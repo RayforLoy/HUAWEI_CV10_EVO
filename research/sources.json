@@ -1,0 +1,70 @@
+{
+  "community_commit": "03bf1012493fd821f38114010e4b21fe20f1d4f1",
+  "community_raw_directory": "https://raw.githubusercontent.com/EnYaoJingYa/huawei-vr-compat/03bf1012493fd821f38114010e4b21fe20f1d4f1/%E5%8E%9F%E5%8C%85/",
+  "sources": [
+    {
+      "name": "huawei-unity-3.5.0.68",
+      "file": "vrsdk-3.5.0.68.zip",
+      "url": "https://appfile1.hicloud.com/FileServer/getFile/app/011/111/111/0000000000011111111.20211021191700.38494686162974099647973174714584:20471231000000:0001:348D852821A0C966564C87ED5ADBEA5A470C5A24536A9A32BD0B3973E7B74CC0.zip?needInitFileName=true",
+      "source": "https://developer.huawei.com/consumer/cn/doc/graphics-Library/unity-sdk-download-0000001142315529/",
+      "bytes": 76254271,
+      "sha256": "c699a924f372e9a2d0cf536d7c5f911de83da10e17935e9dfb2d0871578d9dc4",
+      "apk_member": "3.5.0.68.apk",
+      "apk_sha256": "5c60378ce4229e436fc6a929d4ad2fd362818faadead22008a3eae6dd0fe3547"
+    },
+    {
+      "name": "huawei-openxr-3.5.0.79",
+      "file": "hvrsdk-openxr-3.5.0.79.zip",
+      "url": "https://appfile-cn.dbankcdn.com/FileServer/getFile/appAttach/011/111/111/0000000000011111111.20221102173621.26457187764006494803558873286117:20471231000000:0001:0C6F017944A9E97D1380250E932668F2E878702C93E2E88C14D4A710C6110422.zip?needInitFileName=true",
+      "source": "https://developer.huawei.com/consumer/cn/doc/graphics-Library/openxr-sdk-download-0000001148849243/",
+      "bytes": 13899828,
+      "sha256": "0fcf46b0f1d789493b09fc2b3e3f1d134215f791df37c7fe52771f652edd77d9"
+    },
+    {
+      "name": "jadx-1.5.7",
+      "file": "jadx-1.5.7.zip",
+      "url": "https://github.com/skylot/jadx/releases/download/v1.5.7/jadx-1.5.7.zip",
+      "source": "https://github.com/skylot/jadx/releases/tag/v1.5.7",
+      "sha256": "1755e4242ade71a077438723689f404079592ec7764a3a0572f98fef94ebcbf3"
+    }
+  ],
+  "community_apks": [
+    {
+      "file": "com.huawei.appmarket.vr.apk",
+      "bytes": 69766327,
+      "sha256": "0b67aea288b8aca30388b2d2931d2b08172275159732da84258b51f59b2250d6"
+    },
+    {
+      "file": "com.huawei.himovie.vr.apk",
+      "url": "https://github.com/EnYaoJingYa/huawei-vr-compat/releases/download/original-apks-v1/com.huawei.himovie.vr.apk",
+      "bytes": 116811077,
+      "sha256": "d34ada2b296794f6bdd89e1426577ad42cb99a6aee17758565ad10f5918ce5ea"
+    },
+    {
+      "file": "com.huawei.hvrsdkserverapp.apk",
+      "bytes": 66871844,
+      "sha256": "e0af366239d1c9c8ad384651a3173dfdfccac9ba221768f4db6c5349101d1444"
+    },
+    {
+      "file": "com.huawei.vrhandle.apk",
+      "bytes": 8963026,
+      "sha256": "e947fc358e9692358ac42cfe4a565c112f7fc9349da693643f863d08af98b3d2"
+    },
+    {
+      "file": "com.huawei.vrlauncherx.apk",
+      "bytes": 59024225,
+      "sha256": "1e91f00d596c636c3f52dddc494ee6b745cdf90bb3a0838ff203f9ae54b92dd3"
+    },
+    {
+      "file": "com.huawei.vrvirtualscreen.apk",
+      "bytes": 14786134,
+      "sha256": "229eba319b78a94dd5b497c1aadd739db07189fa5b8c4680473529350d70c7fe"
+    },
+    {
+      "file": "com.huawei.vrservice.apk",
+      "bytes": 3042010,
+      "sha256": "317c09957c6bf35edc9f4bca258a7aedbb81cebedfd212244f2776e82491f41e"
+    }
+  ],
+  "community_reference": "https://github.com/EnYaoJingYa/huawei-vr-compat/blob/03bf1012493fd821f38114010e4b21fe20f1d4f1/docs/BASELINE.md"
+}
