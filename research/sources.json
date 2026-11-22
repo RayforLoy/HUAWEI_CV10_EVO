@@ -25,6 +25,7 @@
       "file": "jadx-1.5.7.zip",
       "url": "https://github.com/skylot/jadx/releases/download/v1.5.7/jadx-1.5.7.zip",
       "source": "https://github.com/skylot/jadx/releases/tag/v1.5.7",
+      "bytes": 74766896,
       "sha256": "1755e4242ade71a077438723689f404079592ec7764a3a0572f98fef94ebcbf3"
     }
   ],
