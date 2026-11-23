@@ -34,6 +34,12 @@ python tools/inspect_samples.py inspect
 
 华为 VR、视频、手柄、桌面和手机投屏的部分 Java 方法仍有 JADX 转换错误。系统 `vrservice` 和两份 SDK runtime 的 Java 反编译完成，关键系统方法另用 DEX 指令交叉核对。所有原始 DEX 均可从解包目录复查。
 
+### 网友提供的七件套
+
+本地目录 `华为VR/` 的 01 至 06 号文件逐个计算 SHA-256 后，分别与样本清单中的 SDK runtime、华为 VR、VR 视频、手柄、桌面和手机投屏完全一致。07 号是另一版 `com.huawei.vrservice`，版本 `12.0.0.302`，versionCode `120000302`，文件 SHA-256 为 `fd363dbea8f8413e5de0b984e3151432e27fc788e579b72ec542a2a48f02882d`。来源机型和固件未知。
+
+`aapt2` 显示 07 号包声明共享 UID `android.uid.system`，仅携带 `lib/armeabi-v7a/libvrservice.so`。`apksigner verify --verbose --print-certs` 通过 v2 校验，签名证书 SHA-256 为 `c7ab9c302937f2a0806ddff90800ca52649116543b950226464b5449e32d758f`，与上述 Mate 20 样本不同。其原生库中能找到 `setVrScreenOnNative` 和 `AT^SWITCHSCREEN`，未检出旧版中的两个完整串口路径字符串。这提供了追踪新版开屏实现的入口，具体通道仍待核对。真机阶段先记录 P40 Pro+ 实际服务的版本、APK 哈希和证书，以选择匹配的分析样本。
+
 ## USB 插入、显示枚举与原厂路由
 
 1. **USB 接入等待外显。** 在社区 `com.huawei.vrservice` `11.0.0.322` 的 `classes.dex` 中，`UsbReceiver.onReceive`（DEX `0xe304c`）处理 `USB_DEVICE_ATTACHED`，读取 VR 开关和机主用户条件，通过 `VRUtils.isHelmetDevice` 过滤，再启动 `VRService`。样本的正常接入路径匹配华为 `12d1:1092` 和相应产品名，固件升级状态另用 `12d1:1093`。`onStartCommand` 将事件交给 worker，`handleUsbChanged` 把正常接入交给 `handleGlassIn`（`0xe4058`），其中等待显示闩锁最多 5 秒。`VRService.onDisplayAdded`（`0xe4b10`）核对 `HUAWEI VR Display`，记录显示 ID 并释放闩锁。初始化后绑定 `com.huawei.vrlauncherx` 内的 `com.huawei.client.vrservice.VRService`，通过 Messenger `1001` 传递系统服务 Binder。桌面回调 `2202` 进入服务的头显准备路径。
