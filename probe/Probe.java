@@ -27,7 +27,7 @@ public class Probe extends Activity implements DisplayManager.DisplayListener {
     private LinearLayout panel;
     private Presentation presentation;
     private Pattern pattern;
-    private int left = 90, right = 270;
+    private int left = 270, right = 90;
     private static final String USB_ACCESS = "org.cv10.displayprobe.USB_ACCESS";
     private static final String HID_ACCESS = "org.cv10.displayprobe.HID_ACCESS";
     private UsbManager usb;

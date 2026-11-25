@@ -1,0 +1,18 @@
+11-25 15:16:41.169 29315 29423 I MonadoView: CV10 target id=32 name=HUAWEIAV03 active={id=65, parentModeId=-1, flags=, FLAG_SIZE_OVERRIDE, width=3200, height=1600, fps=90.0, vsync=90.0, alternativeRefreshRates=[70.0], supportedHdrTypes=[2, 3]} preferred={id=65, parentModeId=-1, flags=, FLAG_SIZE_OVERRIDE, width=3200, height=1600, fps=90.0, vsync=90.0, alternativeRefreshRates=[70.0], supportedHdrTypes=[2, 3]} path=presentation
+11-25 15:16:41.511 29315 29338 V hello_xr: [15:16:41.511][Info   ] System Properties: Name=Monado: Huawei VR Glass CV10 (USB IMU) VendorId=42
+11-25 15:16:41.511 29315 29338 V hello_xr: [15:16:41.511][Info   ] System Tracking Properties: OrientationTracking=True PositionTracking=False
+11-25 15:16:41.511 29315 29338 V hello_xr: [15:16:41.511][Info   ] Creating color and depth swapchain for view 0 with dimensions Width=2240 Height=2240 SampleCount=1
+11-25 15:16:41.530 29315 29338 V hello_xr: [15:16:41.530][Info   ] Creating color and depth swapchain for view 1 with dimensions Width=2240 Height=2240 SampleCount=1
+11-25 15:16:41.557 29315 29338 V hello_xr: [15:16:41.557][Info   ] XrEventDataSessionStateChanged: state XR_SESSION_STATE_VISIBLE->XR_SESSION_STATE_FOCUSED session=-5476376638598498384 time=2520412353021
+11-25 15:16:41.156 29376 29419 I MonadoCV10: CV10 PCUI AT^SWITCHSCREEN=1 OK
+11-25 15:16:41.156 29376 29418 I MonadoCV10: CV10 IMU enabled, interrupt IN 0x84
+11-25 15:16:41.158 29376 29418 I MonadoCV10: CV10 valid IMU samples=1 deviceNs=1006984409868
+11-25 15:16:41.158 29376 29418 I monado.cv10_worker:  INFO [cv10_worker] CV10 3DoF tracking initialized from USB, first mapped sample 2088914369991973 ns
+11-25 15:16:41.158 29376 29418 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=1 q_xyzw=(0.0000,0.0000,0.0000,1.0000) gyro_rad_s=(0.006,-0.001,-0.001) peak_rad_s=0.006
+11-25 15:16:43.159 29376 29418 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=1947 q_xyzw=(0.0495,0.0001,-0.0169,0.9986) gyro_rad_s=(0.001,-0.000,-0.002) peak_rad_s=0.008
+11-25 15:16:45.160 29376 29418 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=3915 q_xyzw=(0.0991,0.0001,-0.0336,0.9945) gyro_rad_s=(0.003,0.001,-0.001) peak_rad_s=0.008
+11-25 15:16:46.253 29376 29418 I MonadoCV10: CV10 valid IMU samples=5000 deviceNs=1012079232650
+11-25 15:16:47.160 29376 29418 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=5907 q_xyzw=(0.1099,0.0001,-0.0372,0.9932) gyro_rad_s=(-0.000,0.003,0.001) peak_rad_s=0.009
+11-25 15:16:49.161 29376 29418 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=7894 q_xyzw=(0.1103,0.0001,-0.0373,0.9932) gyro_rad_s=(-0.001,-0.000,-0.001) peak_rad_s=0.010
+11-25 15:16:51.162 29376 29418 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=9895 q_xyzw=(0.1104,-0.0000,-0.0373,0.9932) gyro_rad_s=(-0.002,0.000,0.002) peak_rad_s=0.009
+11-25 15:16:51.267 29376 29418 I MonadoCV10: CV10 valid IMU samples=10000 deviceNs=1017093248750
