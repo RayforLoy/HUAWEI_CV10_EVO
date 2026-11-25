@@ -95,3 +95,5 @@ adb -s $serial shell "nohup sh /data/local/tmp/cv10-hello-refresh.sh >/data/loca
 ```
 
 脚本仅在当前 hello_xr 会话临时将手机系统 `min_refresh_rate` 设为 120 Hz。退出样例、拔掉眼镜或结束运行时后，脚本会在下一次轮询恢复原值；轮询间隔为三秒。已实测退出样例后恢复。手机突然断电会中断清理，再运行脚本会先恢复原值；也可以执行 `adb -s $serial shell sh /data/local/tmp/cv10-hello-refresh.sh restore` 清理上次异常退出的状态。再次打开样例时需重新启动此辅助脚本。单独安装 APK 即可使用 MAILBOX。
+
+佩戴者在当前修复配置下复测，反馈「转头拖影明显减少」。本轮没有用高速摄像测量光学残影长度。
