@@ -91,7 +91,19 @@
       -1
     ],
     "usb_parent": "Microsoft usbccgp; two HID functions enumerated",
-    "pcui_mi00": "Code 28 before binding. Signed Huawei hwusb_cdcacm then reported Code 39. WinUSB model not selected. No confirmed PCUI screen-on from this PC."
+    "pcui_mi00": "Code 28 before binding. Signed Huawei hwusb_cdcacm then reported Code 39. WinUSB model not selected. No confirmed PCUI screen-on from this PC.",
+    "pcui_driver": {
+      "setupapi_local_time": "2026-11-26T03:03:21+08:00",
+      "version": "1.0.26.0",
+      "install_section": "PCUI_DevInstall",
+      "postinstall_problem": "0x27 CM_PROB_DRIVER_FAILED_LOAD",
+      "problem_status": "0xC000007B STATUS_INVALID_IMAGE_FORMAT",
+      "binary": "hw_cdcacm.sys",
+      "machine": "AMD64",
+      "section_alignment": "0x80",
+      "INIT_characteristics": "0xE2000020",
+      "installed_and_driverstore_sha256": "5758a0814ca8aa1e7447e1cbdf94352266edeee547ab896fcff97727d8ecde53"
+    }
   },
   "steamvr": {
     "release": "2.18.4",
@@ -152,22 +164,22 @@
   "observer": {
     "source": "Windows QueryDisplayConfig and enumeration of the headset HID. Every fifth iteration sampled AMD ADL and P40 ADB transport.",
     "first": "2026-11-26T02:51:47+08:00",
-    "last": "2026-11-26T03:26:43+08:00",
-    "samples": 39,
+    "last": "2026-11-26T03:29:28+08:00",
+    "samples": 42,
     "maximum_sampling_gap_seconds": 56,
     "secondary_signal_samples": {
-      "640x480": 39
+      "640x480": 42
     },
     "primary_signal_samples": {
-      "2560x1440": 39
+      "2560x1440": 42
     },
-    "both_hid_samples": 39,
+    "both_hid_samples": 42,
     "amd_dce_samples": {
       "DCE ret=0 rateEnum=0 active=0 total=4": 1,
-      "DCE ret=0 rateEnum=1 active=1 total=4": 7
+      "DCE ret=0 rateEnum=1 active=1 total=4": 8
     },
     "p40_adb_samples": {
-      "device": 8
+      "device": 9
     },
     "display_runs": [
       {
@@ -184,8 +196,8 @@
       },
       {
         "first": "2026-11-26T03:08:20+08:00",
-        "last": "2026-11-26T03:26:43+08:00",
-        "observations": 21,
+        "last": "2026-11-26T03:29:28+08:00",
+        "observations": 24,
         "state": "DISPLAY103 / desktop 640x480 / signal 640x480 / 60000:1001 Hz"
       }
     ]

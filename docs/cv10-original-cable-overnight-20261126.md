@@ -37,7 +37,7 @@ P40 先在手机本地记录直连与原厂线的切换，随后通过无线 ADB
 ![P40 主摄拍摄的三次双镜片裁切，上中下依次对应 02:46、03:04、03:05](../research/evidence/pc-original-cable-optics-20261126.jpg)
 
 <!-- observation-start -->
-只读观察从 02:51:47 到 03:26:43，共 39 次，最长采样间隔 56 秒。每次采样的副屏信号均为 640×480。两个头显 HID 在 39 次采样中同时可枚举。最后一次镜片实拍在 03:05，之后的采样只说明电脑端状态。
+只读观察从 02:51:47 到 03:29:28，共 42 次，最长采样间隔 56 秒。每次采样的副屏信号均为 640×480。两个头显 HID 在 42 次采样中同时可枚举。最后一次镜片实拍在 03:05，之后的采样只说明电脑端状态。
 <!-- observation-end -->
 
 ## EDID、显示链路与 SteamVR 422
@@ -47,6 +47,12 @@ P40 先在手机本地记录直连与原厂线的切换，随后通过无线 ADB
 - **两台主机的协商结果不同。** Fold7 使用两种线时均记录到 DP 引脚配置 C、HBR2 四通道、两阶段训练成功和视频流启用。两种线都出现过 HDCP 2.2 认证失败，工作正常的直连仍可显示测试图。Windows 的 AMD 接口曾报告 RBR 一条活动通道、四条总通道，也返回过未知速率及零活动通道。该读数对应当时的低分辨率模式，尚未确定是带宽受限导致回退，还是驱动随已选模式降低了链路速率。[Fold7 内核对照](../research/evidence/fold7-original-vs-direct-dp.txt) · [AMD 显示库](https://github.com/GPUOpen-LibrariesAndSDKs/display-library/tree/84c881cb2136f04287eb3af12de00a9e2867aa9e) · [VESA 链路速率资料](https://www.vesa.org/wp-content/uploads/2017/06/VESA-DP-Tech-Update-62117.pdf)
 - **422 出现在合成器选择桌面输出时。** 当时的日志先判断头显在桌面上，接着报告输出索引 `-1`。实测 AMD 是 DXGI 适配器 1、输出 0。NOLO 的默认设置含产品号 2，本机眼镜为 3。进一步检查同版本安装的驱动 DLL，发现它有按 `HWV0003` 搜索实际 DXGI 输出的路径，因此单看默认产品号不足以解释 422。它还读取名为 `lowVersionDriver` 的标志来选择查找输出的分支，本次没有记录到出错现场该标志的值。[Valve OpenVR 驱动接口](https://github.com/ValveSoftware/openvr/blob/master/headers/openvr_driver.h)
 - **群资料和官方适配的范围不同。** 本地群文件问答收录了 NOLO 与华为助手外部驱动登记冲突，没有检索到字面错误码 422。随附 6DoF 说明的成功条件包含眼镜可选 3200×1600 扩展屏，不能据此认定本机已经满足条件。华为支持文档要求眼镜接 NVIDIA 独显，并列出 Belkin、FIBBR 计算机线。此次主板 AMD 核显和带供电口的原厂手机线属于另一种接法。[群文件问答](../resources/qq_gourp/华为vr%20glass问题汇总与解答.xlsx) · [群文件有线连接说明](../resources/qq_gourp/华为vr%20glass%206dof%20PC有线连接说明v0.1.docx) · [华为电脑黑屏排查](https://consumer.huawei.com/cn/support/content/zh-cn00793812/)
+
+### 电脑为什么没有取得开屏应答
+
+Windows 安装日志记录，03:03:21 头显 MI_00 已匹配华为 PCUI 驱动 `1.0.26.0`，内核加载阶段返回 `0xC000007B`（`STATUS_INVALID_IMAGE_FORMAT`），设备管理器随之报告代码 39。驱动文件实际存在，是 x64 程序，和驱动仓库副本的 SHA-256 相同。USB 父设备和两个 HID 当时可以工作，失败的环节已缩小到专用控制子接口的驱动加载。[微软的代码 39 说明](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/cm-prob-driver-failed-load) · [NTSTATUS 对照](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55)
+
+旧驱动的 PE 节对齐值为 `0x80`，`INIT` 节同时可写、可执行。这两项不满足微软对内存完整性兼容驱动的要求。现有日志足以确认映像加载失败，仍不能把本机这次拒载单独归因于内存完整性。下一次测试可在同一 MI_00 上验证兼容的控制驱动，先以读回 `CV10` 型号确认通道已打通。[驱动摘要与读数](../research/evidence/pc-original-cable-20261126.json) · [微软的驱动兼容条件](https://learn.microsoft.com/en-us/windows-hardware/drivers/driversecurity/implement-hvci-compatible-code)
 
 ## 线内电池与固件
 
