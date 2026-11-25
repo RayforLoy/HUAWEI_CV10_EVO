@@ -1,0 +1,59 @@
+{
+  "device": "SM-F9660",
+  "apk_sha256_before_and_after_permission_test": "0b40daccb53d0155e419169244a820523c089bd4e2dff7c1bc37707c2d033403",
+  "at_report": {
+    "shizuku_server_running": true,
+    "monado_enabled": true,
+    "monado_authorized_in_shizuku": false,
+    "headset_connected": true,
+    "min_refresh_rate": null,
+    "primary_active_hz": 60
+  },
+  "after_authorizing_and_relaunching_client": {
+    "min_refresh_rate": 120,
+    "primary_active_hz": 120,
+    "external_mode_hz": 90,
+    "legacy_script_running": false,
+    "layer": {
+      "seconds": 1.4,
+      "unique_presentations": 127,
+      "unique_hz": 89.94,
+      "interval_p50_p95_ms": [
+        8.29,
+        16.58
+      ],
+      "ready_to_present_p50_p95_ms": [
+        12.18,
+        16.09
+      ],
+      "desired_to_present_p50_p95_ms": [
+        10.34,
+        14.23
+      ]
+    }
+  },
+  "hotfix": {
+    "sha256": "ee2ee28b44ef7342723a68f00e94d536edbeb8be0f7547f2bc0561d500301b6e",
+    "shizuku_restarted_from_manager": true,
+    "primary_active_hz": 120,
+    "headset_mode_hz": 90,
+    "legacy_script_running": false,
+    "layer_after_server_restart": {
+      "seconds": 1.41,
+      "unique_presentations": 127,
+      "unique_hz": 89.4,
+      "interval_p50_p95_ms": [
+        8.29,
+        16.58
+      ],
+      "ready_to_present_p50_p95_ms": [
+        11.88,
+        19.9
+      ],
+      "desired_to_present_p50_p95_ms": [
+        13.32,
+        21.45
+      ]
+    }
+  }
+}

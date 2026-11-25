@@ -36,10 +36,10 @@ index 0000000..c4c208a
 +}
 diff --git a/src/xrt/auxiliary/android/src/main/java/org/freedesktop/monado/auxiliary/Cv10RefreshLease.java b/src/xrt/auxiliary/android/src/main/java/org/freedesktop/monado/auxiliary/Cv10RefreshLease.java
 new file mode 100644
-index 0000000..33402a5
+index 0000000..a4d22f0
 --- /dev/null
 +++ b/src/xrt/auxiliary/android/src/main/java/org/freedesktop/monado/auxiliary/Cv10RefreshLease.java
-@@ -0,0 +1,208 @@
+@@ -0,0 +1,328 @@
 +// SPDX-License-Identifier: BSL-1.0
 +package org.freedesktop.monado.auxiliary;
 +
@@ -56,11 +56,14 @@ index 0000000..33402a5
 +import android.os.Handler;
 +import android.os.HandlerThread;
 +import android.os.IBinder;
-+import android.os.RemoteException;
++import android.os.Looper;
++import android.os.SystemClock;
++import java.util.Objects;
 +import android.os.UserManager;
 +import android.provider.Settings;
 +import android.util.Log;
 +import android.view.Display;
++import android.widget.Toast;
 +import rikka.shizuku.Shizuku;
 +
 +/** One serialized coordinator per runtime process; never instantiated in OpenXR client apps. */
@@ -77,11 +80,25 @@ index 0000000..33402a5
 +    private final DisplayManager displays;
 +    private final SharedPreferences prefs;
 +    private final Handler work;
++    private final Handler main = new Handler(Looper.getMainLooper());
 +    private final Binder lifetime = new Binder();
 +    private final Shizuku.UserServiceArgs args;
 +    private ServiceConnection binding;
 +    private ICv10Refresh remote;
-+    private boolean bound, connected, attempted, owned;
++    private boolean bound, connected, suppressed, owned, warnedPermission;
++    private IBinder server;
++    private long nextAttach;
++    private int failures;
++    private String lastStatus = "";
++    private String displayStatus = "";
++    private final Runnable retry = this::refresh;
++    private final Runnable timeout = () -> { if (binding != null && remote == null) failed("UserService callback timeout"); };
++
++    private void status(String message) {
++        if (!message.equals(lastStatus)) Log.i(TAG, message);
++        lastStatus = message;
++    }
++
 +
 +    public static boolean supportedPhone(Context context) {
 +        return "org.cv10.monado.out_of_process".equals(context.getPackageName())
@@ -105,7 +122,7 @@ index 0000000..33402a5
 +        thread.start();
 +        work = new Handler(thread.getLooper());
 +        args = new Shizuku.UserServiceArgs(new ComponentName(context, Cv10RefreshUserService.class))
-+                .daemon(false).processNameSuffix("cv10_refresh").tag("cv10_refresh").version(1);
++                .daemon(false).processNameSuffix("cv10_refresh").tag("cv10_refresh").version(2);
 +        if (!supportedPhone(context)) return;
 +        prefs.registerOnSharedPreferenceChangeListener(options);
 +        displays.registerDisplayListener(this, work);
@@ -113,27 +130,42 @@ index 0000000..33402a5
 +                new ContentObserver(work) {
 +                    @Override public void onChange(boolean self) { observe(); }
 +                });
-+        Shizuku.addBinderReceivedListenerSticky(this::schedule);
-+        Shizuku.addBinderDeadListener(() -> work.post(() -> {
-+            if (owned) restore();
-+            detach();
-+            attempted = false;
-+        }));
++        Shizuku.addBinderReceivedListenerSticky(() -> work.post(this::serverChanged));
++        Shizuku.addBinderDeadListener(() -> work.post(this::serverChanged));
++        Shizuku.addRequestPermissionResultListener((code, result) -> schedule());
++    }
++
++    private void serverChanged() {
++        IBinder now = Shizuku.getBinder();
++        if (now != null && !now.pingBinder()) now = null;
++        if (!Objects.equals(now, server)) {
++            if (owned && remote != null && remote.asBinder().pingBinder()) restore();
++            detach(false);
++            server = now;
++            failures = 0;
++            nextAttach = 0;
++            status(now == null ? "Shizuku server disconnected" : "New Shizuku server binder received");
++        }
++        refresh();
 +    }
 +
 +    public static void recoverFromLauncher(Service service) { get(service).schedule(); }
 +
 +    private void schedule() { work.post(this::refresh); }
 +
-+    public void onBound() { work.post(() -> bound = true); }
++    public void onBound() { work.post(() -> { bound = true; Log.i(TAG, "Android XR service bound"); }); }
 +
 +    /** Native server successfully accepted the client's IPC fd. */
 +    public void onAccepted() { work.post(() -> {
-+        if (bound) { connected = true; refresh(); }
++        if (bound) { connected = true; status("OpenXR IPC accepted"); refresh(); }
++        else Log.w(TAG, "Ignoring late IPC acceptance after Android XR service unbound");
 +    }); }
 +
 +    public void onUnbound() { work.post(() -> {
++        Log.i(TAG, "Android XR service unbound");
 +        bound = connected = false;
++        suppressed = false;
++        warnedPermission = false;
 +        refresh();
 +    }); }
 +
@@ -141,20 +173,23 @@ index 0000000..33402a5
 +
 +    private boolean eligibleDisplays() {
 +        Display phone = displays.getDisplay(Display.DEFAULT_DISPLAY);
-+        if (phone == null) return false;
-+        boolean capable = false;
++        if (phone == null) { displayStatus = "primary unavailable"; return false; }
 +        Display.Mode current = phone.getMode();
++        int w = current.getPhysicalWidth(), h = current.getPhysicalHeight();
++        float peak = 0;
 +        for (Display.Mode mode : phone.getSupportedModes()) {
-+            if (mode.getPhysicalWidth() == current.getPhysicalWidth()
-+                    && mode.getPhysicalHeight() == current.getPhysicalHeight()
-+                    && Math.abs(mode.getRefreshRate() - 120f) < 1f) capable = true;
++            int mw = mode.getPhysicalWidth(), mh = mode.getPhysicalHeight();
++            if ((mw == w && mh == h) || (mw == h && mh == w)) peak = Math.max(peak, mode.getRefreshRate());
 +        }
-+        if (!capable) return false;
-+        for (Display display : displays.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)) {
-+            if (display.getDisplayId() != Display.DEFAULT_DISPLAY && display.isValid()
-+                    && "HUAWEIAV03".equals(display.getName().trim())) return true;
++        boolean cv10 = false;
++        StringBuilder external = new StringBuilder();
++        for (Display d : displays.getDisplays()) {
++            if (d.getDisplayId() == Display.DEFAULT_DISPLAY) continue;
++            external.append(d.getDisplayId()).append('/').append(d.getName().trim()).append(' ');
++            if (d.isValid() && "HUAWEIAV03".equalsIgnoreCase(d.getName().trim())) cv10 = true;
 +        }
-+        return false;
++        displayStatus = "primary=" + w + "x" + h + " peak=" + peak + " external=[" + external + "]";
++        return peak >= 119 && cv10;
 +    }
 +
 +    private boolean pending() { return prefs.getBoolean(PENDING, false); }
@@ -168,67 +203,152 @@ index 0000000..33402a5
 +    private void observe() {
 +        try {
 +            if (owned && !TARGET.equals(read())) {
-+                if (remote != null) remote.relinquish();
-+                clearJournal();
-+                Log.i(TAG, "Manual refresh change retained");
++                suppressed = true;
++                try { if (remote != null) remote.relinquish(); }
++                finally { clearJournal(); }
++                status("Manual refresh change retained until XR/display disconnect");
++                refresh();
 +            }
 +        } catch (Exception e) { Log.w(TAG, "Could not inspect refresh change", e); }
 +    }
 +
++    private void retryAfter(long delay) {
++        work.removeCallbacks(retry);
++        work.postDelayed(retry, delay);
++    }
++
++    private void failed(String why) {
++        Log.w(TAG, why);
++        detach(true);
++        failures = Math.min(failures + 1, 5);
++        long delay = Math.min(12000, 500L << failures);
++        nextAttach = SystemClock.uptimeMillis() + delay;
++        retryAfter(delay);
++    }
++
 +    private void attach() {
-+        if (binding != null || !Shizuku.pingBinder() || Shizuku.getVersion() < 13
-+                || Shizuku.getUid() != 2000 || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED)
-+            return;
++        if (binding != null) return;
++        long remaining = nextAttach - SystemClock.uptimeMillis();
++        if (remaining > 0) { retryAfter(remaining); return; }
++        if (!Shizuku.pingBinder()) {
++            status("Waiting for Shizuku server"); retryAfter(3000); return;
++        }
++        if (Shizuku.getVersion() < 13 || Shizuku.getUid() != 2000) {
++            status("Waiting for Shizuku 13+ running as wireless-debugging shell"); retryAfter(5000); return;
++        }
++        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
++            status("Waiting for Shizuku user authorization");
++            if (connected && prefs.getBoolean(ENABLED, false) && !warnedPermission) {
++                warnedPermission = true;
++                main.post(() -> Toast.makeText(context, "独立 120 Hz 需要授权：打开 Shizuku → 已授权应用 → Monado CV10。", Toast.LENGTH_LONG).show());
++            }
++            retryAfter(5000); return;
++        }
++        final IBinder expectedServer = Shizuku.getBinder();
 +        ServiceConnection c = new ServiceConnection() {
 +            @Override public void onServiceConnected(ComponentName name, IBinder binder) {
 +                work.post(() -> {
-+                    if (binding != this || binder == null) return;
++                    if (binding != this || !Objects.equals(expectedServer, Shizuku.getBinder())) return;
++                    if (binder == null || !binder.pingBinder()) { failed("Dead UserService on connect"); return; }
++                    work.removeCallbacks(timeout);
 +                    remote = ICv10Refresh.Stub.asInterface(binder);
++                    status("Shizuku UserService connected");
 +                    refresh();
 +                });
 +            }
 +            @Override public void onServiceDisconnected(ComponentName name) {
-+                work.post(() -> {
-+                    if (binding != this) return;
-+                    detach();
-+                    attempted = false;
-+                    if (Shizuku.pingBinder()) work.postDelayed(Cv10RefreshLease.this::refresh, 1000);
-+                });
++                work.post(() -> { if (binding == this) failed("Shizuku UserService disconnected"); });
 +            }
 +        };
 +        binding = c;
-+        try { Shizuku.bindUserService(args, c); }
-+        catch (RuntimeException e) { binding = null; throw e; }
++        status("Binding Shizuku UserService, attempt " + (failures + 1));
++        work.removeCallbacks(timeout);
++        work.postDelayed(timeout, 6500);
++        // SDK 13.1.5 delivers and mutates its unsynchronized connection set on the main looper.
++        main.post(() -> {
++            try {
++                if (Objects.equals(expectedServer, Shizuku.getBinder())) {
++                    // A daemon death can prevent an earlier unbind(false) from clearing the SDK cache.
++                    try { Shizuku.unbindUserService(args, null, false); }
++                    catch (RuntimeException e) { Log.d(TAG, "Previous UserService callback unavailable", e); }
++                    Shizuku.bindUserService(args, c);
++                }
++            } catch (RuntimeException e) {
++                work.post(() -> { if (binding == c) failed("Shizuku bind failed: " + e); });
++            }
++        });
 +    }
 +
-+    private void detach() {
++    private void detach(boolean remove) {
++        work.removeCallbacks(timeout);
 +        ServiceConnection old = binding;
++        IBinder oldServer = server;
 +        remote = null;
 +        binding = null;
 +        owned = false;
-+        if (old == null || !Shizuku.pingBinder()) return;
-+        try { Shizuku.unbindUserService(args, old, true); }
-+        catch (RuntimeException e) { Log.w(TAG, "UserService disconnected", e); }
++        if (old == null) return;
++        main.post(() -> {
++            if (!Shizuku.pingBinder()) return;
++            try {
++                // false unregisters the SDK callback object; true alone only removes the server record.
++                Shizuku.unbindUserService(args, old, false);
++                if (remove && Objects.equals(oldServer, Shizuku.getBinder()))
++                    Shizuku.unbindUserService(args, old, true);
++            } catch (RuntimeException e) { Log.w(TAG, "UserService cleanup deferred", e); }
++        });
 +    }
 +
 +    private void refresh() {
 +        if (!supportedPhone(context)) return;
++        work.removeCallbacks(retry);
 +        try {
-+            boolean use = connected && prefs.getBoolean(ENABLED, false) && eligibleDisplays();
-+            if (!use) attempted = false;
-+            if (use && owned) return;
-+            if (!pending() && (!use || attempted)) { detach(); return; }
++            IBinder now = Shizuku.getBinder();
++            if (now != null && !now.pingBinder()) now = null;
++            if (!Objects.equals(now, server)) { serverChanged(); return; }
++            boolean optedIn = prefs.getBoolean(ENABLED, false);
++            boolean displaysReady = connected && optedIn && eligibleDisplays();
++            if (!displaysReady) suppressed = false;
++            if (owned && remote != null && !remote.asBinder().pingBinder()) {
++                failed("UserService binder lost"); return;
++            }
++            if (owned && displaysReady) { observe(); return; }
++
++            // The shell service may already have restored the floor on death. No privileged RPC
++            // is needed to reconcile this case, including a previously absent (null) original.
++            if (pending() && !owned) {
++                String actual = read(), original = prefs.getString(ORIGINAL, null);
++                if (!TARGET.equals(actual)) {
++                    if (displaysReady && !Objects.equals(actual, original)) suppressed = true;
++                    clearJournal();
++                    status(Objects.equals(actual, original) ? "Journal reconciled: original already restored"
++                            : "Journal reconciled: external setting retained");
++                }
++            }
++            if (!pending() && (!displaysReady || suppressed)) {
++                detach(true);
++                if (connected && optedIn && !displaysReady) {
++                    status("Waiting for CV10/120 Hz: " + displayStatus); retryAfter(2000);
++                }
++                return;
++            }
 +            if (remote == null) { attach(); return; }
-+            if (pending() && !restore()) return;
-+            if (!use || attempted) { detach(); return; }
-+            attempted = true;
++            if (pending() && !restore()) { failed("Refresh restore pending"); return; }
++            if (!displaysReady || suppressed) { detach(true); return; }
 +            String before = read();
-+            if (TARGET.equals(before)) { detach(); return; }
-+            if (!prefs.edit().putBoolean(PENDING, true).putString(ORIGINAL, before).commit()) return;
++            if (TARGET.equals(before)) { suppressed = true; detach(true); return; }
++            if (!prefs.edit().putBoolean(PENDING, true).putString(ORIGINAL, before).commit()) {
++                failed("Could not commit refresh journal"); return;
++            }
 +            owned = remote.acquire(before, lifetime);
-+            if (owned) Log.i(TAG, "Shizuku acquired 120 Hz refresh floor");
-+            else { restore(); detach(); }
-+        } catch (Exception e) { Log.w(TAG, "Refresh floor unavailable; XR continues", e); }
++            if (owned) {
++                failures = 0;
++                nextAttach = 0;
++                status("Shizuku acquired 120 Hz refresh floor");
++            } else {
++                if (!Objects.equals(before, read())) suppressed = true;
++                failed("UserService did not acquire refresh floor");
++            }
++        } catch (Exception e) { failed("Refresh RPC unavailable; XR continues: " + e); }
 +    }
 +
 +    private boolean restore() {
@@ -481,7 +601,7 @@ index 2befb60..163b57b 100644
      }
  
 diff --git a/src/xrt/targets/android_common/src/main/java/org/freedesktop/monado/android_common/AboutActivity.java b/src/xrt/targets/android_common/src/main/java/org/freedesktop/monado/android_common/AboutActivity.java
-index d7f4ff6..0f1cac8 100644
+index d7f4ff6..1943afb 100644
 --- a/src/xrt/targets/android_common/src/main/java/org/freedesktop/monado/android_common/AboutActivity.java
 +++ b/src/xrt/targets/android_common/src/main/java/org/freedesktop/monado/android_common/AboutActivity.java
 @@ -9,7 +9,14 @@
@@ -499,11 +619,20 @@ index d7f4ff6..0f1cac8 100644
  import android.text.method.LinkMovementMethod;
  import android.view.Menu;
  import android.view.MenuItem;
-@@ -31,6 +38,75 @@ import org.freedesktop.monado.auxiliary.UiProvider;
+@@ -31,6 +38,80 @@ import org.freedesktop.monado.auxiliary.UiProvider;
  public class AboutActivity extends AppCompatActivity {
      private static final int CV10_USB_ACCESS = 0x43563130;
  
 +    private static final int CV10_REFRESH = 0x43563131;
++
++    private static final int CV10_DISABLE = 0x43563132;
++    private final Shizuku.OnBinderReceivedListener binderReady = this::invalidateOptionsMenu;
++    private final Shizuku.OnBinderDeadListener binderLost = this::invalidateOptionsMenu;
++
++    private boolean authorized() {
++        try { return Shizuku.pingBinder() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED; }
++        catch (RuntimeException e) { return false; }
++    }
 +
 +    private SharedPreferences refreshPrefs() {
 +        return getSharedPreferences(Cv10RefreshLease.PREFS, MODE_PRIVATE);
@@ -525,12 +654,6 @@ index d7f4ff6..0f1cac8 100644
 +    }
 +
 +    private void changeRefreshOption() {
-+        SharedPreferences prefs = refreshPrefs();
-+        if (prefs.getBoolean(Cv10RefreshLease.ENABLED, false)) {
-+            prefs.edit().putBoolean(Cv10RefreshLease.ENABLED, false).apply();
-+            invalidateOptionsMenu();
-+            return;
-+        }
 +        new AlertDialog.Builder(this)
 +                .setTitle("开启独立 120 Hz")
 +                .setMessage("连接 CV10 并运行 OpenXR 应用时，临时将手机最低刷新率设为 120 Hz。"
@@ -569,35 +692,49 @@ index d7f4ff6..0f1cac8 100644
 +
 +    @Override protected void onDestroy() {
 +        Shizuku.removeRequestPermissionResultListener(refreshPermission);
++        Shizuku.removeBinderReceivedListener(binderReady);
++        Shizuku.removeBinderDeadListener(binderLost);
 +        super.onDestroy();
 +    }
 +
      @Inject NoticeFragmentProvider noticeFragmentProvider;
  
      @Inject UiProvider uiProvider;
-@@ -55,6 +131,7 @@ public class AboutActivity extends AppCompatActivity {
+@@ -55,6 +136,9 @@ public class AboutActivity extends AppCompatActivity {
      @Override
      protected void onCreate(Bundle savedInstanceState) {
          super.onCreate(savedInstanceState);
 +        Shizuku.addRequestPermissionResultListener(refreshPermission);
++        Shizuku.addBinderReceivedListenerSticky(binderReady);
++        Shizuku.addBinderDeadListener(binderLost);
          setContentView(R.layout.activity_about);
  
          // Default to dark mode universally?
-@@ -106,6 +183,10 @@ public class AboutActivity extends AppCompatActivity {
+@@ -106,6 +190,15 @@ public class AboutActivity extends AppCompatActivity {
      @Override
      public boolean onCreateOptionsMenu(Menu menu) {
          menu.add(Menu.NONE, CV10_USB_ACCESS, Menu.NONE, "CV10 USB access");
 +        if (Cv10RefreshLease.supportedPhone(this)) {
 +            boolean enabled = refreshPrefs().getBoolean(Cv10RefreshLease.ENABLED, false);
-+            menu.add(Menu.NONE, CV10_REFRESH, Menu.NONE, enabled ? "关闭独立 120 Hz" : "开启独立 120 Hz");
++            if (!enabled) menu.add(Menu.NONE, CV10_REFRESH, Menu.NONE, "开启独立 120 Hz");
++            else {
++                if (!authorized())
++                    menu.add(Menu.NONE, CV10_REFRESH, Menu.NONE, "重新授权 Shizuku · 独立 120 Hz");
++                menu.add(Menu.NONE, CV10_DISABLE, Menu.NONE, "关闭独立 120 Hz");
++            }
 +        }
          aboutMenuProvider.ifPresent(
                  menuProvider -> menuProvider.onCreateOptionsMenu(getMenuInflater(), menu));
          return super.onCreateOptionsMenu(menu);
-@@ -113,6 +194,10 @@ public class AboutActivity extends AppCompatActivity {
+@@ -113,6 +206,15 @@ public class AboutActivity extends AppCompatActivity {
  
      @Override
      public boolean onOptionsItemSelected(@NonNull MenuItem item) {
++        if (item.getItemId() == CV10_DISABLE) {
++            refreshPrefs().edit().putBoolean(Cv10RefreshLease.ENABLED, false).apply();
++            invalidateOptionsMenu();
++            return true;
++        }
 +        if (item.getItemId() == CV10_REFRESH) {
 +            changeRefreshOption();
 +            return true;
