@@ -38,6 +38,6 @@ adb -s $serial logcat -d -s Cv10RefreshLease MonadoCV10
 
 ## 原厂线与发布
 
-Windows 连接线工具面向单独接入电脑的原厂手机线。C9.49.6 已双读备份并完成零差异预检，尚待同板型新版供体和实物升级验证。头显升级包与线缆镜像各有独立目标，操作前核实设备和镜像类型。详见[连接线实测](docs/cable.md)和[头显固件研究](docs/firmware-resource-analysis.md)。
+Windows 连接线工具面向单独接入电脑的原厂手机线。已测试群友 C9.52.6，并刷回本线 C9.49.6，断电后双读与原备份一致。两版在 Fold7 均复现黑屏。头显升级包与线缆镜像各有独立目标，操作前核实设备和镜像类型。详见[连接线实测](docs/cable.md)、[头显固件研究](docs/firmware-resource-analysis.md)及[手机、电脑与镜片对照](docs/cv10-original-cable-overnight-20261126.md)。
 
 发布时把标签固定到已推送的提交，核对 APK 包名、签名及两个附件的 SHA-256。仓库共享补丁、工具源码和筛选后的证据；发布附件使用项目构建的运行时和诊断工具，厂商样本保留在本地。

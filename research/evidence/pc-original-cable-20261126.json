@@ -1,0 +1,193 @@
+{
+  "time_zone": "Asia/Hong_Kong",
+  "scope": "One Windows PC, onboard DP Alt Mode on AMD iGPU, original mobile cable C9.49.6, external 5 V, CV10. P40 Pro+ USB debugging for photographs.",
+  "monitor": {
+    "name": "HUAWEIAV03",
+    "pnp_id": "HWV0003",
+    "physical_edid_bytes": 256,
+    "physical_edid_sha256": "55f1e31462b6905922e91b7fa3732f84367175c3319a692a06529e7d23a629fb",
+    "physical_edid_hex_blocks": [
+      "00ffffffffffff0022f6030001000000141b010380502d780a3ce0a05747982712484c0000000101010101010101010101010101010102cf806cc040b4603c08d1043c320000001e02a1806cc040b4603c08f10c3c320000001e000000fc00485541574549415630330a2020000000fd003b5b0f4435000a202020202020019a",
+      "02031242230906078300000065030c0010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000067"
+    ],
+    "fold7_edid_by_connection": {
+      "gen2_direct": {
+        "kernel_monotonic_seconds": "2113283.721919",
+        "bytes": 256,
+        "sha256": "55f1e31462b6905922e91b7fa3732f84367175c3319a692a06529e7d23a629fb"
+      },
+      "original_powered": {
+        "kernel_monotonic_seconds": "2115029.360134",
+        "bytes": 256,
+        "sha256": "55f1e31462b6905922e91b7fa3732f84367175c3319a692a06529e7d23a629fb"
+      }
+    },
+    "block_checksum_residues": [
+      0,
+      0
+    ],
+    "source_mode_dtd": [
+      {
+        "pixels": [
+          3200,
+          1600
+        ],
+        "clock_hz": 529940000,
+        "totals": [
+          3308,
+          1780
+        ]
+      },
+      {
+        "pixels": [
+          3200,
+          1600
+        ],
+        "clock_hz": 412180000,
+        "totals": [
+          3308,
+          1780
+        ]
+      }
+    ],
+    "range_horizontal_khz": [
+      15,
+      68
+    ],
+    "override_test_changed_base_byte_indexes": [
+      116,
+      127
+    ],
+    "override_test_horizontal_max_khz": 161,
+    "override_removed_at": "2026-11-26T03:07:44+08:00"
+  },
+  "windows": {
+    "graphics_outputs": {
+      "dxgi_adapter_0_output_0": "RTX 3090, primary",
+      "dxgi_adapter_1_output_0": "AMD Radeon Graphics, CV10"
+    },
+    "active_signal_at_optical_tests": {
+      "size": [
+        640,
+        480
+      ],
+      "pixel_clock_hz": 25175000,
+      "refresh_hz": [
+        60000,
+        1001
+      ]
+    },
+    "native_gdi_test_70_90": [
+      -2,
+      -2
+    ],
+    "native_ccd_validate_70_90": [
+      1610,
+      1610
+    ],
+    "same_topology_ccd_validate": 0,
+    "amd_custom_timing_writes_70_90": [
+      -1,
+      -1
+    ],
+    "usb_parent": "Microsoft usbccgp; two HID functions enumerated",
+    "pcui_mi00": "Code 28 before binding. Signed Huawei hwusb_cdcacm then reported Code 39. WinUSB model not selected. No confirmed PCUI screen-on from this PC."
+  },
+  "steamvr": {
+    "release": "2.18.4",
+    "previous_compositor_error": 422,
+    "previous_compositor_detail": "Invalid adapter output specified! (-1) 887A0002",
+    "nolo_driver": {
+      "file": "driver_huaweicv1pro.dll",
+      "sha256": "dbddd3c4b3dfcdaad953d08a0bea735422af72eda8d53916be28c858b41729c1",
+      "lowVersionDriver_key_rva": "0x8695",
+      "enum_display_devices_call_rva": "0xA592",
+      "HWV0003_match_string_reference_rva": "0xA5C8",
+      "display_window_bounds_function_rva": "0x9850"
+    },
+    "isolated_nolo_run": "03:06:48 driver constructor entered; vrstartup returned 301; next server declined driver after a safe-mode event. Original OpenVR paths and settings byte-identical."
+  },
+  "fold7_lcd_queries": {
+    "powered": {
+      "read_lcd_timeout_local": {
+        "R": "11-25 22:15:09.862",
+        "L": "11-25 22:14:47.662"
+      }
+    },
+    "gen2": {
+      "read_lcd_timeout_local": {
+        "L": "11-25 22:18:42.032",
+        "R": "11-25 22:18:48.201"
+      }
+    }
+  },
+  "camera": [
+    {
+      "capture_time_local": "20261126-024633",
+      "test": "Original EDID, PC source mode",
+      "raw_sha256": "dd0f9c6c0db193998cefb85dbcccf8445982091b1187262c39a235dde901fd62",
+      "observed": "Both optical windows visible. Room reflections; neither L nor R visible."
+    },
+    {
+      "capture_time_local": "20261126-030423",
+      "test": "Range descriptor override, after target-only and iGPU restart",
+      "raw_sha256": "19de6946fc24ff0f32139279fe74e9f25d3eab6c1d3559049e3e19429895f323",
+      "observed": "Both optical windows visible. Room reflections; neither L nor R visible."
+    },
+    {
+      "capture_time_local": "20261126-030544",
+      "test": "Range override, PC source, wear and IMU HID writes",
+      "raw_sha256": "dad3449536f99e1f04942bb6dd46f04c697992eedc4f0c38a36683c27a422cce",
+      "observed": "Both optical windows visible. Room reflections; neither L nor R visible."
+    }
+  ],
+  "published_optics": {
+    "dimensions": [
+      750,
+      897
+    ],
+    "sha256": "282fbfe516073f9facbeb0dfc32d69d5b6e4749e8a079f6bb9c4e42ae39a2c83",
+    "description": "Three crops of the same two lenses. Ordered from earliest to latest."
+  },
+  "observer": {
+    "source": "Windows QueryDisplayConfig and enumeration of the headset HID. Every fifth iteration sampled AMD ADL and P40 ADB transport.",
+    "first": "2026-11-26T02:51:47+08:00",
+    "last": "2026-11-26T03:26:43+08:00",
+    "samples": 39,
+    "maximum_sampling_gap_seconds": 56,
+    "secondary_signal_samples": {
+      "640x480": 39
+    },
+    "primary_signal_samples": {
+      "2560x1440": 39
+    },
+    "both_hid_samples": 39,
+    "amd_dce_samples": {
+      "DCE ret=0 rateEnum=0 active=0 total=4": 1,
+      "DCE ret=0 rateEnum=1 active=1 total=4": 7
+    },
+    "p40_adb_samples": {
+      "device": 8
+    },
+    "display_runs": [
+      {
+        "first": "2026-11-26T02:51:47+08:00",
+        "last": "2026-11-26T03:02:49+08:00",
+        "observations": 13,
+        "state": "DISPLAY5 / desktop 640x480 / signal 640x480 / 60000:1001 Hz"
+      },
+      {
+        "first": "2026-11-26T03:03:44+08:00",
+        "last": "2026-11-26T03:07:25+08:00",
+        "observations": 5,
+        "state": "DISPLAY98 / desktop 640x480 / signal 640x480 / 60000:1001 Hz"
+      },
+      {
+        "first": "2026-11-26T03:08:20+08:00",
+        "last": "2026-11-26T03:26:43+08:00",
+        "observations": 21,
+        "state": "DISPLAY103 / desktop 640x480 / signal 640x480 / 60000:1001 Hz"
+      }
+    ]
+  }
+}
