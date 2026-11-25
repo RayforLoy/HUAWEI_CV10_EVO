@@ -1,0 +1,500 @@
+diff --git a/app/build.gradle b/app/build.gradle
+index 1fb0a2f..a829501 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@ -3,7 +3,7 @@ android {
+     namespace 'org.vrglass.bridge'
+     compileSdk 36
+     defaultConfig {
+-        applicationId 'com.samrat.vrglassbridge'
++        applicationId 'com.samrat.vrglassbridge.cv10'
+         minSdk 26
+         targetSdk 36
+         versionCode 14
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 5840312..9aa76a5 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -1,5 +1,6 @@
+-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.samrat.vrglassbridge" android:versionCode="100" android:versionName="1.0.0">
++<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.samrat.vrglassbridge.cv10" android:versionCode="100" android:versionName="1.0.0">
+     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
++    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+     <uses-permission android:name="android.permission.INTERNET" />
+     <!-- Указка Huawei — устройство Bluetooth LE, а не HID: Android не видит её устройством ввода. -->
+     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+diff --git a/app/src/main/java/org/vrglass/bridge/AboutActivity.java b/app/src/main/java/org/vrglass/bridge/AboutActivity.java
+index a1b3e80..b9c47ec 100644
+--- a/app/src/main/java/org/vrglass/bridge/AboutActivity.java
++++ b/app/src/main/java/org/vrglass/bridge/AboutActivity.java
+@@ -15,7 +15,7 @@ public final class AboutActivity extends Activity {
+         Ui.text(body, "ABOUT", 13, Ui.ACCENT);
+         Ui.text(body, "Huawei Vr Glass Globalka", 28, Ui.INK);
+         Ui.text(body, "Version " + Ui.VERSION, 17, Ui.INK);
+-        Ui.text(body, "Shows a 360° environment, the tablet screen and a MacBook or Windows screen in Huawei VR Glass. There is no head tracking: the view is turned with a gamepad stick.", 15, Ui.MUTED);
++        Ui.text(body, "Shows a 360° environment, the tablet screen and a MacBook or Windows screen in Huawei VR Glass. CV10 head motion turns the view. A gamepad can turn it when tracking is unavailable.", 15, Ui.MUTED);
+         Ui.text(body, "Made with ❤️ by", 17, Ui.INK);
+         Ui.link(body, "@Beketov_samrat", 22, () -> browse(Ui.TELEGRAM));
+         Ui.button(body, "Support on Boosty", true, () -> browse(Ui.BOOSTY));
+diff --git a/app/src/main/java/org/vrglass/bridge/Cv10Pose.java b/app/src/main/java/org/vrglass/bridge/Cv10Pose.java
+new file mode 100644
+index 0000000..fd80175
+--- /dev/null
++++ b/app/src/main/java/org/vrglass/bridge/Cv10Pose.java
+@@ -0,0 +1,60 @@
++package org.vrglass.bridge;
++
++import java.nio.ByteBuffer;
++
++/** Relative, body-to-world rotation for the 60-byte Wallex IMU report. */
++final class Cv10Pose {
++    private double w = 1, x, y, z;
++    private double refX, refY, refZ;
++    private double biasX, biasY, biasZ;
++    private long previousNs;
++
++    boolean add(ByteBuffer b, int length) {
++        if (length != 60 || b.get(0) != 1 || b.getInt(12) != 0 || b.getInt(28) != 1) return false;
++        double ax = b.getFloat(16), ay = b.getFloat(20), az = b.getFloat(24);
++        double gx = Math.toRadians(b.getFloat(32)), gy = Math.toRadians(b.getFloat(36));
++        double gz = Math.toRadians(b.getFloat(40));
++        double g = Math.sqrt(ax*ax + ay*ay + az*az);
++        if (!Double.isFinite(g) || !Double.isFinite(gx + gy + gz)) return false;
++        long ns = ((long)b.getInt(4) << 32) | (b.getInt(8) & 0xffffffffL);
++        if (previousNs == 0) {
++            if (g < 0.85 || g > 1.15 || ns <= 0) return false;
++            refX = ax/g; refY = ay/g; refZ = az/g;
++            previousNs = ns;
++            return true;
++        }
++        double dt = (ns - previousNs) * 1e-9;
++        previousNs = ns;
++        if (dt <= 0 || dt > 0.05) return false;
++        // Estimate zero rate slowly and only during near-stationary intervals.
++        if (Math.abs(g - 1) < 0.04 && gx*gx + gy*gy + gz*gz < 0.00012) {
++            double k = dt / (4 + dt);
++            biasX += k*(gx-biasX); biasY += k*(gy-biasY); biasZ += k*(gz-biasZ);
++        }
++        gx -= biasX; gy -= biasY; gz -= biasZ;
++        if (Math.abs(g - 1) < 0.12) {
++            // Rotate the reference gravity into the current headset frame.
++            double vx = (1-2*(y*y+z*z))*refX + 2*(x*y+w*z)*refY + 2*(x*z-w*y)*refZ;
++            double vy = 2*(x*y-w*z)*refX + (1-2*(x*x+z*z))*refY + 2*(y*z+w*x)*refZ;
++            double vz = 2*(x*z+w*y)*refX + 2*(y*z-w*x)*refY + (1-2*(x*x+y*y))*refZ;
++            gx += (ay*vz-az*vy)/g;
++            gy += (az*vx-ax*vz)/g;
++            gz += (ax*vy-ay*vx)/g;
++        }
++        double h = dt/2;
++        double nw = w-h*(x*gx+y*gy+z*gz);
++        double nx = x+h*(w*gx+y*gz-z*gy);
++        double ny = y+h*(w*gy+z*gx-x*gz);
++        double nz = z+h*(w*gz+x*gy-y*gx);
++        double norm = Math.sqrt(nw*nw+nx*nx+ny*ny+nz*nz);
++        w=nw/norm; x=nx/norm; y=ny/norm; z=nz/norm;
++        return true;
++    }
++
++    void matrix(float[] m) {
++        m[0]=(float)(1-2*(y*y+z*z)); m[1]=(float)(2*(x*y+w*z)); m[2]=(float)(2*(x*z-w*y)); m[3]=0;
++        m[4]=(float)(2*(x*y-w*z)); m[5]=(float)(1-2*(x*x+z*z)); m[6]=(float)(2*(y*z+w*x)); m[7]=0;
++        m[8]=(float)(2*(x*z+w*y)); m[9]=(float)(2*(y*z-w*x)); m[10]=(float)(1-2*(x*x+y*y)); m[11]=0;
++        m[12]=0; m[13]=0; m[14]=0; m[15]=1;
++    }
++}
+diff --git a/app/src/main/java/org/vrglass/bridge/Cv10Tracking.java b/app/src/main/java/org/vrglass/bridge/Cv10Tracking.java
+new file mode 100644
+index 0000000..93a2815
+--- /dev/null
++++ b/app/src/main/java/org/vrglass/bridge/Cv10Tracking.java
+@@ -0,0 +1,164 @@
++package org.vrglass.bridge;
++
++import android.app.PendingIntent;
++import android.content.Context;
++import android.content.Intent;
++import android.hardware.usb.*;
++import android.os.Handler;
++import android.os.Looper;
++import android.os.SystemClock;
++import android.util.Log;
++import android.view.View;
++import android.widget.Toast;
++import java.nio.ByteBuffer;
++import java.nio.ByteOrder;
++import java.util.concurrent.Executors;
++import java.util.concurrent.ExecutorService;
++import java.util.concurrent.TimeoutException;
++
++/** Shares one USB reader while at least one Globalka render surface is attached. */
++final class Cv10Tracking {
++    static final String TAG = "GlobalkaCV10";
++    private static final ExecutorService worker = Executors.newSingleThreadExecutor();
++    private static final Handler main = new Handler(Looper.getMainLooper());
++    private static final float[] latest = new float[16];
++    private static long lastPoseMs;
++    private static int users;
++    private static volatile int generation;
++
++    static void attach(View surface) {
++        Context ctx = surface.getContext().getApplicationContext();
++        surface.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
++            boolean active;
++            public void onViewAttachedToWindow(View v) {
++                if (!active) { active = true; retain(ctx); }
++            }
++            public void onViewDetachedFromWindow(View v) {
++                if (active) { active = false; release(); }
++            }
++        });
++    }
++    private static synchronized void retain(Context ctx) {
++        if (++users == 1) {
++            int token = ++generation;
++            worker.execute(() -> monitor(ctx, token));
++        }
++    }
++    private static synchronized void release() {
++        if (--users == 0) {
++            generation++;
++            lastPoseMs = 0;
++        }
++    }
++    static synchronized boolean read(float[] target) {
++        if (lastPoseMs == 0 || SystemClock.elapsedRealtime() - lastPoseMs > 500) return false;
++        System.arraycopy(latest, 0, target, 0, 16);
++        return true;
++    }
++    private static synchronized void publish(Cv10Pose pose, int token) {
++        if (generation != token) return;
++        pose.matrix(latest);
++        lastPoseMs = SystemClock.elapsedRealtime();
++    }
++    private static void notice(Context ctx, String message) {
++        Log.i(TAG, message);
++        main.post(() -> Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show());
++    }
++    private static void monitor(Context ctx, int token) {
++        UsbManager usb = ctx.getSystemService(UsbManager.class);
++        if (usb == null) return;
++        int asked = -1;
++        while (token == generation) {
++            try {
++                UsbDevice device = null;
++                for (UsbDevice d : usb.getDeviceList().values()) {
++                    if (d.getVendorId() == 0x12d1 && d.getProductId() == 0x107e) { device=d; break; }
++                }
++                if (device == null) asked = -1;
++                else if (usb.hasPermission(device)) {
++                    capture(ctx, usb, device, token);
++                } else if (asked != device.getDeviceId()) {
++                    asked = device.getDeviceId();
++                    Intent intent = new Intent(ctx.getPackageName()+".USB_PERMISSION").setPackage(ctx.getPackageName());
++                    usb.requestPermission(device, PendingIntent.getBroadcast(ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE));
++                    Log.i(TAG, "Requested CV10 USB permission");
++                }
++            } catch (RuntimeException error) { Log.w(TAG, "USB reader", error); }
++            SystemClock.sleep(500);
++        }
++    }
++    private static int feature(UsbDeviceConnection c, int id) {
++        byte[] data = {(byte)id, 2, 0, 0, 0};
++        return c.controlTransfer(0x21, 9, 0x0300 | id, 3, data, data.length, 500);
++    }
++    private static void capture(Context ctx, UsbManager usb, UsbDevice device, int token) {
++        for (int i=0; i<device.getInterfaceCount(); i++) {
++            UsbInterface hid=device.getInterface(i);
++            if (hid.getId()!=3 || hid.getAlternateSetting()!=0 || hid.getInterfaceClass()!=UsbConstants.USB_CLASS_HID ||
++                    hid.getInterfaceSubclass()!=0 || hid.getInterfaceProtocol()!=0) continue;
++            for (int j=0; j<hid.getEndpointCount(); j++) {
++                UsbEndpoint ep=hid.getEndpoint(j);
++                if (ep.getAddress()!=0x84 || ep.getType()!=UsbConstants.USB_ENDPOINT_XFER_INT ||
++                        ep.getMaxPacketSize()<60) continue;
++                UsbDeviceConnection c = usb.openDevice(device);
++                if (c == null) return;
++                try {
++                    if (!c.claimInterface(hid,false) && !c.claimInterface(hid,true)) return;
++                    try {
++                        if (feature(c,5)!=5) { Log.w(TAG,"IMU enable failed"); return; }
++                        try { stream(ctx,c,ep,token); }
++                        finally { Log.i(TAG,"IMU disable bytes="+feature(c,6)); }
++                    } finally { c.releaseInterface(hid); }
++                } finally { c.close(); }
++                return;
++            }
++        }
++    }
++    private static void stream(Context ctx, UsbDeviceConnection c, UsbEndpoint ep, int token) {
++        Cv10Pose pose=new Cv10Pose();
++        ByteBuffer buf=ByteBuffer.allocateDirect(ep.getMaxPacketSize()).order(ByteOrder.LITTLE_ENDIAN);
++        UsbRequest req = new UsbRequest();
++        try {
++            if (!req.initialize(c,ep)) return;
++            long count=0, received=0, start=SystemClock.elapsedRealtime(), last=start;
++            float[] diagnostic=new float[16];
++            while (token==generation) {
++                buf.clear();
++                if (!req.queue(buf)) { Log.w(TAG,"Failed to queue HID input"); return; }
++                // Timed-out waits leave the request queued. Keep the same request alive
++                // through firmware startup and short runtime gaps, without toggling the sensor.
++                long deadline = SystemClock.elapsedRealtime() + (received == 0 ? 5000 : 2500);
++                boolean completed = false;
++                while (token == generation && SystemClock.elapsedRealtime() < deadline) {
++                    try {
++                        if (c.requestWait(250) != req) { Log.w(TAG,"USB input disconnected"); return; }
++                        completed = true;
++                        break;
++                    } catch (TimeoutException waiting) { /* Still queued. */ }
++                }
++                if (!completed) {
++                    req.cancel();
++                    try { c.requestWait(250); } catch (TimeoutException ignored) { }
++                    Log.i(TAG, "IMU wait ended received="+received+" valid="+count+" stopping="+(token!=generation));
++                    return;
++                }
++                if (++received == 1) {
++                    Log.i(TAG, "firstReportMs="+(SystemClock.elapsedRealtime()-start)+" bytes="+buf.position()
++                        +" id="+(buf.position()==0 ? -1 : buf.get(0)&255));
++                }
++                if (pose.add(buf, buf.position())) {
++                    publish(pose,token);
++                    if (++count==1) notice(ctx,"CV10 head tracking active");
++                }
++                long now=SystemClock.elapsedRealtime();
++                if (now-last>=3000) {
++                    pose.matrix(diagnostic);
++                    Log.i(TAG, String.format(java.util.Locale.ROOT,
++                        "validIMU=%d received=%d elapsedMs=%d headForward=(%.3f,%.3f,%.3f)",
++                        count,received,now-start,-diagnostic[8],-diagnostic[9],-diagnostic[10]));
++                    last=now;
++                }
++            }
++        } finally { req.close(); }
++    }
++}
+diff --git a/app/src/main/java/org/vrglass/bridge/MainActivity.java b/app/src/main/java/org/vrglass/bridge/MainActivity.java
+index 710a2e7..c0cfe85 100644
+--- a/app/src/main/java/org/vrglass/bridge/MainActivity.java
++++ b/app/src/main/java/org/vrglass/bridge/MainActivity.java
+@@ -19,14 +19,22 @@ public final class MainActivity extends Activity {
+     private static final int CAPTURE_SCREEN = 13, OVERLAY_PERMISSION = 14;
+ 
+     private android.widget.Button lens;
++    private boolean directMirror;
++
++    @Override protected void onSaveInstanceState(Bundle state) {
++        super.onSaveInstanceState(state);
++        state.putBoolean("directMirror", directMirror);
++    }
+ 
+     protected void onCreate(Bundle state) {
+         super.onCreate(state);
++        directMirror = state != null && state.getBoolean("directMirror");
+         LinearLayout body = Ui.screen(this);
+         Ui.text(body, "VR GLASS", 13, Ui.ACCENT);
+         Ui.text(body, "Huawei Vr Glass Globalka", 28, Ui.INK);
+-        Ui.button(body, "Start VR", true, this::startMirror);
+-        Ui.button(body, "MacBook screen in VR", false, () -> startActivity(new Intent(this, DesktopScreenActivity.class)));
++        Ui.button(body, "投手机桌面 / Mirror phone", true, () -> { directMirror = true; startMirror(); });
++        Ui.button(body, "Start VR launcher", false, () -> { directMirror = false; startMirror(); });
++        Ui.button(body, "PC / Mac screen in VR", false, () -> startActivity(new Intent(this, DesktopScreenActivity.class)));
+         Ui.button(body, "3DoF pointer", false, () -> startActivity(new Intent(this, PointerActivity.class)));
+         lens = Ui.button(body, lensTitle(), false, this::cycleLens);
+         Ui.button(body, "Support on Boosty", false, () -> open(Ui.BOOSTY));
+@@ -52,7 +60,7 @@ public final class MainActivity extends Activity {
+                 .show();
+             return;
+         }
+-        if (VrTouchService.isEnabled(this) && keyboardEnabled()) { requestCapture(); return; }
++        if (directMirror || (VrTouchService.isEnabled(this) && keyboardEnabled())) { requestCapture(); return; }
+         new AlertDialog.Builder(this)
+             .setTitle("Controls in VR")
+             .setMessage("The cursor service performs taps inside other apps; the large keyboard stays readable through the lenses. Both are switched on in system settings and are optional.")
+@@ -137,7 +145,8 @@ public final class MainActivity extends Activity {
+         super.onActivityResult(request, result, data);
+         if (request == OVERLAY_PERMISSION) { startMirror(); return; }
+         if (request != CAPTURE_SCREEN || result != RESULT_OK || data == null) return;
+-        VrDisplayService.start(this, result, data);
++        VrDisplayService.start(this, result, data, directMirror);
++        if (directMirror) moveTaskToBack(true);
+ 
+     }
+ }
+diff --git a/app/src/main/java/org/vrglass/bridge/VrDisplayService.java b/app/src/main/java/org/vrglass/bridge/VrDisplayService.java
+index ac0c191..b829d53 100644
+--- a/app/src/main/java/org/vrglass/bridge/VrDisplayService.java
++++ b/app/src/main/java/org/vrglass/bridge/VrDisplayService.java
+@@ -78,12 +78,12 @@ public final class VrDisplayService extends Service
+         new Thread(() -> {
+             Bitmap sky = Environments.load(this, Environments.selected(this));
+             VrUi built = new VrUi(this);
+-            main.post(() -> attach(sky, built));
++            main.post(() -> attach(sky, built, intent.getBooleanExtra("directMirror", false)));
+         }, "vr-prepare").start();
+         return START_NOT_STICKY;
+     }
+ 
+-    private void attach(Bitmap sky, VrUi built) {
++    private void attach(Bitmap sky, VrUi built, boolean directMirror) {
+         Display glasses = glassesDisplay(this);
+         if (glasses == null) { stopSelf(); return; }
+         ui = built;
+@@ -96,6 +96,7 @@ public final class VrDisplayService extends Service
+         glassesWindows = glassesContext.getSystemService(WindowManager.class);
+         glassesView = new GLSurfaceView(glassesContext);
+         glassesView.setEGLContextClientVersion(2);
++        Cv10Tracking.attach(glassesView);
+         glassesView.setRenderer(renderer);
+         glassesView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+@@ -112,8 +113,8 @@ public final class VrDisplayService extends Service
+             stopSelf();
+             return;
+         }
+-        showLauncher(true);
+-        showControls();
++        showLauncher(!directMirror);
++        if (!directMirror) showControls();
+         wand = new HuaweiPointer(this, this);
+         wand.start();
+     }
+@@ -440,8 +441,9 @@ public final class VrDisplayService extends Service
+         return best;
+     }
+ 
+-    static void start(Context context, int resultCode, Intent resultData) {
++    static void start(Context context, int resultCode, Intent resultData, boolean directMirror) {
+         context.startForegroundService(new Intent(context, VrDisplayService.class)
++            .putExtra("directMirror", directMirror)
+             .putExtra(EXTRA_RESULT_CODE, resultCode)
+             .putExtra(EXTRA_RESULT_DATA, resultData));
+     }
+diff --git a/app/src/main/java/org/vrglass/bridge/VrSceneRenderer.java b/app/src/main/java/org/vrglass/bridge/VrSceneRenderer.java
+index 0847e48..b6abf22 100644
+--- a/app/src/main/java/org/vrglass/bridge/VrSceneRenderer.java
++++ b/app/src/main/java/org/vrglass/bridge/VrSceneRenderer.java
+@@ -53,6 +53,7 @@ final class VrSceneRenderer implements GLSurfaceView.Renderer {
+     private final float[] head = new float[16];
+     private volatile float[] pendingHead;
+ 
++    private boolean loggedHeadsetPose;
+     private final boolean hasScreen;
+     private final boolean screenFromSurface;
+     private ScreenSurfaceListener screenListener;
+@@ -188,8 +189,16 @@ final class VrSceneRenderer implements GLSurfaceView.Renderer {
+ 
+     public void onDrawFrame(GL10 gl) {
+         uploadPending();
+-        float[] fresh = pendingHead;
+-        if (fresh != null) { pendingHead = null; System.arraycopy(fresh, 0, head, 0, 16); }
++        if (Cv10Tracking.read(head)) {
++            if (!loggedHeadsetPose) {
++                String scene = screenFromSurface ? "mirror" : hasScreen ? "remote" : "environment";
++                android.util.Log.i(Cv10Tracking.TAG, "Renderer using CV10 pose scene=" + scene);
++                loggedHeadsetPose = true;
++            }
++        } else {
++            float[] manual = pendingHead;
++            if (manual != null) System.arraycopy(manual, 0, head, 0, 16);
++        }
+         // Матрица переводит оси головы в мировые; взгляд — обратное преобразование, а для чистого
+         // поворота обратное совпадает с транспонированным.
+         Matrix.transposeM(view, 0, head, 0);
+diff --git a/app/src/main/java/org/vrglass/bridge/VrStage.java b/app/src/main/java/org/vrglass/bridge/VrStage.java
+index 2bc7d9f..0bed8c3 100644
+--- a/app/src/main/java/org/vrglass/bridge/VrStage.java
++++ b/app/src/main/java/org/vrglass/bridge/VrStage.java
+@@ -29,6 +29,7 @@ final class VrStage {
+         GLSurfaceView view = new GLSurfaceView(glasses != null
+             ? activity.createDisplayContext(glasses) : (Context) activity);
+         view.setEGLContextClientVersion(2);
++        Cv10Tracking.attach(view);
+         view.setRenderer(renderer);
+         view.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+         Presentation presentation = null;
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index bc40a8e..279b711 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <string name="app_name">Huawei Vr Glass Globalka</string>
++    <string name="app_name">Globalka CV10 IMU</string>
+     <string name="keyboard_name">Huawei Vr Glass Globalka keyboard</string>
+     <string name="touch_service_description">Taps where the cursor points while the tablet screen is shown in the glasses. The app does not read screen contents.</string>
+ </resources>
+diff --git a/tools/build.py b/tools/build.py
+index 2b7933d..6a34b50 100644
+--- a/tools/build.py
++++ b/tools/build.py
+@@ -14,12 +14,16 @@ OUT = ROOT / 'build/offline'
+ JAVA = Path(os.environ.get('JAVA_HOME', '/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home'))
+ 
+ def run(*args):
+-    subprocess.run([str(x) for x in args], check=True, cwd=ROOT,
++    executable, *rest = args
++    if os.name == 'nt' and not executable.suffix:
++        extension = '.bat' if executable.name in {'apksigner', 'd8'} else '.exe'
++        executable = executable.with_suffix(extension)
++    subprocess.run([str(x) for x in (executable, *rest)], check=True, cwd=ROOT,
+                    env={**os.environ, 'JAVA_HOME': str(JAVA)})
+ 
+ def main():
+     for path in (BT / 'aapt2', BT / 'd8', BT / 'apksigner', ANDROID, JAVA / 'bin/javac'):
+-        if not path.exists():
++        if not path.exists() and not (os.name == 'nt' and (path.with_suffix('.bat').exists() or path.with_suffix('.exe').exists())):
+             raise SystemExit(f'Missing dependency: {path}. Set ANDROID_HOME / JAVA_HOME.')
+     if OUT.exists():
+         shutil.rmtree(OUT)
+@@ -45,7 +49,7 @@ def main():
+         run(JAVA / 'bin/keytool', '-genkeypair', '-keystore', key, '-storepass', 'android',
+             '-keypass', 'android', '-alias', 'bridge', '-keyalg', 'RSA', '-keysize', '2048',
+             '-validity', '3650', '-dname', 'CN=VR Glass Bridge Development')
+-    target = ROOT / 'dist/SamratVR.apk'
++    target = ROOT / 'dist/Globalka-CV10-IMU.apk'
+     run(BT / 'apksigner', 'sign', '--ks', key, '--ks-pass', 'pass:android',
+         '--out', target, OUT / 'aligned.apk')
+     run(BT / 'apksigner', 'verify', '--verbose', target)
+diff --git a/tools/tests/Cv10PoseCheck.java b/tools/tests/Cv10PoseCheck.java
+new file mode 100644
+index 0000000..c391f70
+--- /dev/null
++++ b/tools/tests/Cv10PoseCheck.java
+@@ -0,0 +1,36 @@
++package org.vrglass.bridge;
++
++import java.nio.ByteBuffer;
++import java.nio.ByteOrder;
++
++/** JVM check of the 60-byte report layout, two-word time, integration and column-major output. */
++public final class Cv10PoseCheck {
++    private static final ByteBuffer frame = ByteBuffer.allocate(60).order(ByteOrder.LITTLE_ENDIAN);
++
++    private static void sample(Cv10Pose pose, long ns, float rate) {
++        frame.putInt(4, (int)(ns >>> 32));
++        frame.putInt(8, (int)ns);
++        frame.putFloat(36, rate);
++        if (!pose.add(frame, 60)) throw new AssertionError("Valid report rejected");
++    }
++
++    public static void main(String[] args) {
++        Cv10Pose pose = new Cv10Pose();
++        frame.put(0, (byte)1);
++        frame.putInt(12, 0);
++        frame.putInt(28, 1);
++        frame.putFloat(20, 1);
++        long t = 0xffffffffL - 100_000_000L;
++        sample(pose, t, 0);
++        for (int i = 1; i <= 1000; i++) sample(pose, t + 1_000_000L*i, 90);
++        float[] m = new float[16];
++        pose.matrix(m);
++        if (Math.abs(m[8]-1) > 0.001 || Math.abs(m[10]) > 0.001 || Math.abs(m[5]-1) > 0.001) {
++            throw new AssertionError("Expected 90 degree Y rotation, including low-word wrap");
++        }
++        if (pose.add(frame, 59)) throw new AssertionError("Accepted truncated report");
++        frame.putInt(28, 3);
++        if (pose.add(frame, 60)) throw new AssertionError("Accepted wrong gyro tag");
++        System.out.println("CV10 pose replay passed");
++    }
++}
