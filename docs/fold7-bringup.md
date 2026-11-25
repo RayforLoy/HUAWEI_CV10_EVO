@@ -1,6 +1,6 @@
 # Galaxy Z Fold7 点亮 HUAWEI VR Glass CV10
 
-本手册供下一阶段接入真机时使用。当前依据来自厂商文档、公开实机记录和离线分析，Fold7 与 CV10 的组合仍待实测。首个硬件目标是在三星原厂系统上，从 CV10 两个镜片中看到由 Fold7 输出的可辨认图案，并记录可重复的启动条件。
+首轮 Fold7 真机已经完成枚举和黑屏采集，见[真机记录](device-openxr-check.md)。以下步骤用于复测。首个硬件目标是在三星原厂系统上，从 CV10 两个镜片中看到由 Fold7 输出的可辨认图案，并记录可重复的启动条件。
 
 ## 公开证据
 
@@ -16,9 +16,9 @@
 
 每轮记录主机型号和系统版本、眼镜固件（可读时）、线缆型号和接法、辅助电源、接近传感器状态、屏幕模式以及插拔时间。冷插前从眼镜链路断开主机和辅助电源，再按同一顺序接线。保留首次自动响应，再操作 DeX 或 PCVR 助手。每次只调整一个条件。首轮保持 Fold7 原厂系统，使用系统镜像、DeX 和普通应用接口。
 
-1. **P40 Pro+ 原厂对照。** 先在现有可用系统上解锁手机，连接 CV10 原装手机线，戴上眼镜或用手指遮住接近传感器，观察原厂界面。记下两眼画面和拔插恢复。检查辅助供电时，用原线的供电口接 5 V/2 A 电源，把供电配置独立记录。如果原厂对照失败，先核对线缆和眼镜，在恢复已知正常的基线后再用它判断 Fold7。[华为兼容清单](https://consumer.huawei.com/cn/support/content/zh-cn00757272/) · [华为供电说明](https://consumer.huawei.com/cn/support/content/zh-cn00757290/)
+1. **P40 Pro+ 原厂对照。** 先在现有可用系统上解锁手机，使用已经点亮 CV10 的普通 C-C 线；另起一轮连接 CV10 原装手机线，戴上眼镜或用手指遮住接近传感器，观察原厂界面。记下两眼画面和拔插恢复。检查辅助供电时，用原线的供电口接 5 V/2 A 电源，把供电配置独立记录。如果原厂对照失败，先核对线缆和眼镜，在恢复已知正常的基线后再用它判断 Fold7。[华为兼容清单](https://consumer.huawei.com/cn/support/content/zh-cn00757272/) · [华为供电说明](https://consumer.huawei.com/cn/support/content/zh-cn00757290/)
 2. **Fold7 普通显示器对照。** 解锁 Fold7，用已知可用的有线外屏接法，实测镜像或有线 DeX，记录实际可见画面。优先用已知可工作的 USB-C DP Alt Mode 显示器或 USB-C 转 DP 路径，便于核对后续 CV10 的有线视频路径。记录使用的线材和转接器。[三星有线 DeX 说明](https://www.samsung.com/us/business/mobile/phones/galaxy-z-fold7/) · [VESA DP Alt Mode](https://vesa.org/dp-usb-type-c/)
-3. **Fold7 与 CV10。** 用 P40 Pro+ 验过的原装手机线直接连接 Fold7，接近传感器保持触发。先观察系统自动镜像或桌面画面并抓取日志，再在系统提供切换入口时单独测试有线 DeX。单独冷插重测接有 5 V/2 A 辅助电源的配置，记录加电顺序以及活动模式。首轮以直连为准，通用集线器的 USB-C 口是否转发视频须以其规格和实测为准。[华为供电说明](https://consumer.huawei.com/cn/support/content/zh-cn00757290/) · [VESA DP Alt Mode](https://vesa.org/dp-usb-type-c/)
+3. **Fold7 与 CV10。** 用 P40 Pro+ 已点亮的普通 C-C 线直接连接 Fold7，接近传感器保持触发。先观察系统自动镜像或桌面画面并抓取日志，再在系统提供切换入口时单独测试有线 DeX。单独冷插重测接有 5 V/2 A 辅助电源的配置，记录加电顺序以及活动模式。首轮以直连为准，通用集线器的 USB-C 口是否转发视频须以其规格和实测为准。[华为供电说明](https://consumer.huawei.com/cn/support/content/zh-cn00757290/) · [VESA DP Alt Mode](https://vesa.org/dp-usb-type-c/)
 4. **Windows PC 对照。** Belkin `CAZ001` 的 DP 接独立显卡，两个 USB-A 都接电脑 USB 3.0 口，USB-C 接 CV10。若用官方文档列出的 FIBBR 线，将 `SOURCE` 接有视频输出的 PC USB-C，将 `DISPLAY` 接眼镜。华为的 Belkin 接法要求原生 DP 路径，HDMI 转 DP 不在其支持范围。解锁电脑并触发接近传感器，尝试 Windows 扩展屏，核对高级显示设置里的活动信号模式和刷新率。华为记载扩展桌面可呈 90°旋转。若冷插黑屏，再按官方说明查 NVIDIA 直连模式，在单独一轮记录 PCVR 助手切换前后差异。记录 Windows、GPU 驱动和助手版本。[华为 PC 接线](https://consumer.huawei.com/cn/support/content/zh-cn00757271/) · [直连与扩展模式](https://consumer.huawei.com/cn/support/content/zh-cn15856460/) · [Belkin 线缆规格](https://www.belkin.com/sg/support-article/?articleNum=316883)
 
 PC 上可读取当前呈现给 Windows 的监视器和华为 USB 设备。直连模式下 Windows 可能隐藏 CV10 的监视器条目。设备管理器条目也可能只显示某个复合 USB 接口，因此同时保留高级显示设置和镜片观察结果。[华为直连模式说明](https://consumer.huawei.com/cn/support/content/zh-cn15856460/)
@@ -119,8 +119,7 @@ $Cv10Capture
 
 原厂 `vrservice` 样本的静态分析确认，Java 的 `handleHelmetUp` 有条件地调用屏幕开关 JNI。`setVrScreenOnNative` 经 `GetSimpleResultFromVcom` 访问 `/dev/ttyUSB0`，属于华为 VCOM 串口屏幕控制路径。`libWalleDev.so` 中的 HID 激活和 IMU 读取属于另一条路径。USB 枚举、DP 出图、VCOM 屏幕控制和 HID 姿态各自记录，Fold7 对 VCOM 的呈现及其冷插点亮是否需要该命令仍待验证。首轮在原厂系统上采集枚举、可读取的描述符、系统状态和镜片观察结果。[项目 APK 离线分析](apk-research.md) · [HID 离线分析](https://github.com/EnYaoJingYa/huawei-vr-compat/blob/03bf1012493fd821f38114010e4b21fe20f1d4f1/docs/HELMET_HID_PROTOCOL.md) · [社区串口和 HID 记录](https://github.com/EnYaoJingYa/huawei-vr-compat/blob/03bf1012493fd821f38114010e4b21fe20f1d4f1/docs/evidence/proximity-battery-2026-09-16.md)
 
-## 从显示走到 OpenXR 和 Android XR
+## 从显示走到 OpenXR
 
 1. **CV10 头部姿态。** 点亮通过后，在手机固定时旋转 CV10，用有时间戳的样本验证眼镜自身的三轴旋转、坐标方向和断线恢复。之后再处理双眼光学参数、镜片畸变和渲染时序。公开 Flip5 报告可用作候选协议的交叉对照。[Flip5 HID 实测](https://github.com/EnYaoJingYa/huawei-vr-compat/blob/03bf1012493fd821f38114010e4b21fe20f1d4f1/docs/evidence/proximity-battery-2026-09-16.md)
 2. **Monado 上的 OpenXR 兼容。** Monado 官方资料列出了 Android 手机内置 IMU 路径，CV10 专用驱动和向外屏提交画面的路径仍需实现和验证。以一个独立的 OpenXR 应用如 Khronos `hello_xr` 为验收。记录加载到的 runtime、`xrGetSystem` 和 `xrCreateSession` 结果，确认 CV10 两眼显示 OpenXR 提交的帧并随眼镜转动更新。[Monado 官方文档](https://monado.freedesktop.org/) · [Khronos `hello_xr` 构建文档](https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/main/BUILDING.md#running-the-hello_xr-sample)
-3. **Google Android XR。** 在 Fold7 原厂系统上记录 `adb shell pm list features` 返回的 `android.software.xr.api.openxr` 和 `android.software.xr.api.spatial` 项，并核对实际运行时来源。验收要求在目标设备上使用 Google Android XR 平台的运行时启动对应的官方 OpenXR 或 Jetpack XR 示例，建立设备支持的沉浸会话并在 CV10 镜片中看到画面。Google 公布的首款有线 Android XR 眼镜 XREAL AURA 使用专用计算单元，Fold7 与 CV10 的 Android XR 集成仍待平台证据。Monado 的结果记录为 OpenXR 兼容性里程碑。[Android XR OpenXR](https://developer.android.com/develop/xr/openxr/get-started) · [Android XR 设备特性](https://developer.android.com/develop/xr/package-and-distribute) · [Google 有线 Android XR 公告](https://developer.android.com/blog/posts/build-android-xr-devices-tools)

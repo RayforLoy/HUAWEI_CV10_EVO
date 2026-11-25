@@ -1,6 +1,6 @@
 # CV10 APK 离线分析
 
-华为原厂服务有一条经 VCOM 串口控制屏幕的路径。头显 HID 初始化、姿态读取、DP 显示枚举和华为 VR 应用路由各有自己的入口。Fold7 可以先用原厂手机线验证 DP 外屏输出。如果系统识别到外屏却始终黑屏，再查接近传感器、供电、实际时序及是否出现 VCOM 接口。[Fold7 点亮手册](fold7-bringup.md)
+华为原厂服务有一条经 VCOM 串口控制屏幕的路径。头显 HID 初始化、姿态读取、DP 显示枚举和华为 VR 应用路由各有自己的入口。普通 C-C 线的 Fold7 实测见[真机记录](device-openxr-check.md)。如果系统识别到外屏却始终黑屏，再查接近传感器、供电、实际时序及是否出现 VCOM 接口。[Fold7 点亮手册](fold7-bringup.md)
 
 ## 样本来源与复现
 
@@ -57,7 +57,7 @@ python tools/inspect_samples.py inspect
 | huawei-vr-glass-globalka | 三星 SM-X806B、Android 16 上的系统外显和双眼渲染实测。`Presentation` 与可调眼别/方向是 Fold7 测试应用的参考。[实机记录](https://github.com/samrat1games/huawei-vr-glass-globalka/blob/266dbe02e115c7aeed936dedc2d1924ae375bc8c/docs/verification.md) |
 | HuaweiVRGlass-ALVR-Android | OnePlus 7T 的自研 OpenXR shim、双目外显与姿态实验，依赖 Magisk 系统适配。可参考与 Fold7 不同的加载和设备接入实现，仓库的兼容性证据以作者测试设备为限。[固定版本](https://github.com/niceqwer55555/HuaweiVRGlass-ALVR-Android/tree/0a7cc2625db16732e38863a419d4aaeb2cdb1322) |
 | huawei-vr-compat | 七包及华为平台接口台账，含 Flip5 实测和原厂调用锚点。可据此缩小 APK、HID、显示路由和 VCOM 的检索范围。[固定版本](https://github.com/EnYaoJingYa/huawei-vr-compat/tree/03bf1012493fd821f38114010e4b21fe20f1d4f1) |
-| Monado 与 Android Runtime Broker | Monado 提供开放的 Android OpenXR runtime，Khronos Broker 提供 runtime 发现机制。Fold7 仍需验证 CV10 HID、外屏与帧提交。Google Android XR 的验收另用系统 runtime 和官方样例。[Monado](https://monado.freedesktop.org/) · [Khronos Broker](https://github.com/KhronosGroup/OpenXR-Android-Broker) · [Android XR OpenXR 要求](https://developer.android.com/develop/xr/openxr/get-started) |
+| Monado 与 Android Runtime Broker | Monado 提供开放的 Android OpenXR runtime，Khronos Broker 提供 runtime 发现机制。Fold7 仍需验证 CV10 HID、外屏与帧提交。项目以独立 OpenXR 应用在 CV10 上建立会话并出图为验收。[Monado](https://monado.freedesktop.org/) · [Khronos Broker](https://github.com/KhronosGroup/OpenXR-Android-Broker) · [Android XR OpenXR 要求](https://developer.android.com/develop/xr/openxr/get-started) |
 
 ### `huawei-vr-compat` 二次校验
 
