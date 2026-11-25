@@ -1,0 +1,142 @@
+2026-11-25 13:04:19, WalleXPCUpgrader_Program : enter Main method
+2026-11-25 13:04:19, WalleXPCUpgrader_Program : start to verify if any file is corrupted
+2026-11-25 13:04:19, WalleXPCUpgrader_RsaParamsGenerator : enter VerifyUpgraderNotCorrupted
+2026-11-25 13:04:19, WalleXPCUpgrader_RsaParamsGenerator : enter ResolveEncryptedHashStr
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\HidConnectState.dll
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Upgrade\tools\DfuSeCommandNew.exe
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Upgrade\tools\STDFU.dll
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Upgrade\tools\STDFUFiles.dll
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Upgrade\tools\STDFUPRT.dll
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Upgrade\tools\STTubeDevice30.dll
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Driver\x64\dpinst_amd64.exe
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Driver\x64\x64\STTub30.sys
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Driver\x64\sttube.cat
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Driver\x64\STtube.inf
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Driver\x86\dpinst_x86.exe
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Driver\x86\x86\STTub30.sys
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Driver\x86\sttube.cat
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Driver\x86\STtube.inf
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Dfu\wallex.dfu
+2026-11-25 13:04:19, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:20, WalleXPCUpgrader_SecurityUtil : enter VerifyFile
+2026-11-25 13:04:20, WalleXPCUpgrader_SecurityUtil : start to verify file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Dfu\halliday.dfu
+2026-11-25 13:04:20, WalleXPCUpgrader_SecurityUtil : verify pass
+2026-11-25 13:04:20, WalleXPCUpgrader_Program : verify files pass, start Upgrader
+2026-11-25 13:04:20, WalleXPCUpgrader_Upgrader : init
+2026-11-25 13:04:20, WalleXPCUpgrader_OSVersionUtil : Is64BitOperatingSystem = True
+2026-11-25 13:04:20, WalleXPCUpgrader_Upgrader : background img exists
+2026-11-25 13:04:20, WalleXPCUpgrader_LanguageUtil : language identifier = 2052
+2026-11-25 13:04:20, WalleXPCUpgrader_Upgrader : user select language
+2026-11-25 13:04:20, WalleXPCUpgrader_Upgrader : language switched to zh-CN
+2026-11-25 13:04:20, WalleXPCUpgrader_Upgrader : language switched to zh-CN
+2026-11-25 13:04:20, WalleXPCUpgrader_Upgrader : roundcornerbutton img exists
+2026-11-25 13:04:22, WalleXPCUpgrader_Upgrader : if user accept agreement : True
+2026-11-25 13:04:22, WalleXPCUpgrader_OSVersionUtil : Is64BitOperatingSystem = True
+2026-11-25 13:04:22, WalleXPCUpgrader_Upgrader : user click upgrade button
+2026-11-25 13:04:22, WalleXPCUpgrader_OSVersionUtil : verName = Win10, major = 10, minor = 0
+2026-11-25 13:04:22, WalleXPCUpgrader_OSVersionUtil : Is64BitOperatingSystem = True
+2026-11-25 13:04:22, WalleXPCUpgrader_Upgrader : user's operating system supports upgrade
+2026-11-25 13:04:22, WalleXPCUpgrader_Upgrader : user has accepted the agreement
+2026-11-25 13:04:22, WalleXPCUpgrader_OSVersionUtil : Is64BitOperatingSystem = True
+2026-11-25 13:04:22, WalleXPCUpgrader_HelmetManager : prefix of helmetDriverDirName = sttube.inf_amd64
+2026-11-25 13:04:22, WalleXPCUpgrader_FileHelper : found : sttube.inf_amd64_a8b237bfe1fbdc78
+2026-11-25 13:04:22, WalleXPCUpgrader_HelmetManager : driver manifest path found : C:\Windows\System32\DriverStore\FileRepository\sttube.inf_amd64_a8b237bfe1fbdc78\
+2026-11-25 13:04:22, WalleXPCUpgrader_HelmetManager : C:\Windows\System32\DriverStore\FileRepository\sttube.inf_amd64_a8b237bfe1fbdc78\sttube.inf contains flag of helmet dfu mode
+2026-11-25 13:04:22, WalleXPCUpgrader_Upgrader : helmet driver is installed correctly
+2026-11-25 13:04:22, WalleXPCUpgrader_EnvironmentUtil : dllSystemFolder = C:\Windows\SysWOW64\, dllApplicationFolder = D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Upgrade\tools\
+2026-11-25 13:04:22, WalleXPCUpgrader_EnvironmentUtil : system path has C:\Windows\SysWOW64\mfc120.dll
+2026-11-25 13:04:22, WalleXPCUpgrader_EnvironmentUtil : system path has C:\Windows\SysWOW64\msvcr120.dll
+2026-11-25 13:04:22, WalleXPCUpgrader_EnvironmentUtil : system path has C:\Windows\SysWOW64\mfc100.dll
+2026-11-25 13:04:22, WalleXPCUpgrader_EnvironmentUtil : system path has C:\Windows\SysWOW64\msvcr100.dll
+2026-11-25 13:04:22, WalleXPCUpgrader_Upgrader : microsoft dlls complete
+2026-11-25 13:04:22, WalleXPCUpgrader_Upgrader : helmet not connected to PC when user click upgrade button
+2026-11-25 13:04:38, WalleXPCUpgrader_Upgrader : user click upgrade button
+2026-11-25 13:04:38, WalleXPCUpgrader_OSVersionUtil : verName = Win10, major = 10, minor = 0
+2026-11-25 13:04:38, WalleXPCUpgrader_OSVersionUtil : Is64BitOperatingSystem = True
+2026-11-25 13:04:38, WalleXPCUpgrader_Upgrader : user's operating system supports upgrade
+2026-11-25 13:04:38, WalleXPCUpgrader_Upgrader : user has accepted the agreement
+2026-11-25 13:04:38, WalleXPCUpgrader_OSVersionUtil : Is64BitOperatingSystem = True
+2026-11-25 13:04:38, WalleXPCUpgrader_HelmetManager : prefix of helmetDriverDirName = sttube.inf_amd64
+2026-11-25 13:04:38, WalleXPCUpgrader_FileHelper : found : sttube.inf_amd64_a8b237bfe1fbdc78
+2026-11-25 13:04:38, WalleXPCUpgrader_HelmetManager : driver manifest path found : C:\Windows\System32\DriverStore\FileRepository\sttube.inf_amd64_a8b237bfe1fbdc78\
+2026-11-25 13:04:38, WalleXPCUpgrader_HelmetManager : C:\Windows\System32\DriverStore\FileRepository\sttube.inf_amd64_a8b237bfe1fbdc78\sttube.inf contains flag of helmet dfu mode
+2026-11-25 13:04:38, WalleXPCUpgrader_Upgrader : helmet driver is installed correctly
+2026-11-25 13:04:38, WalleXPCUpgrader_EnvironmentUtil : dllSystemFolder = C:\Windows\SysWOW64\, dllApplicationFolder = D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Upgrade\tools\
+2026-11-25 13:04:38, WalleXPCUpgrader_EnvironmentUtil : system path has C:\Windows\SysWOW64\mfc120.dll
+2026-11-25 13:04:38, WalleXPCUpgrader_EnvironmentUtil : system path has C:\Windows\SysWOW64\msvcr120.dll
+2026-11-25 13:04:38, WalleXPCUpgrader_EnvironmentUtil : system path has C:\Windows\SysWOW64\mfc100.dll
+2026-11-25 13:04:38, WalleXPCUpgrader_EnvironmentUtil : system path has C:\Windows\SysWOW64\msvcr100.dll
+2026-11-25 13:04:38, WalleXPCUpgrader_Upgrader : microsoft dlls complete
+2026-11-25 13:04:38, WalleXPCUpgrader_Upgrader : helmet is recognized, start to load dfu file
+2026-11-25 13:04:38, WalleXPCUpgrader_Upgrader : load dfu file, load mode = 0
+2026-11-25 13:04:39, WalleXPCUpgrader_HelmetManager : GetHelmetPortName, portWholeName = Android Adapter PCUI (COM17)
+2026-11-25 13:04:40, WalleXPCUpgrader_HelmetManager : GetHelmetVersion, versionInfos = 
+^SWVER:
+MAINVER:CV10AC10.0.1.349
+
+OK
+
+2026-11-25 13:04:40, WalleXPCUpgrader_HelmetManager : GetHelmetVersion, helmetVersion = CV10AC10.0.1.349
+2026-11-25 13:04:40, WalleXPCUpgrader_Upgrader : AutoLoadDfuFile, dfu file path = D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Dfu\halliday.dfu
+2026-11-25 13:04:40, WalleXPCUpgrader_FileHelper : only read 10 lines from file : D:\HUAWEI_CV10_EVO\resources\qq_gourp\HuaweiVRUpdater_10.0.0.312\Dfu\halliday.dfu
+2026-11-25 13:04:40, WalleXPCUpgrader_HelmetManager : halliday dfu file's full version = 10.0.1.357
+2026-11-25 13:04:40, WalleXPCUpgrader_HelmetManager : helmet version code = 1001349, local dfu version code = 1001357
+2026-11-25 13:04:40, WalleXPCUpgrader_UpgradeProcess : init
+2026-11-25 13:04:40, WalleXPCUpgrader_UpgradeProcess : init timer
+2026-11-25 13:04:41, WalleXPCUpgrader_UpgradeProcess : enter upgrade mode by hid command success, no need resend command
+2026-11-25 13:04:41, WalleXPCUpgrader_UpgradeProcess : helmet dfu mode not recognized, return
+2026-11-25 13:04:42, WalleXPCUpgrader_UpgradeProcess : UpgradeCmdReceived, return
+2026-11-25 13:04:43, WalleXPCUpgrader_UpgradeProcess : UpgradeCmdReceived, return
+2026-11-25 13:04:44, WalleXPCUpgrader_UpgradeProcess : UpgradeCmdReceived, return
+2026-11-25 13:04:45, WalleXPCUpgrader_UpgradeProcess : UpgradeCmdReceived, return
+2026-11-25 13:04:46, WalleXPCUpgrader_UpgradeProcess : UpgradeCmdReceived, return
+2026-11-25 13:04:47, WalleXPCUpgrader_UpgradeProcess : UpgradeCmdReceived, return
+2026-11-25 13:04:48, WalleXPCUpgrader_UpgradeProcess : Huawei device in dfu mode is recognized in device manager, start to upgrade
+2026-11-25 13:04:48, WalleXPCUpgrader_UpgradeProcess : start to upgrade
+2026-11-25 13:05:59, WalleXPCUpgrader_UpgradeProcess : return code of mProcUpgrade : 0
+2026-11-25 13:05:59, WalleXPCUpgrader_UpgradeProcess : detect helmet connect, time = 1
+2026-11-25 13:06:00, WalleXPCUpgrader_UpgradeProcess : detect helmet connect, time = 2
+2026-11-25 13:06:00, WalleXPCUpgrader_UpgradeProcess : detect helmet connect, time = 3
+2026-11-25 13:06:01, WalleXPCUpgrader_UpgradeProcess : ret = 0, upgrade succeeded, need to exit dfu mode
+2026-11-25 13:06:01, WalleXPCUpgrader_UpgradeProcess : start to exit dfu mode, caseOfExitDfu : 0
+2026-11-25 13:06:03, WalleXPCUpgrader_UpgradeProcess : return code of mProcExitDfu : 0
+2026-11-25 13:06:03, WalleXPCUpgrader_UpgradeProcess : FormClosing event
+2026-11-25 13:06:03, WalleXPCUpgrader_UpgradeProcess : Exit
+2026-11-25 13:06:03, WalleXPCUpgrader_UpgradeProcess : kill mProcUpgrade
+2026-11-25 13:06:03, WalleXPCUpgrader_ProcessUtil : catch InvalidOperationException in KillProcess
+2026-11-25 13:06:03, WalleXPCUpgrader_UpgradeProcess : kill mProcExitDfu
+2026-11-25 13:06:03, WalleXPCUpgrader_ProcessUtil : catch InvalidOperationException in KillProcess
+2026-11-25 13:06:03, WalleXPCUpgrader_UpgradeProcess : ret = 0, exit dfu succeeded
+2026-11-25 13:06:49, WalleXPCUpgrader_UpgradeProcess : user confirm the result of upgrade success
+2026-11-25 13:06:49, WalleXPCUpgrader_UpgradeProcess : FormClosing event
+2026-11-25 13:06:49, WalleXPCUpgrader_UpgradeProcess : Exit
+2026-11-25 13:06:49, WalleXPCUpgrader_Upgrader : Upgrader form is closed

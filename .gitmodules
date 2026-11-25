@@ -1,0 +1,6 @@
+[submodule "ports/Monado_CV10"]
+	path = ports/Monado_CV10
+	url = https://github.com/RayforLoy/Monado_CV10.git
+[submodule "ports/piliplus_monado"]
+	path = ports/piliplus_monado
+	url = https://github.com/RayforLoy/piliplus_monado.git

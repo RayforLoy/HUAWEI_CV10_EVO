@@ -4,7 +4,7 @@
 
 ## 接手工作树
 
-当前协作分支为 `codex/cv10-phase1`。在仓库根目录运行以下命令，核对本机分支、未提交工作、与远端的差距，以及发布标签对应的源码。新检出可用 `git clone --branch codex/cv10-phase1 https://github.com/RayforLoy/HUAWEI_CV10_EVO.git`。
+当前协作分支为 `codex/cv10-phase1`。在仓库根目录运行以下命令，核对本机分支、未提交工作、与远端的差距，以及发布标签对应的源码。新检出可用 `git clone --recurse-submodules --branch codex/cv10-phase1 https://github.com/RayforLoy/HUAWEI_CV10_EVO.git`。
 
 ```powershell
 git fetch origin --tags
@@ -18,9 +18,9 @@ git log -1 --oneline v0.1.1
 ## 在新电脑上复现
 
 - **直接安装**：从 [v0.1.1 Release](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1) 下载 Android arm64 APK 和 Windows x64 连接线工具。用 `Get-FileHash <文件> -Algorithm SHA256` 与发布页核对。另一台电脑自行构建通常使用不同的 Android 调试证书；覆盖安装已有运行时时优先使用同签名的发布 APK。
-- **构建 Monado**：依赖版本和 Gradle 命令见 [Monado 构建说明](ports/monado-cv10/README.md)。v0.1.1 从 Monado 提交 `ce2b721eb4ffcbd726fb88357625f55871a8f262` 开始，依次应用 `cv10.patch`、`framevote90.patch`、`primary-mailbox.patch`、`launcher-name.patch`、`shizuku-120.patch`。每个补丁先执行 `git apply --check` 再应用；最后一个补丁含重连修复。主说明的首段构建示例只应用基础补丁，构建此版本时须补齐这条序列。[Shizuku 构建与恢复说明](ports/monado-cv10/shizuku-120.md)
-- **移植其他应用**：可复用仓库内的 [OpenXR 移植流程](.agents/skills/cv10-openxr-port/SKILL.md)。[Globalka](ports/globalka/README.md) 已实测手机和 Windows 桌面投屏；[PiliPlus](ports/piliplus/README.md) 已验证手机端播放，仍待其自身的镜片与头动验收。
-- **本地资料**：`.research/` 是本机构建、日志和厂商样本的工作目录，`resources/` 放本地输入和产物，两者均被 Git 忽略。新电脑上需另外准备所需上游源码、SDK 或样本；目录名和 ADB 序列号以当前机器为准。
+- **构建 Monado**：运行 `git submodule update --init --recursive`，随后按 [Monado CV10 构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.2/README.md) 在子模块内构建。历史补丁和验证记录位于 `ports/Monado_CV10/history/`。
+- **移植其他应用**：可复用仓库内的 [OpenXR 移植流程](.agents/skills/cv10-openxr-port/SKILL.md)。[Globalka](ports/globalka/README.md) 已实测手机和 Windows 桌面投屏；[PiliPlus](https://github.com/RayforLoy/piliplus_monado/blob/de31798f68501b75c96977e9f64dbaf61944119a/README.md) 已验证手机端播放，仍待其自身的镜片与头动验收。
+- **本地资料**：`.research/` 是本机构建、日志和厂商样本的工作目录，`resources/` 放本地输入和产物，本地研究目录及 .gitignore 列出的个别大文件被 Git 忽略。新电脑上需另外准备所需上游源码、SDK 或样本；目录名和 ADB 序列号以当前机器为准。
 
 ## 设备与验收
 

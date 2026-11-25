@@ -1,0 +1,43 @@
+2026-11-25 13:04:22, HidConnectState : ---- enter isHelmetNormalModeRecognized ----
+2026-11-25 13:04:22, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:22, HidConnectState : helmet dfu mode not recognized
+2026-11-25 13:04:38, HidConnectState : ---- enter isHelmetNormalModeRecognized ----
+2026-11-25 13:04:38, HidConnectState : (HUAWEI_HID_PID == hidAttributes.ProductID) && (HUAWEI_HID_VID == hidAttributes.VendorID)
+2026-11-25 13:04:38, HidConnectState : ---- enter isHelmetNormalModeRecognized ----
+2026-11-25 13:04:38, HidConnectState : (HUAWEI_HID_PID == hidAttributes.ProductID) && (HUAWEI_HID_VID == hidAttributes.VendorID)
+2026-11-25 13:04:41, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:41, HidConnectState : helmet dfu mode not recognized
+2026-11-25 13:04:41, HidConnectState : ---- enter enterUpgradeMode ----
+2026-11-25 13:04:41, HidConnectState : ---- enter accessHelmet ----
+2026-11-25 13:04:41, HidConnectState : ---- enter GetHandle ----
+2026-11-25 13:04:41, HidConnectState : (HUAWEI_HID_PID == hidAttributes.ProductID) && (HUAWEI_HID_VID == hidAttributes.VendorID)
+2026-11-25 13:04:41, HidConnectState : ret = 1
+2026-11-25 13:04:42, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:42, HidConnectState : helmet dfu mode not recognized
+2026-11-25 13:04:43, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:43, HidConnectState : helmet dfu mode not recognized
+2026-11-25 13:04:44, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:44, HidConnectState : helmet dfu mode not recognized
+2026-11-25 13:04:45, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:45, HidConnectState : helmet dfu mode not recognized
+2026-11-25 13:04:46, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:46, HidConnectState : helmet dfu mode not recognized
+2026-11-25 13:04:47, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:47, HidConnectState : helmet dfu mode not recognized
+2026-11-25 13:04:48, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:04:48, HidConnectState : searched device name is HUAWEI Device in DFU Mode, targeted device is HUAWEI Device in DFU Mode
+2026-11-25 13:04:48, HidConnectState : HUAWEI Device in DFU Mode is found
+2026-11-25 13:06:00, HidConnectState : ---- enter isHelmetNormalModeRecognized ----
+2026-11-25 13:06:00, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:06:00, HidConnectState : searched device name is HUAWEI Device in DFU Mode, targeted device is HUAWEI Device in DFU Mode
+2026-11-25 13:06:00, HidConnectState : HUAWEI Device in DFU Mode is found
+2026-11-25 13:06:00, HidConnectState : ---- enter isHelmetNormalModeRecognized ----
+2026-11-25 13:06:00, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:06:00, HidConnectState : searched device name is HUAWEI Device in DFU Mode, targeted device is HUAWEI Device in DFU Mode
+2026-11-25 13:06:00, HidConnectState : HUAWEI Device in DFU Mode is found
+2026-11-25 13:06:01, HidConnectState : ---- enter isHelmetNormalModeRecognized ----
+2026-11-25 13:06:01, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:06:01, HidConnectState : searched device name is HUAWEI Device in DFU Mode, targeted device is HUAWEI Device in DFU Mode
+2026-11-25 13:06:01, HidConnectState : HUAWEI Device in DFU Mode is found
+2026-11-25 13:06:03, HidConnectState : ---- enter isHelmetDfuModeRecognized ----
+2026-11-25 13:06:03, HidConnectState : helmet dfu mode not recognized
