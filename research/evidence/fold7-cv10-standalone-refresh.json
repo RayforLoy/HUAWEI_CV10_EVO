@@ -1,0 +1,98 @@
+{
+  "device": "SM-F9660",
+  "android_api": 36,
+  "headset_mode": "HUAWEIAV03 3200x1600 @ 90 Hz",
+  "client": "org.khronos.openxr.hello_xr.opengles",
+  "legacy_refresh_script_running": false,
+  "primary_hz": {
+    "named_default": 60,
+    "ordinary_write_settings": 60,
+    "shizuku_first": 120,
+    "shizuku_launcher": 120,
+    "after_back": 60
+  },
+  "min_refresh_rate_after_back": null,
+  "layer_present_measurements": {
+    "named_default": {
+      "seconds": 2.09,
+      "unique_presentations": 127,
+      "unique_hz": 60.31,
+      "interval_p50_p95_ms": [
+        16.58,
+        16.58
+      ],
+      "ready_to_present_p50_p95_ms": [
+        11.05,
+        15.42
+      ],
+      "desired_to_present_p50_p95_ms": [
+        14.16,
+        21.62
+      ]
+    },
+    "ordinary_write_settings": {
+      "seconds": 2.09,
+      "unique_presentations": 127,
+      "unique_hz": 60.31,
+      "interval_p50_p95_ms": [
+        16.58,
+        16.58
+      ],
+      "ready_to_present_p50_p95_ms": [
+        10.78,
+        15.44
+      ],
+      "desired_to_present_p50_p95_ms": [
+        14.04,
+        21.52
+      ]
+    },
+    "shizuku_first": {
+      "seconds": 1.4,
+      "unique_presentations": 127,
+      "unique_hz": 89.96,
+      "interval_p50_p95_ms": [
+        8.29,
+        16.58
+      ],
+      "ready_to_present_p50_p95_ms": [
+        19.7,
+        26.64
+      ],
+      "desired_to_present_p50_p95_ms": [
+        20.86,
+        27.52
+      ]
+    },
+    "shizuku_launcher": {
+      "seconds": 1.43,
+      "unique_presentations": 127,
+      "unique_hz": 88.38,
+      "interval_p50_p95_ms": [
+        8.29,
+        16.58
+      ],
+      "ready_to_present_p50_p95_ms": [
+        10.52,
+        12.79
+      ],
+      "desired_to_present_p50_p95_ms": [
+        10.34,
+        14.02
+      ]
+    }
+  },
+  "public_api_test": {
+    "render_path": "presentation",
+    "primary_window_preferred_mode_id": 0,
+    "primary_window_requested_hz": 120,
+    "visible_primary_surface_requested_hz": 120,
+    "primary_surface_buffer_posts_per_second": [
+      60.46,
+      60.3
+    ],
+    "primary_active_hz": 60,
+    "external_active_hz": 90,
+    "min_refresh_rate": null
+  }
+}
