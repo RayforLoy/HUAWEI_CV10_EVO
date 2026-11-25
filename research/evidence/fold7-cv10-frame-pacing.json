@@ -1,0 +1,121 @@
+{
+  "fifo140": {
+    "seconds": 2.07,
+    "unique_presentations": 126,
+    "unique_hz": 60.32,
+    "interval_p50_p95_ms": [
+      16.58,
+      16.58
+    ],
+    "ready_to_present_p50_p95_ms": [
+      27.47,
+      31.23
+    ],
+    "desired_to_present_p50_p95_ms": [
+      30.88,
+      38.32
+    ]
+  },
+  "mailbox140": {
+    "seconds": 2.09,
+    "unique_presentations": 127,
+    "unique_hz": 60.32,
+    "interval_p50_p95_ms": [
+      16.58,
+      16.58
+    ],
+    "ready_to_present_p50_p95_ms": [
+      10.97,
+      14.94
+    ],
+    "desired_to_present_p50_p95_ms": [
+      14.4,
+      21.81
+    ]
+  },
+  "scoped-first": {
+    "seconds": 2.09,
+    "unique_presentations": 127,
+    "unique_hz": 60.31,
+    "interval_p50_p95_ms": [
+      16.58,
+      16.58
+    ],
+    "ready_to_present_p50_p95_ms": [
+      11.0,
+      14.72
+    ],
+    "desired_to_present_p50_p95_ms": [
+      14.28,
+      21.7
+    ]
+  },
+  "scoped-pulse": {
+    "seconds": 2.09,
+    "unique_presentations": 127,
+    "unique_hz": 60.33,
+    "interval_p50_p95_ms": [
+      16.58,
+      16.58
+    ],
+    "ready_to_present_p50_p95_ms": [
+      10.81,
+      15.51
+    ],
+    "desired_to_present_p50_p95_ms": [
+      14.33,
+      21.82
+    ]
+  },
+  "final-session1": {
+    "seconds": 1.4,
+    "unique_presentations": 127,
+    "unique_hz": 89.95,
+    "interval_p50_p95_ms": [
+      8.29,
+      16.58
+    ],
+    "ready_to_present_p50_p95_ms": [
+      10.27,
+      12.7
+    ],
+    "desired_to_present_p50_p95_ms": [
+      10.14,
+      13.85
+    ]
+  },
+  "final-session2": {
+    "seconds": 1.4,
+    "unique_presentations": 127,
+    "unique_hz": 89.94,
+    "interval_p50_p95_ms": [
+      8.29,
+      16.58
+    ],
+    "ready_to_present_p50_p95_ms": [
+      10.22,
+      13.35
+    ],
+    "desired_to_present_p50_p95_ms": [
+      10.23,
+      13.91
+    ]
+  },
+  "final-confirm": {
+    "seconds": 1.4,
+    "unique_presentations": 127,
+    "unique_hz": 89.95,
+    "interval_p50_p95_ms": [
+      8.29,
+      16.58
+    ],
+    "ready_to_present_p50_p95_ms": [
+      10.26,
+      12.6
+    ],
+    "desired_to_present_p50_p95_ms": [
+      10.32,
+      13.98
+    ]
+  }
+}
