@@ -29,14 +29,15 @@ public class Probe extends Activity implements DisplayManager.DisplayListener {
     private Pattern pattern;
     private int left = 90, right = 270;
     private static final String USB_ACCESS = "org.cv10.displayprobe.USB_ACCESS";
+    private static final String HID_ACCESS = "org.cv10.displayprobe.HID_ACCESS";
     private UsbManager usb;
     private String result = "";
     private boolean working;
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
-            if (USB_ACCESS.equals(intent.getAction())) {
+            if (USB_ACCESS.equals(intent.getAction()) || HID_ACCESS.equals(intent.getAction())) {
                 UsbDevice d = PanelControl.find(usb);
-                if (d != null && usb.hasPermission(d)) runWake(d);
+                if (d != null && usb.hasPermission(d)) runUsb(d, HID_ACCESS.equals(intent.getAction()));
                 else { result = "未取得 USB 访问权限"; refresh(); }
             } else refresh();
         }
@@ -47,6 +48,7 @@ public class Probe extends Activity implements DisplayManager.DisplayListener {
         manager = getSystemService(DisplayManager.class);
         usb = getSystemService(UsbManager.class);
         IntentFilter filter = new IntentFilter(USB_ACCESS);
+        filter.addAction(HID_ACCESS);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         if (android.os.Build.VERSION.SDK_INT >= 33)
@@ -58,8 +60,9 @@ public class Probe extends Activity implements DisplayManager.DisplayListener {
         panel.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(panel);
         setContentView(scroll);
-        if (state == null && getIntent().getBooleanExtra("request_usb", false))
-            scroll.post(this::requestWake);
+        if (state == null && (getIntent().getBooleanExtra("request_usb", false)
+                || getIntent().getBooleanExtra("sample_hid", false)))
+            scroll.post(() -> requestUsb(getIntent().getBooleanExtra("sample_hid", false)));
     }
 
     @Override public void onStart() {
@@ -98,8 +101,11 @@ public class Probe extends Activity implements DisplayManager.DisplayListener {
 
     private void refresh() {
         panel.removeAllViews();
-        if (!working) button("通过 USB 识别 CV10 并开屏", v -> requestWake());
-        text(working ? "正在读取 PCUI 应答…" : result);
+        if (!working) {
+            button("通过 USB 识别 CV10 并开屏", v -> requestUsb(false));
+            button("采样头显 HID 输入", v -> requestUsb(true));
+        }
+        text(working ? "正在读取头显…" : result);
         Display[] displays = targets();
         if (displays.length == 0) text("等待可用于 Presentation 的外接显示器");
         for (Display d : displays) {
@@ -115,21 +121,21 @@ public class Probe extends Activity implements DisplayManager.DisplayListener {
         }
     }
 
-    private void requestWake() {
+    private void requestUsb(boolean sample) {
         UsbDevice d = PanelControl.find(usb);
         if (d == null) { result = "未发现 12d1:107e，请检查连接"; refresh(); return; }
-        if (usb.hasPermission(d)) { runWake(d); return; }
-        Intent grant = new Intent(USB_ACCESS).setPackage(getPackageName());
+        if (usb.hasPermission(d)) { runUsb(d, sample); return; }
+        Intent grant = new Intent(sample ? HID_ACCESS : USB_ACCESS).setPackage(getPackageName());
         usb.requestPermission(d, PendingIntent.getBroadcast(this, 0, grant, PendingIntent.FLAG_IMMUTABLE));
     }
 
-    private void runWake(UsbDevice d) {
+    private void runUsb(UsbDevice d, boolean sample) {
         if (working) return;
         working = true;
         refresh();
         new Thread(() -> {
             String message;
-            try { message = PanelControl.wake(usb, d); }
+            try { message = sample ? HeadsetInput.sample(usb, d) : PanelControl.wake(usb, d); }
             catch (Exception e) { message = e.toString(); }
             final String captured = message;
             Log.i("Cv10Probe", captured);
@@ -138,7 +144,7 @@ public class Probe extends Activity implements DisplayManager.DisplayListener {
                 result = captured;
                 if (!isDestroyed()) refresh();
             });
-        }, "cv10-pcui").start();
+        }, "cv10-usb").start();
     }
 
     @Override protected void onDestroy() {

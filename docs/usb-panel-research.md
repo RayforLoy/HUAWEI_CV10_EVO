@@ -22,3 +22,17 @@
 ## Git 中的前期记录
 
 核查时远端默认分支为 `codex/cv10-phase1`，指向 `5118561`。此前已提交的四个节点依次为 `04d0999`（采样基线）、`11129c5`（APK 分析）、`fbd899a`（Fold7 手册）和 `5118561`（用户提供的 APK 对比）。原始下载、反编译目录与真机日志由 `.gitignore` 排除。可通过 `git log --oneline --all` 和 `git ls-tree -r --name-only 5118561` 检查。
+
+## 普通 C-C 线的真机开屏试验
+
+13:34:50，Fold7 经普通 C-C、Android USB Host API 直接访问 107e 的接口 0，型号查询返回 `^DEVMODEL:CV10`、`OK`；版本查询返回 `MAINVER:CV10AC10.0.1.357`、`OK`；开屏命令返回 `^SWITCHSCREEN=1`、`OK`。此时外屏 ID 24，物理模式 ID 47 为 640×480 @ 60 Hz，DeX 逻辑画布 1600×900。这次实测确认了原厂系统以外的 PCUI 访问、头显固件升级后的实际版本及面板命令应答。
+
+13:36，在 DeX 扩展模式重复开屏并旋转测试图。外显截图中左右图案完整，摄像头连续记录的左镜片仍接近全黑。固件的开屏应答表示命令已被接受。13:38，保持普通 C-C 连接，把三星设置里的外屏方式切成「已镜像」，物理输出随即出现 3200×1600 @ 90/70 Hz，当前 90 Hz。摄像头先观察到亮度变化，重启测试图并再次发送开屏请求后拍到蓝底白箭头。本轮切换前已经发送过开屏命令，其必要性尚需从完全断电状态做单变量复测。
+
+| 可见证据 | 记录 |
+| --- | --- |
+| 扩展模式，PCUI 已应答 | [左镜片黑屏](../research/evidence/fold7-dex-left.jpg) |
+| 镜像模式，原生时序，测试图 | [左镜片蓝底白箭头](../research/evidence/fold7-mirror-left.jpg) |
+| 镜像模式，官方 OpenXR 场景 | [左镜片拍到方块边缘](../research/evidence/fold7-hello-xr-left.jpg) · [同次外显合成帧缩略图](../research/evidence/fold7-hello-xr-compositor.jpg) |
+
+以上镜片照片来自同一台对准左眼的摄像头。完整 OpenXR 场景、运行时与实际输出路径见[真机记录](device-openxr-check.md)。
