@@ -168,7 +168,28 @@ def dump_native(read, info):
 
 
 def read_register(read, address):
-    return read(0xe0, (address << 8) | 1, 0, 1)[0]
+    return read(0xe0, ((address & 0xff) << 8) | 1, address >> 8, 1)[0]
+
+
+def battery_status(read):
+    info = probe(read)
+    if info['mode'] != 'runtime' or info['version_raw'] not in ('0c094906', '0c095206'):
+        raise ValueError('Battery telemetry layout is known only for running C9.49.6 and C9.52.6')
+    # The USB request handler saves bRequest and wIndex low here before serving the read.
+    if read_register(read, 0x2cf1) != 0xe0 or read_register(read, 0x2cf9) != 0x2c:
+        raise ValueError('Could not verify the 16-bit runtime register address')
+    level = read_register(read, 0x2dfe)
+    for _ in range(3):
+        high = read_register(read, 0x2e02)
+        low = read_register(read, 0x2e01)
+        if high == read_register(read, 0x2e02):
+            break
+    else:
+        raise ValueError('Temperature changed during all three reads')
+    raw = (high << 8) | low
+    return dict(version_raw=info['version_raw'], level_raw=level,
+                temperature_raw=raw,
+                temperature_c=(raw - 2731) / 10 if raw not in (0, 0xffff) else None)
 
 
 def wait_mode(path, runtime):
@@ -401,6 +422,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='command', required=True)
     commands.add_parser('probe', help='read USB descriptors, version and execution mode')
+    commands.add_parser('battery', help='read cached cable gauge values in normal Billboard mode')
     dump_parser = commands.add_parser('dump', help='read and verify the raw PD image twice')
     dump_parser.add_argument('file', type=Path)
     backend = dump_parser.add_mutually_exclusive_group()
@@ -426,7 +448,7 @@ def main():
         result = flash_raw(args)
     else:
         with cable_reader() as read:
-            result = probe(read)
+            result = battery_status(read) if args.command == 'battery' else probe(read)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

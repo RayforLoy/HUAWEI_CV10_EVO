@@ -1,2 +1,6 @@
 /.research/
 __pycache__/
+/华为VR/
+/resources/CV10-before-*.bin
+/resources/CV10-after-*.bin
+/resources/CV10-restored-*.bin

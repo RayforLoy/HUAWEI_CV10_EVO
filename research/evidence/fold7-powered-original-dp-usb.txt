@@ -1,0 +1,38 @@
+Fold7, 2026-11-25; original cable, external 5 V; headset end reconnected.
+DisplayPort log; bracketed numbers are kernel monotonic seconds.
+[2115017.964432] !@[11-25 14:45:02.577]
+[2115017.964436] PDIC_NOTIFY_ID_DP_CONNECT<0>
+[2115017.967443] audio stream 0 is disconnected
+[2115018.136139] core:on link:on strm0:off strm1:off
+[2115018.137018] core:on link:off strm0:off strm1:off
+[2115026.684966] !@[11-25 14:45:11.298]
+[2115026.684971] PDIC_NOTIFY_ID_DP_CONNECT<1>
+[2115027.015880] !@[11-25 14:45:11.629]
+[2115027.015906] PDIC_NOTIFY_ID_DP_HPD<low><.>
+[2115027.019497] active_stream_cnt 0
+[2115027.532270] PDIC_NOTIFY_ID_DP_LINK_CONF<C>
+[2115028.247369] !@[11-25 14:45:12.860]
+[2115028.247373] PDIC_NOTIFY_ID_DP_HPD<low><.>
+[2115028.251409] active_stream_cnt 0
+[2115028.553317] !@[11-25 14:45:13.166]
+[2115028.553320] PDIC_NOTIFY_ID_DP_HPD<low><.>
+[2115028.559403] active_stream_cnt 0
+[2115029.096449] !@[11-25 14:45:13.709]
+[2115029.096453] PDIC_NOTIFY_ID_DP_HPD<high><.>
+[2115029.097056] core:on link:off strm0:off strm1:off
+[2115029.317620] DPCD:14 14 c4 c0 01 06 01 80 02 00 00 00 00 00 84 00
+[2115029.362561] bw_code=20, lane_count=4
+[2115029.363662] core:on link:on strm0:off strm1:off
+[2115029.370601] link training #1 successful
+[2115029.400146] link training #2 successful
+[2115030.026587] core:on link:on strm0:on strm1:off
+USB LOG, same kernel clock; wall time is UTC.
+[11-25 14:45:13] [2115029.209986] port connect - VID:0x2109 PID:0x2211 cnt:48
+[11-25 14:45:14] [2115030.155124] port connect - VID:0x12d1 PID:0x1092 cnt:35
+[11-25 14:45:15] [2115030.571874] port connect - VID:0x12d1 PID:0x107e cnt:35
+[11-25 14:45:15] [2115030.786428] port connect - VID:0x2109 PID:0x8888 cnt:44
+[11-25 14:45:17] [2115032.510765] port disconnect - VID:0x12d1 PID:0x1092
+[11-25 14:45:17] [2115032.542728] port disconnect - VID:0x12d1 PID:0x107e
+[11-25 14:45:17] [2115032.575318] port disconnect - VID:0x2109 PID:0x8888
+[11-25 14:45:17] [2115032.606717] port disconnect - VID:0x2109 PID:0x2211
+[11-25 14:45:18] [2115034.259586] port connect - VID:0x2109 PID:0x2211 cnt:49

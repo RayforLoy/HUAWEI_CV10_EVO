@@ -1,0 +1,38 @@
+P40 Pro+ / ELS-AN10, Hong Kong local time. USB timestamps from dumpsys usb; activity timestamps from dumpsys usagestats (one-second precision).
+00:42 Gen 2 C-C direct: user observed VR interface in both eyes.
+00:43 Original cable with external 5 V per test setup: user observed VR detection and both lenses black.
+2026-11-26 00:42:36 ACTIVITY_RESUMED com.huawei.vrlauncherx com.huawei.client.vrservice.activity.VRPrepareActivity
+2026-11-26 00:42:36 FOREGROUND_SERVICE_START com.huawei.vrhandle com.huawei.vrhandle.service.VRHandleService
+2026-11-26 00:42:36 FOREGROUND_SERVICE_START com.huawei.vrhandle com.huawei.vrhandle.service.VRHandleService
+2026-11-26 00:42:36 FOREGROUND_SERVICE_START com.huawei.vrlauncherx com.huawei.client.vrservice.VRService
+2026-11-26 00:42:36 FOREGROUND_SERVICE_START com.huawei.vrlauncherx com.huawei.vrhandle.VrHandleReconnectService
+2026-11-26 00:42:36 FOREGROUND_SERVICE_START com.huawei.vrservice com.huawei.vrservice.VRService
+2026-11-26 00:42:36 FOREGROUND_SERVICE_STOP com.huawei.vrhandle com.huawei.vrhandle.service.VRHandleService
+2026-11-26 00:42:36.508 USB /dev/bus/usb/002/003 attach 12d1:1092
+2026-11-26 00:42:36.573 USB /dev/bus/usb/002/004 attach 12d1:107e
+2026-11-26 00:42:37 ACTIVITY_RESUMED com.huawei.vrlauncherx com.huawei.vrlauncherx.MainActivity
+2026-11-26 00:42:38 FOREGROUND_SERVICE_START com.huawei.vrlauncherx com.huawei.client.vrservice.VrStateQueryService
+2026-11-26 00:42:38 FOREGROUND_SERVICE_START com.huawei.vrservice com.huawei.vrinstaller.service.VrParamsProviderService
+2026-11-26 00:43:06 FOREGROUND_SERVICE_STOP com.huawei.vrhandle com.huawei.vrhandle.service.VRHandleService
+2026-11-26 00:43:06 FOREGROUND_SERVICE_STOP com.huawei.vrlauncherx com.huawei.vrhandle.VrHandleReconnectService
+2026-11-26 00:43:06.502 USB /dev/bus/usb/002/003 detach
+2026-11-26 00:43:06.506 USB /dev/bus/usb/002/004 detach
+2026-11-26 00:43:07 FOREGROUND_SERVICE_STOP com.huawei.vrlauncherx com.huawei.client.vrservice.VRService
+2026-11-26 00:43:07 FOREGROUND_SERVICE_STOP com.huawei.vrlauncherx com.huawei.client.vrservice.VrStateQueryService
+2026-11-26 00:43:07 FOREGROUND_SERVICE_STOP com.huawei.vrservice com.huawei.vrinstaller.service.VrParamsProviderService
+2026-11-26 00:43:07 FOREGROUND_SERVICE_STOP com.huawei.vrservice com.huawei.vrservice.VRService
+2026-11-26 00:43:42 FOREGROUND_SERVICE_START com.huawei.vrservice com.huawei.vrservice.VRService
+2026-11-26 00:43:43 ACTIVITY_RESUMED com.huawei.vrlauncherx com.huawei.client.vrservice.activity.VRPrepareActivity
+2026-11-26 00:43:43 FOREGROUND_SERVICE_START com.huawei.vrhandle com.huawei.vrhandle.service.VRHandleService
+2026-11-26 00:43:43 FOREGROUND_SERVICE_START com.huawei.vrhandle com.huawei.vrhandle.service.VRHandleService
+2026-11-26 00:43:43 FOREGROUND_SERVICE_START com.huawei.vrlauncherx com.huawei.client.vrservice.VRService
+2026-11-26 00:43:43 FOREGROUND_SERVICE_START com.huawei.vrlauncherx com.huawei.vrhandle.VrHandleReconnectService
+2026-11-26 00:43:43 FOREGROUND_SERVICE_STOP com.huawei.vrhandle com.huawei.vrhandle.service.VRHandleService
+2026-11-26 00:43:43.109 USB /dev/bus/usb/002/003 attach 12d1:1092
+2026-11-26 00:43:43.196 USB /dev/bus/usb/002/004 attach 12d1:107e
+2026-11-26 00:43:44 FOREGROUND_SERVICE_STOP com.huawei.vrhandle com.huawei.vrhandle.service.VRHandleService
+2026-11-26 00:43:44 FOREGROUND_SERVICE_STOP com.huawei.vrlauncherx com.huawei.client.vrservice.VRService
+2026-11-26 00:43:44 FOREGROUND_SERVICE_STOP com.huawei.vrlauncherx com.huawei.vrhandle.VrHandleReconnectService
+2026-11-26 00:43:44 FOREGROUND_SERVICE_STOP com.huawei.vrservice com.huawei.vrservice.VRService
+2026-11-26 00:43:44.000 USB /dev/bus/usb/002/003 detach
+2026-11-26 00:43:44.054 USB /dev/bus/usb/002/004 detach

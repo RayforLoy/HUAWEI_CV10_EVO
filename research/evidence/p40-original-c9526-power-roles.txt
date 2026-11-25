@@ -1,0 +1,61 @@
+P40 Pro+ (ELS-AN10) / HUAWEI VR Glass CV10 / original powered phone cable
+2026-11-26, Hong Kong local time. Android UsbHostManager, UsbPortManager,
+SurfaceFlinger, Huawei VRHandle and VRService logs. USB topology sampled over
+wireless ADB. Lens observations were supplied by the wearer.
+
+Factory cable connected to 5 V, then connected to the P40. Both eyes black.
+00:56:19.242  P40 sink, data host
+00:56:22.104  HUAWEI VR Display 3200 x 1600 at 70 Hz added
+00:56:23.133  12d1:1092 audio added
+00:56:23.758  12d1:107e control added
+00:56:24.502  audio removed
+00:56:24.623  control removed, 0.865 s after attach
+00:56:24.884  downstream USB hub absent from topology, both host root buses still present
+00:56:26.233  downstream hub returned
+00:56:31.834  only child 2-1.5 present. External display and sink/host roles remained active.
+00:58:07.549  P40 USB HAL reported role switch failed when asked to switch data role to device.
+             Power role stayed sink and data role stayed host throughout the request.
+
+Glasses end unplugged while phone and external 5 V remained connected.
+00:59:48.117  Huawei VRHandle 10.0.1.345 queried the 2109:0105 USB Billboard interface.
+             getVliFwVersion = 201937414. Decimal bytes 12,9,82,6 = hex 0c 09 52 06.
+             Official local version string c.9.52.6; UI text 已是最新版本.
+             This identifies the cable for these tests independently of the older C9.49.6 backup.
+
+Glasses connected after the powered cable had stabilized on the phone. Both eyes black.
+01:01:34.260  HUAWEI VR Display added
+01:01:35.897  control added
+01:01:36.849  control removed after 0.952 s. Audio and hub also removed.
+01:02:04.921  control added on a subsequent enumeration
+01:02:05.500  IoSetBrightness 4 success
+01:02:05.694  IoGetBatteryStatus failed, result(-1), errno(32):Broken pipe, return -1.
+             The accompanying JNI log printed battery info 0, 0, 0.
+01:02:06.337  control removed after 1.416 s
+
+External 5 V removed, then the phone plug reinserted with the power jack empty.
+The wearer reported black lenses throughout both steps.
+01:05:35.132  audio added
+01:05:35.942  control added. P40 source/host, no external physical display.
+01:05:40.880  IoSetBrightness 4 success
+01:05:41.057  IoGetBatteryStatus failed (EPIPE), accompanied by the same zero fields.
+             Huawei VR launcher MainActivity resumed. Only the built-in display was present.
+
+5 V reconnected while audio and control were still present; both eyes stayed black.
+01:07:03.635  P40 transitioning to sink. Audio and control then removed.
+01:07:04.026  control removed, 88.084 s after the 01:05:35.942 attach
+01:07:09.739  external physical display present again, P40 sink/host
+01:07:10.688  control added
+01:07:12.718  control removed after 2.030 s
+01:07:18.839  control added after a further display reconnect
+01:07:20.231  control removed after 1.392 s
+01:07:43.108  external physical display still present; downstream hub and child 2-1.5 only.
+
+Gen 2 C-C cable with the same P40 and CV10. Wearer confirmed VR home visible in both eyes.
+01:09:57.474  HUAWEI VR Display 3200 x 1600 at 70 Hz added
+01:09:59.516  audio added
+01:10:01.003  control added
+01:10:01.604  IoSetBrightness 4 success
+01:10:01.790  IoGetBatteryStatus failed, result(-1), errno(32):Broken pipe, return -1.
+             JNI again printed battery info 0, 0, 0. The battery query also fails when the
+             original cable and its cell are physically absent. It did not measure that cell.
+01:10:27.183  P40 remained source/host with the external display and both USB functions present.

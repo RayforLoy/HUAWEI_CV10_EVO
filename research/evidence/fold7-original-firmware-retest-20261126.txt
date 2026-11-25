@@ -1,0 +1,141 @@
+Galaxy Z Fold7 (SM-F9660) and one HUAWEI VR Glass CV10, Hong Kong time, 2026-11-26.
+
+Windows, original cable alone, no glasses, phone or auxiliary supply connected.
+Before restoration: 2109:0105, bcdDevice 0c52, runtime 0c 09 52 06.
+Two fresh reads of the 49,152-byte VL105 PD application matched the supplied C9.52.6 image.
+SHA-256 1ebf1217d0dda526f64ed3b15504db409fbdf25bc866f0fbebb874adcd00485a, CRC-16/USB 2dcb.
+At the owner's request, restored the backup made from this unit before testing the donor image.
+The tool compared the read and write regions with the fresh pre-flash backup, programmed all
+12 differing 4-KiB sectors, verified the entire write region, and checked the runtime version.
+After restart: 2109:0105, bcdDevice 0c49, runtime 0c 09 49 06. A separate maintenance session
+read the 49,152-byte image twice. Both reads matched the pre-donor backup byte for byte.
+SHA-256 f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02, CRC-16/USB 1a69.
+The earlier 2026-11-25 21:26 readback also matched C9.49.6. The intervening cause of the
+version change is unknown. The 2026-11-26 00:59 P40 query and the new PC double-read agreed.
+
+Fold7 control trial with the same glasses over the known-good Gen 2 C-C cable.
+User saw the left/right test patterns in both eyes at brightness 1. HID confirmed 4 -> 1,
+the headset acknowledged AT^SWITCHSCREEN=1, and AT^QUERYEXCEPTION returned ASCII decimal 0.
+
+Fold7 with the original cable, C9.52.6, same external 5 V supply.
+01:36:19.635  DisplayDeviceRepository added HUAWEIAV03, 3200 x 1600 at 90 Hz.
+01:36:20.409  UsbHostManager attached 12d1:107e (headset control).
+01:36:22.095  brightness 4 -> 1 verified by readback, AT^SWITCHSCREEN=1 returned OK.
+01:36:22.295  AT^QUERYEXCEPTION returned ASCII decimal 0.
+01:36:22.747  headset audio removed. 01:36:22.797 control removed (0.702 s after wake).
+01:36:23.830  separate display-probe activity reported showing L/R pattern on the external display.
+User observed both eyes black throughout. This trial did not establish L/R presentation
+before the wake. Raw diagnostic APK SHA-256 be4e6cde224d1a8e9a21c2cfb0bc15489d7659f15114be2461f2d0de2948a9c2.
+
+Fold7 with the restored C9.49.6 cable; same glasses and 5 V supply, phone connected last.
+The cable went straight from the verified PC readback to the Fold7. The diagnostic activity
+owned the external presentation and held it across headset USB loss. No forced display mode.
+01:46:01.806  first external presentation frame committed on logical display 61.
+01:46:02.162  headset control attached; removed 01:46:04.079. No wake recorded this time.
+01:46:28.439  next presentation frame committed on display 62, 3200 x 1600 at 90 Hz.
+01:46:28.977  headset control attached. Android granted the diagnostic app access.
+01:46:29.760  brightness 4 -> 1 verified by HID readback.
+01:46:29.761  AT^SWITCHSCREEN=1 returned OK, 1.322 s after the external frame commit.
+01:46:29.963  AT^QUERYEXCEPTION returned ASCII decimal 0.
+01:46:30.859  audio removed. 01:46:30.911 control removed, 1.150 s after the wake.
+01:46:31.025  USB topology had the host root buses only, while HUAWEIAV03 remained present.
+01:46:32.576  USB topology again included the downstream hub.
+User observed both eyes black for the powered C9.49.6 trial. Test APK SHA-256
+258f013953daf299c216bbaacb484f15d00f9d9222ff90f9f0da02b8ba885b34.
+
+The P40 VRServiceX 13.0.0.300 JNI implementation of copyHelmetLkmsgToPhoneNative (ELF VA
+0x1090c) selects AT^PULLMCULOG=LKMSG with CRLF. CatchHelmetErrorLog (0xc328) selects
+/dev/ttyUSB0. CopyErrorLogToPhone (0xbec8) reads this port until a ten-pipe marker.
+On the Fold7 the original C9.49.6 cable and the Gen 2 direct control returned exactly the
+same 17 bytes: CR LF NO PERMISSION CR LF (SHA-256 60254352eafbaee1e77538f8d2feaf4e6f4df56bdb4ebba2a2b63af3f0c99750).
+The direct connection stayed online past the response. These bytes do not contain MCU logs.
+01:48:18.549  Gen 2 direct, restored the saved original brightness: before=4 target=4 after=4.
+
+Additional C9.49.6 trial varying the Fold7's own battery charging.
+Used the Samsung Battery Protection screen to change the existing Basic setting (mode 3)
+temporarily to the existing 80% limit (mode 1). Fold7 reported level 81% at connection.
+01:51:46.730  BatteryService reported status 4 (NOT_CHARGING), external power attached.
+01:51:49.916  USB powered, phone battery still NOT_CHARGING. PortManager showed sink/host.
+01:51:50.485  external L/R pattern committed on display 64, 3200 x 1600 at 90 Hz.
+01:51:51.121  headset control attached.
+01:51:52.779  brightness 4 -> 1 verified.
+01:51:52.780  AT^SWITCHSCREEN=1 returned OK, 2.295 s after frame commit.
+01:51:52.906  AT^QUERYEXCEPTION returned 0.
+01:51:52.907  LKMSG write failed as USB disappeared. No MCU log from this trial.
+01:51:52.931  headset audio removed; 01:51:52.980 control removed (1.859 s after attach).
+The wearer reported both eyes black throughout. Battery status stayed NOT_CHARGING through
+the failure. This status concerns the phone battery; the phone could still draw system power.
+Restored the previously selected Samsung Basic mode (3); verified the four original
+charging-protection settings and that the phone again reported status 2 (CHARGING).
+
+Final Gen 2 direct control with the same Fold7 and headset.
+01:54:14.445  L/R frame committed on display 65 at 3200 x 1600, 90 Hz.
+01:54:15.514  saved brightness restored and re-read: before=4 target=4 after=4 original=4.
+01:54:15.515  AT^SWITCHSCREEN=1 returned OK; fault query returned 0.
+01:54:15.716  AT^TYPECSTATE? returned 1. AT^CABLEINFO? returned 0000000000000000 and OK.
+The wearer confirmed both lenses displayed the test patterns. Direct C-C had no powered
+adaptor in circuit. The subsequent DFU analysis below identifies this as the type-0 reply. Reference APK
+SHA-256 694e5410d50cea2df8d9b2ff694f250c60ba0c82763b380983fb0b308d2fe576.
+
+01:56  Original cable reconnected to Windows after both Fold7 trials. All external plugs
+had been removed. Runtime bcdDevice=0c49, version=0c094906. Two more reads of 49,152 bytes
+matched the original f1605706...93e02 image; exit from maintenance again returned runtime
+0c094906. Disconnecting external power does not establish whether the internal cell was live.
+
+Final read-only cable identification with the restored powered cable and Fold7.
+01:58:43.035  headset control attached.
+01:58:44.087  AT^CABLEINFO? returned ^CABLEINFO=10C094906255+280 and OK.
+01:58:44.088  AT^TYPECSTATE? returned ^TYPECSTATE:2 and OK.
+01:58:45.377  headset control removed. No panel, brightness, or firmware writes in this read.
+Same queries in the working Gen 2 reference returned 0000000000000000 and 1 respectively.
+Test APK SHA-256 307223fe9dc68f560e4831fb1e44819fd854f6c044ee7d2206df0032a238ff0e.
+
+Huawei VR Launcher 11.1.0.337 on the P40 and the locally analysed APK are byte-identical,
+SHA-256 1e91f00d596c636c3f52dddc494ee6b745cdf90bb3a0838ff203f9ae54b92dd3.
+VrHelmetConnector.getCableInfo (libvrconnector.so, ARM32 VA 0x84e0) issues the full-text
+query. CableInfo (classes.dex, r1.a) uses substring(11,12) for type and (12,20) for
+firmware after trimming. On the observed text these are 1 and 0C094906. It stores
+(20,22) and (22,26) as strings, corresponding to "25" and "5+28"; the final "0" is beyond
+those two slices. The Java type has getters for type and version. These slices alone do
+not establish battery state of charge or temperature units.
+
+Cross-check with the supplied HuaweiVRUpdater_10.0.0.312.zip
+SHA-256 272ad42b514a552821305201b6487bc203c92c119815d36b6b88fa677a6ae23e.
+CV10 halliday.dfu SHA-256 85579969f7362cc9acf894cd351d54328763b1a6819c0953c64857a5d1aae7e8.
+P40 VRServiceX captured AT^SWVER MAINVER:CV10AC10.0.1.357 on the original cable at
+01:02:05.910, and on the working direct cable at 01:10:02.007. This matches the file version.
+All headset offsets below refer to the full DFU, with 0x525 mapped to 0x08020000.
+0x91157 dispatches UVDM 0x0105 (serial) and 0x0106 (info) on the low header half-word.
+0x910BB marks type 1, formats word 0 as four upper-to-lower %02X octets, then the low
+byte of word 1 as %03d. It subtracts 2731 from word 2, formats the result as %04d,
+and overwrites its leading character with the sign. 0x84E05 emits type + 8 + 3 + 4
+characters. For type 0 the suffix is explicitly filled with 15 ASCII zeros.
+Temperature 0x0BC3 gives 3011 - 2731 = 280 -> 0280 -> +280.
+Temperature 0xFFFF gives 65535 - 2731 = 62804 -> +2804 -> +280 (first four characters).
+Thus the AT string cannot discriminate these cases. Its last 0 belongs to the signed field.
+The RAM command table reconstructed from 0xB9E51 using the decompressor at 0xB0F7D
+maps TBATLVL, TBATVOLT, TBATTEMP, TBATCURRENT, TBATDATA?, VBUS? and IINLIMIT? to
+0x8243F, which calls the response builder with four zero arguments and performs no measurement.
+
+Transmitter (original C9.49.6, raw 8051 file offsets and XDATA addresses).
+0x03C7 / 0x03F9 select serial/info, then 0x0917 builds the 2109:0105/0106 VDM headers.
+For the info message 0x0408..0x0428 produce the version bytes. 0x0429..0x0455 insert
+XDATA[2DFE] in payload word 1 and XDATA[2E01], XDATA[2E02] in the low two bytes of
+word 2. The TX buffer is cleared before the packet is built (0x842D -> 0x95BA).
+0xA188..0xA1B6 and 0x6329..0x6346 load these caches from I2C slave 55h: register 2Ch
+for the level byte and 66h/67h for the temperature low/high bytes. 0xA1C8 onwards
+compares the level with 40/60, then 30; it treats FF as numerically above 60 here.
+0xA14A checks the temperature word and skips this over-temperature check on FFFF or 0000.
+
+Windows runtime Billboard 2109:0105, original C9.49.6, reads only. Verified the address
+mapping on USB vendor IN E0, subcode 01 by reading the controller's cached setup bytes:
+2CF0=01, 2CF1=E0, 2CF8=F8 and 2CF9=2C on their respective requests. Chip ID= A0;
+runtime mode=81. At 02:22:13.638..02:22:24.780 with only the host plug connected,
+12 consecutive samples yielded level FF, temperature FFFF. High byte reread each time.
+With glasses still absent and computer plug unchanged, a continuous 1 Hz run recorded:
+02:23:45.664..02:24:22.082, 35 samples, 2DFE=FF, 2E01/02=FF/FF, 2DFF=81, 2E00=69.
+02:24:23.151..02:26:04.716, 96 samples, 2DFE=FF, 2E01/02=FF/FF, 2DFF=83, 2E00=69.
+The user connected the auxiliary 5 V between these two states. The host and glasses end
+stayed in place. 2E00 is loaded separately from I2C slave 53h, register 0Bh (0xA193).
+Neither the displayed temperature nor the FF bytes establish the cell voltage, the physical
+health of the cell, or loss of I2C acknowledgement. No cell bypass was attempted.
