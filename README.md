@@ -1,6 +1,16 @@
 # HUAWEI CV10 EVO
 
-项目目标是在 Galaxy Z Fold7 上运行标准 OpenXR 应用，由 HUAWEI VR Glass CV10 显示独立双目画面并提供头部 3DoF。验收时固定手机、转动眼镜，确认应用提交的画面随眼镜转动。
+项目目标是在 Galaxy Z Fold7 上运行标准 OpenXR 应用，由 HUAWEI VR Glass CV10 显示独立双目画面并提供头部 3DoF。Fold7 上未经修改的 Khronos `hello_xr` 已通过双眼镜片实拍、立体视差和眼镜姿态验证。当前使用定制运行时 **Monado CV10**。
+
+## 各会话进度 · 2026-11-25
+
+| 会话 | 已验证 | 待验证或待取得的材料 |
+| --- | --- | --- |
+| 核对资源并移植OpenXR | 在 Fold7 上，Monado CV10 经 USB 开屏、从眼镜 IMU 以约 1 kHz 采样，官方 `hello_xr` 进入 FOCUSED。两台摄像头分别拍到正读的 L↑、R↑ 和样例方块，双眼水平视差方向正确。[构建及证据](ports/monado-cv10/README.md) | 当前提供旋转 3DoF。镜片畸变、个体瞳距与三轴角度精度待标定；Android XR 通用启动器兼容性尚未验证。 |
+| 核对资源并移植OpenXR · 桌面与时序 | Globalka 已把手机桌面和 Windows 桌面投到镜片，接入眼镜姿态。Monado 的 MAILBOX 配合会话刷新率脚本，使外屏图层从约 60 升至 90 次呈现/秒，画面就绪到呈现中位等待从 27.5 降至 10.3 ms，佩戴者确认转头拖影明显减少。[Globalka 移植](ports/globalka/README.md) · [Windows 发送端](docs/windows-desktop-sender.md) · [时序实测](research/evidence/fold7-cv10-frame-pacing.json) | 退出样例后会恢复手机刷新率，下次需重新启动辅助脚本；尚未测量完整运动到成像延迟。 |
+| 移植 PiliPlus VR 播放器 | 11.19 版已在 Fold7 从推荐页选片播放，mpv 切换到 VR SurfaceTexture，OpenXR 会话进入 FOCUSED。1920×1080 视频交换链在两个三秒窗口分别收到 90、91 帧。[移植与构建](ports/piliplus/README.md) · [可复用移植流程](.agents/skills/cv10-openxr-port/SKILL.md) | 该轮仅验证手机端播放；仍需用 Monado CV10 对播放器本身做双眼镜片实拍和转头测试。 |
+| 研究固件升级工具 | QQ 升级包识别出两款头显镜像。原厂手机线为 VL105，C9.49.6 固件已从实机双读，49,152 字节，校验一致；Windows 工具整合固件导出、离线检查、烧录前比对和运行态诊断。[头显升级器](docs/firmware-resource-analysis.md) · [连接线研究](docs/cable-firmware-research.md) · [工具与操作记录](docs/cable.md) | 升级包中未找到可识别的新版连接线镜像。仍需同板型供体；未用新版固件完成实机烧录或验证原厂线黑屏修复。 |
+| 调研 VRglass 点亮开源项目 | 比较了七个项目或构建分支，整理了 Globalka 在三星设备上的出图记录、Flip5 的 IMU 实验和 Jetson 的显示异常。Fold7 本地复测确认同一条普通 C-C 线在 DeX 扩展与镜像模式下表现不同。[开源项目调研与原始出处](docs/vrglass-open-source-survey.md) | B 站所述闪烁评论的原文尚未定位。 |
 
 ## 当前硬件基线 · 2026-11-25
 
@@ -10,11 +20,13 @@
 | Windows，普通 C-C | 用户实测 SteamVR 可见 | 本机安装 HiSuite 和 NOLO HOME |
 | P40 Pro+，原厂手机线 | 用户实测黑屏 | 手机认出 VR。线单独连接电脑，版本读回为 `0c 09 49 06` |
 | Fold7，普通 C-C，三星 DeX 扩展 | 镜片黑屏，摄像头复测一致 | HUAWEIAV03 为 640×480 @ 60 Hz，PCUI 开屏返回 OK |
-| Fold7，同一接法，三星「已镜像」 | 左眼摄像头拍到测试图和官方 hello_xr 的蓝色方块 | 活动时序 3200×1600 @ 90 Hz，也列出 70 Hz；Monado 使用手机姿态，右眼尚未独立拍摄 |
+| Fold7，同一接法，三星「已镜像」 | 左右镜片均拍到正向测试图和官方 hello_xr 方块 | Monado CV10 向 HUAWEIAV03 提交双目画面，使用眼镜 USB IMU；面板活动模式 3200×1600 @ 90 Hz |
 
-**复现已出图的配置**：使用上述普通 C-C 线，在 Fold7「设置 → 已连接的设备 → Samsung DeX → 已连接的显示器」选择「已镜像」。本轮曾先通过 USB 开屏，再切换镜像；尚未从完全断电条件单独验证这条命令的必要性。[镜片实拍与 USB 应答](docs/usb-panel-research.md)
+**Fold7 复现方法**　使用上述普通 C-C 线，在 Fold7「设置 → 已连接的设备 → Samsung DeX → 已连接的显示器」选择「已镜像」。在 Khronos OpenXR Runtime Broker 选 **Monado CV10**，首次运行允许它访问 HUAWEI GLASS HID。定制运行时会发送 USB 开屏命令。需要复现高刷新率时，按[运行时说明](ports/monado-cv10/README.md)启动会话脚本。[镜片实拍与 USB 应答](docs/usb-panel-research.md)
 
 ## 研究与工具
+
+- [原厂线固件逆向与诊断](docs/cable-firmware-research.md) 对照 C9.49.6 镜像与实机 USB 应答，记录显示与供电功能、配置常量和诊断上位机的使用方法。
 
 - [USB 开屏研究](docs/usb-panel-research.md) 对照公开项目、原厂服务及本机识别出的 PCUI 端点。
 - [Fold7 与 P40 真机记录](docs/device-openxr-check.md) 包含无线 ADB、设备版本、当前显示模式和 OpenXR 验证。

@@ -1,6 +1,6 @@
 # 原厂手机线与 VL105
 
-2026-11-25，在原厂手机线单独接入 Windows 的条件下，已读到线的 USB 描述符和四字节固件版本。导出尝试停在首次读镜像头，尚无该线的可恢复备份，也没有执行擦除或写入。
+2026-11-25，在原厂手机线单独接入 Windows 的条件下，已读到线的 USB 描述符和四字节固件版本。通过 WinUSB 临时进入 VL105 ROM 模式后，已双读导出当前 PD 镜像。设备随后恢复运行态。
 
 | 只读实测 | 结果 |
 | --- | --- |
@@ -24,13 +24,27 @@ python tools/cable.py probe
 若有工作的同硬件版本线，可尝试双读导出。目标目录需已存在，文件名需未被使用。默认后端仅发设备到主机的查询。头部版本、两份数据、长度和 CRC 都通过后才发布结果。
 
 ```powershell
-python tools/cable.py dump donor-vl105.bin
+python tools/cable.py dump --maintenance donor-vl105.bin
 python tools/cable.py inspect donor-vl105.bin
 ```
 
-对使用 fwupd 原生支持且能枚举出目标线的系统，可通过 `dump --fwupdtool fwupdtool` 委托其执行维护模式切换及双读。也可指定工具的绝对路径。安装备有该线 OEM 元数据的官方 CAB 时，`flash` 接受提供方给出的 SHA-256，通过 `fwupdmgr local-install` 向明确匹配的 VLI 设备 ID 提交 CAB，由 fwupd 执行包匹配和更新。该入口需要可用的 fwupd 服务及支持 `local-install` 的客户端。供体导出的裸镜像只用于离线检查。命令参数可用 `python tools/cable.py flash --help` 查看。
+对使用 fwupd 原生支持且能枚举出目标线的系统，可通过 `dump --fwupdtool fwupdtool` 委托其执行维护模式切换及双读。也可指定工具的绝对路径。安装备有该线 OEM 元数据的官方 CAB 时，`flash` 接受提供方给出的 SHA-256，通过 `fwupdmgr local-install` 向明确匹配的 VLI 设备 ID 提交 CAB，由 fwupd 执行包匹配和更新。该入口需要可用的 fwupd 服务及支持 `local-install` 的客户端。同板型裸镜像可用下方的 Windows 原生入口预检。命令参数可用 `python tools/cable.py flash --help` 查看。
 
-## 本机验证与边界
+## 原生烧录与实机备份
+
+本机导出文件为 `resources/CV10-cable-C9.49.6.bin`，大小 49152 字节，CRC-16/USB 为 `1a69`，SHA-256 为 `f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02`。备份覆盖 PD 镜像区。实机从零地址和上游 VL105 写入基址 `0x20000` 读取的整个镜像均与备份一致；两段地址是否映射到同一物理扇区仍未知。
+
+先将目标线的当前固件导出为独立备份，再比较同板型候选镜像：
+
+```powershell
+python tools/cable.py flash-raw candidate.bin --backup current.bin
+```
+
+工具检查 CRC、镜像头 VID/PID、当前版本和两个地址区的内容，再报告有差异的 4 KiB 扇区数。确认镜像的板型与来源后，在同一命令末尾加 `--apply` 才会开始编程。每个有差异的扇区擦除后先查空，再以 32 字节写入并读回比较，随后校验整个写入区，重启并检查运行版本。供电中断时设备可能无法正常启动。
+
+本机用刚导出的备份执行过真实预检，差异为零，重启后版本仍为 C9.49.6。内存模拟器使用三个扇区有差异的镜像，验证了比较、差异写入、全区回读和写入失败后的备份恢复。若写入期间设备仍可通信，工具会尝试恢复已动过的扇区并校验整个写入区；恢复失败时跳过主动复位并报错。断电或 USB 断线可能使恢复无法执行。目前未对实物执行擦写。
+
+## 早期运行态及 fwupd 测试记录
 
 - 已在本机运行 `probe` 并重复读取版本。运行态调用 fwupd 所用 SPI READ 从 `0x1003` 查询镜像头时，WinUSB 返回 `WinError 31`。没有生成镜像。随后重新查询，线仍返回相同运行态和固件版本。
 - 在项目的私有研究目录解包并运行上游 Windows 发行版。2.1.9 的 MSI SHA-256 与 GitHub Release 提供的 `4a9d2b0a387c1fa5757a18d987b00738e5fbd75818a3564bca5c849420278a89` 一致。2.1.9 与 1.9.25 的 `--plugins vli --json get-devices` 都返回 `No detected devices`。2.1.9 的 `builtin.quirk.gz` 含 VL105 参数，但其中没有 `USB\VID_2109&PID_0105` 设备匹配。上游源码的通用 ID 位于 `vli-noinst.quirk`。另在两个解包副本的私有 quirks 目录中，将设备匹配限定到本机的 REV_0C49 再做只读枚举，结果相同。已移除该测试配置，设备始终保持运行态。[上游 Windows 说明](https://github.com/fwupd/fwupd/blob/2.1.9/docs/win32.md) · [2.1.9 发行包](https://github.com/fwupd/fwupd/releases/tag/2.1.9)

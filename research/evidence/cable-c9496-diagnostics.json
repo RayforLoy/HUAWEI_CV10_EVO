@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-11-25T13:50:33+08:00",
+  "vid_pid": "2109:0105",
+  "bcd_device": "0c49",
+  "manufacturer": "VIA Technologies Inc.",
+  "product": "USB 2.0 BILLBOARD",
+  "bos": "050f580004141004000000000000000000000000000000000030100d040100010003000000000000000000000000000000000000000000000000000000000000002101000001ff000408100f000000000007100200000000",
+  "version_raw": "0c094906",
+  "mode": "runtime",
+  "project_register": "A0",
+  "mode_register": "81",
+  "config": "09021200010204c000090400000011000004",
+  "interfaces": [
+    {
+      "number": 0,
+      "alternate": 0,
+      "endpoints": 0,
+      "usb_class": 17
+    }
+  ],
+  "modes": [
+    {
+      "svid": "FF01",
+      "alternate_mode": 0,
+      "configuration": 3
+    }
+  ]
+}

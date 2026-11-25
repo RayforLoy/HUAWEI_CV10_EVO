@@ -12,6 +12,7 @@ import subprocess
 import struct
 import sys
 import tempfile
+import time
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
 VID_PID = (0x2109, 0x0105)
@@ -77,7 +78,7 @@ def cable_path():
 
 
 @contextmanager
-def cable_reader():
+def cable_reader(*, maintenance=False):
     if os.name != 'nt':
         raise ValueError('Live USB inspection requires Windows with the cable WinUSB driver')
     path = cable_path()
@@ -101,7 +102,15 @@ def cable_reader():
                 if not descriptor and count.value != length:
                     raise ValueError(f'Short USB response: {count.value}/{length}')
                 return payload.raw[:count.value]
-            yield read
+            def send(request, value=0, data=b'', *, index=0):
+                count = wintypes.ULONG()
+                buffer = ctypes.create_string_buffer(data) if data else None
+                packet = Setup(0x40, request, value, index, len(data))
+                check(usb.WinUsb_ControlTransfer(interface, packet, buffer, len(data),
+                                                 ctypes.byref(count), None))
+                if count.value != len(data):
+                    raise ValueError('Incomplete USB maintenance request')
+            yield (read, send) if maintenance else read
         finally:
             usb.WinUsb_Free(interface)
     finally:
@@ -158,6 +167,69 @@ def dump_native(read, info):
     return first
 
 
+def read_register(read, address):
+    return read(0xe0, (address << 8) | 1, 0, 1)[0]
+
+
+def wait_mode(path, runtime):
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        try:
+            if cable_path() == path:
+                with cable_reader() as read:
+                    if bool(read_register(read, 0xf7) & 0x80) == runtime:
+                        return
+        except (OSError, ValueError):
+            pass
+        time.sleep(0.25)
+    raise RuntimeError(f'Cable did not enumerate in {"runtime" if runtime else "ROM"} mode')
+
+
+def restart(send, request):
+    try:
+        send(request)
+    except OSError as error:
+        # A reset may disconnect USB before the status stage completes.
+        if error.winerror not in (31, 121, 1167):
+            raise
+
+
+@contextmanager
+def maintenance_session():
+    path = cable_path()
+    with cable_reader(maintenance=True) as (read, send):
+        info = probe(read)
+        if info['mode'] != 'runtime' or read_register(read, 0x18) & 0xf0 != 0xa0:
+            raise ValueError('Expected a running VL105 before entering maintenance mode')
+        # fwupd 2.1.9 VL105 detach sequence. Restore volatile GPIOs if detach fails.
+        settings = [(0x15, 0x7f), (0x19, 0), (0x1c, 2),
+                    (3, (read_register(read, 3) | 0x10) & 0xfe)]
+        saved = []
+        try:
+            for address, value in settings:
+                saved.append((address, read_register(read, address)))
+                send(0xe0, (address << 8) | 2, bytes([value]))
+            restart(send, 0xc0)
+            wait_mode(path, False)
+        except Exception:
+            if cable_path() == path and read_register(read, 0xf7) & 0x80:
+                for address, value in reversed(saved):
+                    send(0xe0, (address << 8) | 2, bytes([value]))
+            raise
+    with cable_reader(maintenance=True) as (read, send):
+        try:
+            yield read, send, {**info, 'mode': 'ROM'}
+        except RecoveryError:
+            # A partially written image must not be started.
+            raise
+        except BaseException:
+            restart(send, 0xb0)
+            wait_mode(path, True)
+            raise
+        restart(send, 0xb0)
+        wait_mode(path, True)
+
+
 def fwupd_target(command, work):
     status = subprocess.run([*command, '--json', 'get-devices'], capture_output=True,
                             encoding='utf-8', errors='replace', cwd=work)
@@ -195,6 +267,9 @@ def export(args):
         work = Path(staging)
         if args.fwupdtool:
             image = dump_fwupd(args.fwupdtool, work)
+        elif args.maintenance:
+            with maintenance_session() as (read, _, info):
+                image = dump_native(read, info)
         else:
             with cable_reader() as read:
                 image = dump_native(read, probe(read))
@@ -202,7 +277,10 @@ def export(args):
         staged = work / 'verified.bin'
         staged.write_bytes(image)
         # Publish exclusively only after both reads and the image CRC pass.
-        os.link(staged, destination)
+        if os.name == 'nt':
+            os.rename(staged, destination)  # Windows refuses to replace an existing file.
+        else:
+            os.link(staged, destination)
     return dict(output=str(destination), independent_reads=2, **metadata)
 
 
@@ -222,18 +300,121 @@ def install_cab(args):
     return dict(device_id=target, package_sha256=args.sha256.lower(), fwupd_exit=0)
 
 
+PD_OFFSET = 0x20000  # fwupd VL105 VliPdOffset
+SECTOR_SIZE = 4096
+
+
+class RecoveryError(RuntimeError):
+    pass
+
+
+def read_region(read, address, size):
+    return b''.join(read_flash(read, address + offset, min(TRANSFER_SIZE, size - offset))
+                    for offset in range(0, size, TRANSFER_SIZE))
+
+
+def wait_flash(read):
+    deadline = time.monotonic() + 5
+    while read(0xc2, 5, 0, 1)[0] & 1:
+        if time.monotonic() >= deadline:
+            raise RuntimeError('Flash remained busy')
+        time.sleep(0.005)
+
+
+def program_sector(read, send, address, data):
+    # VL105 SPI bridge, using the standard sector erase and page program opcodes.
+    send(0xd4, 6)
+    send(0xd2, 0x20, index=address >> 8)
+    wait_flash(read)
+    if read_region(read, address, SECTOR_SIZE) != b'\xff' * SECTOR_SIZE:
+        raise ValueError(f'Sector erase verification failed at {address:#x}')
+    for offset in range(0, SECTOR_SIZE, TRANSFER_SIZE):
+        block = data[offset:offset + TRANSFER_SIZE]
+        if block == b'\xff' * TRANSFER_SIZE:
+            continue
+        position = address + offset
+        send(0xd4, 6)
+        send(0xdc, ((position & 0xff) << 8) | 2, block, index=position >> 8)
+        time.sleep(0.001)
+        wait_flash(read)
+    if read_region(read, address, SECTOR_SIZE) != data:
+        raise ValueError(f'Sector write verification failed at {address:#x}')
+
+
+def flash_raw(args, *, expected_sha256=None):
+    image = args.file.read_bytes()
+    backup = args.backup.read_bytes()
+    metadata = inspect_image(image)
+    if expected_sha256 is not None and metadata['sha256'] != expected_sha256:
+        raise ValueError('候选文件在预检后发生变化，请重新选择。')
+    inspect_image(backup)
+    if image[HEADER + 4:HEADER + 8] != backup[HEADER + 4:HEADER + 8]:
+        raise ValueError('Candidate and backup have different header VID/PID')
+    with maintenance_session() as (read, send, info):
+        if dump_native(read, info) != backup or read_region(read, PD_OFFSET, IMAGE_SIZE) != backup:
+            raise ValueError('The running image and write region must both match the supplied backup')
+        changed = [offset for offset in range(0, IMAGE_SIZE, SECTOR_SIZE)
+                   if image[offset:offset + SECTOR_SIZE] != backup[offset:offset + SECTOR_SIZE]]
+        if changed and args.apply:
+            if read(0xc2, 5, 0, 1)[0] != 0:
+                raise ValueError('Unexpected SPI status before programming')
+            gpio = read_register(read, 3)
+            try:
+                for address, value in ((0x15, 0x7f), (0x19, 0), (0x1c, 2), (3, gpio | 0x44)):
+                    send(0xe0, (address << 8) | 2, bytes([value]))
+                started = []
+                try:
+                    for offset in changed:
+                        started.append(offset)
+                        program_sector(read, send, PD_OFFSET + offset, image[offset:offset + SECTOR_SIZE])
+                    if read_region(read, PD_OFFSET, IMAGE_SIZE) != image:
+                        raise ValueError('Full image readback differs')
+                except BaseException as failure:
+                    try:
+                        wait_flash(read)
+                        for offset in reversed(started):
+                            original = backup[offset:offset + SECTOR_SIZE]
+                            if read_region(read, PD_OFFSET + offset, SECTOR_SIZE) != original:
+                                program_sector(read, send, PD_OFFSET + offset, original)
+                        if read_region(read, PD_OFFSET, IMAGE_SIZE) != backup:
+                            raise ValueError('Restored image differs from backup')
+                    except BaseException as recovery:
+                        raise RecoveryError(f'Programming failed ({failure}); restoration failed '
+                                            f'({recovery}). Reset was withheld.') from recovery
+                    raise RuntimeError(f'Programming failed ({failure}); backup restored and verified') from failure
+            finally:
+                try:
+                    send(0xe0, 0x0302, bytes([gpio]))
+                except OSError as error:
+                    raise RecoveryError(f'Could not restore programming GPIO: {error}. Reset was withheld.') from error
+    with cable_reader() as read:
+        running = probe(read)
+    expected = image if args.apply else backup
+    if running['mode'] != 'runtime' or running['version_raw'] != expected[HEADER:HEADER + 4].hex():
+        raise ValueError(f'Unexpected device state after restart: {running}')
+    return dict(candidate=metadata, differing_sectors=len(changed),
+                programmed_sectors=len(changed) if args.apply else 0,
+                runtime_version=running['version_raw'])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='command', required=True)
     commands.add_parser('probe', help='read USB descriptors, version and execution mode')
     dump_parser = commands.add_parser('dump', help='read and verify the raw PD image twice')
     dump_parser.add_argument('file', type=Path)
-    dump_parser.add_argument('--fwupdtool', metavar='PATH', help='delegate mode changes and readback to fwupd')
+    backend = dump_parser.add_mutually_exclusive_group()
+    backend.add_argument('--fwupdtool', metavar='PATH', help='delegate mode changes and readback to fwupd')
+    backend.add_argument('--maintenance', action='store_true', help='enter VL105 ROM, dump, and return to runtime')
     commands.add_parser('inspect', help='check an offline raw VL105 PD image').add_argument('file', type=Path)
     install = commands.add_parser('flash', help='install a board-matched OEM CAB using fwupdmgr')
     install.add_argument('file', type=Path)
     install.add_argument('--sha256', required=True, help='expected digest from the package provider')
     install.add_argument('--fwupdmgr', default='fwupdmgr', help='executable on PATH or absolute path')
+    raw = commands.add_parser('flash-raw', help='compare or program a board-matched raw VL105 PD image')
+    raw.add_argument('file', type=Path)
+    raw.add_argument('--backup', type=Path, required=True, help='verified dump of the current device')
+    raw.add_argument('--apply', action='store_true', help='program changed sectors after comparison')
     args = parser.parse_args()
     if args.command == 'inspect':
         result = inspect_image(args.file.read_bytes())
@@ -241,6 +422,8 @@ def main():
         result = export(args)
     elif args.command == 'flash':
         result = install_cab(args)
+    elif args.command == 'flash-raw':
+        result = flash_raw(args)
     else:
         with cable_reader() as read:
             result = probe(read)

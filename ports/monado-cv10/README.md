@@ -2,6 +2,8 @@
 
 本目录的 `cv10.patch` 适用于 Monado 提交 `ce2b721eb4ffcbd726fb88357625f55871a8f262`。定制运行时包名为 `org.cv10.monado.out_of_process`，可与官方 `org.freedesktop.monado.openxr_runtime.out_of_process` 共存。在 Khronos OpenXR Runtime Broker 中选择 **Monado CV10** 使用定制版，选择 **Monado XR** 恢复官方版。[Monado 固定源码](https://gitlab.freedesktop.org/monado/monado/-/tree/ce2b721eb4ffcbd726fb88357625f55871a8f262)
 
+Fold7 当前安装的是 MAILBOX 版，启动器与 Broker 均使用 **Monado CV10**。从固定上游提交依次应用 `cv10.patch`、`framevote90.patch`、`primary-mailbox.patch`、`launcher-name.patch` 后构建。最后一个补丁让启动 Activity 继承应用名。本地已安装产物为 `resources/Monado-CV10-primary-mailbox-named-arm64.apk`，SHA-256 为 `ee7a8f1d7e4124a381d32a4cef13aac36c19e5b8f3a98961b81c104b392da41c`。与上一版 MAILBOX 安装包对照，只有 AndroidManifest.xml 的内容发生变化。
+
 定制 HMD 驱动读取 `12d1:107e` 的头显 IMU，向 OpenXR 提供旋转姿态。头显未连接、USB 授权缺失或报告中断时，应用应检查返回的姿态有效标志。外屏路径按名称识别 `HUAWEIAV03`，使用 3200×1600 左右两个视区及相反的逐眼旋转。当前对称视场和镜间距为开发用参数，光学畸变与个体标定仍待测量。
 
 ## 从固定源码构建
