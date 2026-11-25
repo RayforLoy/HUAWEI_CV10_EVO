@@ -49,3 +49,21 @@
 3. `handleHelmetUp`（`0x1D2CF4`）检查需初始化且未进入 VR 模式，广播佩戴状态并调用开屏 JNI。只有收到完整的开启回显才调用 `VRService.init`（`0x1D303C`）。后者设置手机 VR 模式并开始 Android 环境适配，包括唤醒默认显示、设置海思 VR 系统属性、处理锁屏/熄屏，随后绑定桌面客户端。这里没有第二条直接发给头显的开屏 AT 命令。
 
 07 号包的 `lib/armeabi-v7a/libvrservice.so` 提供可供互操作比对的 HID 入口，地址为 ELF 虚拟地址。原厂 `IoGetProximityStatus`（`0x7B1C`）和 `IoGetBrightnessStatus`（`0x7EF4`）分别以 `04`、`0A` 初始化一个字节的缓冲区，然后调用 `ioctl(fd, 0xC0014807, buf)` 读取 feature report。`IoOpenProximity`（`0x8188`）使用 HID 设置缓冲区 `05 04 00 00 00`，`IoSetBrightness`（`0x8408`）使用 `03 <0–9>`。这几组字节描述原厂主机的 ioctl 接口。USB 侧的端点、report 长度、ID 是否由驱动代为处理，应由目标的描述符和抓包验证。亮度读数亦不能替代实际背光或视频输出的观测。
+
+### 固件怎样处理 HID feature report
+
+后续沿设备端回调核对了上述 ioctl 对应的 USB 数据格式。在 10.0.1.357 的固件中，HID 类请求 9（SET_REPORT）进入文件偏移 `0x55FCD`，按 setup 的 wLength 接收 EP0 数据。完成回调在 `0x56337` 将普通 5 字节报文的缓冲区原样送入 `usb_message_recv`，`receive_hid_cmd`（`0x64DF9`）按数据首字节分派。值 5 和 6 分别进入启用与停用传感器的处理器，第二字节交给 `0x64D11` 选择传感器。对普通报文而言，report ID 确实位于 USB 数据的第一个字节。GET_REPORT 则在 `0x55FF3` 从 setup 的 wValue 低字节取 ID。固件对查询 04（接近）和 0A（亮度）都要求 wLength 等于 1，直接返回状态字节。接近查询和背光条件读取同一函数（`0x71629`），亮度查询读取的是软件缓存（`0x72A79`）。
+
+01 号 APK 的 `assets/arm64-v8a/libvrpose.so` 中，`HelmetPose::start` 在 ELF VA `0x15230` 构造 `Wallex`。同包 `libWalleDev.so` 的 `Wallex::onSartGlass` 在 `0x19A04` 传入掩码 2；`ioActiveDev`（`0x168D4`）生成 `05 02 00 00 00`，对称停用路径 `ioDeactiveDev`（`0x16A20`）生成 `06 02 00 00 00`。固件侧 `receive_hid_cmd` 对应地将第二字节的 0x02 映射为内部传感器编号 0x0F。另一类 `Walle` 的调用点传 0x7F，会在库中被掩为 0x7E。
+
+`Wallex::onGlassSensorEvent` 在 `0x1A08C` 按当前记录的首字节分派，值 1 交给 IMU 解析器，值 2 是接近事件。`Wallex::processImuEvent`（`0x19C24`）要求至少 60 字节，从记录偏移 4 复制 56 字节，并检查记录偏移 12、28 的两个小端 32 位字段分别为 0、1。这可用于核对采样；USB interrupt 包和库收到的记录之间是否有额外封装，需用实测原始字节对齐。
+
+在该 60 字节 IMU 记录中，以开头的 `01` 为偏移 0，Wallex 解析器按下表取值。浮点均为小端 IEEE-754 float32。解析函数内部对加速度和角速度三轴分别做标量乘法。
+
+| 偏移 | 字段 | 原厂解析 |
+| --- | --- | --- |
+| 4、8 | 设备时间戳，高 32 位、低 32 位各自小端 | `(uint64(high) << 32) + low`，单位纳秒；在 VA `0x19E08` 合成并除以 1e9 得到秒 |
+| 12、16/20/24 | 标签 0，三轴加速度 | 原始单位 g，在 VA `0x19D84` 起将三轴乘以 9.8 得到 m/s² |
+| 28、32/36/40 | 标签 1，三轴角速度 | 原始单位 °/s，在 VA `0x19DB8` 起将三轴乘以约 0.0174532924 得到 rad/s |
+
+静置时可将加速度原始范数与 1 g、角速度与零比较。用相邻设备时间戳之差统计实际采样周期，另记录 USB 到达时间以识别主机批量调度。

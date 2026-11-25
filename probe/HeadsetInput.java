@@ -10,6 +10,7 @@ import android.hardware.usb.UsbRequest;
 import android.os.SystemClock;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
@@ -89,7 +90,8 @@ final class HeadsetInput {
     private static Capture collect(UsbDeviceConnection c, UsbEndpoint ep) {
         Map<Integer, Integer> lengths = new TreeMap<>();
         Map<Integer, Integer> ids = new TreeMap<>();
-        ByteBuffer buffer = ByteBuffer.allocateDirect(ep.getMaxPacketSize());
+        ByteBuffer buffer = ByteBuffer.allocateDirect(ep.getMaxPacketSize()).order(ByteOrder.LITTLE_ENDIAN);
+        ImuStats imu = new ImuStats();
         String first = "";
         String status = "complete";
         long start = SystemClock.elapsedRealtimeNanos();
@@ -125,12 +127,14 @@ final class HeadsetInput {
                 lengths.put(length, lengths.getOrDefault(length, 0) + 1);
                 if (length == 0) continue;
                 int id = buffer.get(0) & 0xff;
+                if (id == 1 && length == 60) imu.add(buffer);
                 ids.put(id, ids.getOrDefault(id, 0) + 1);
                 lastNs = SystemClock.elapsedRealtimeNanos();
                 if (reports++ == 0) {
                     firstNs = lastNs;
                     StringBuilder prefix = new StringBuilder();
-                    for (int k = 0; k < Math.min(16, length); k++)
+                    int previewLength = id == 1 && length == 60 ? 44 : Math.min(16, length);
+                    for (int k = 0; k < previewLength; k++)
                         prefix.append(String.format(Locale.ROOT, "%02x", buffer.get(k) & 0xff));
                     first = prefix.toString();
                 }
@@ -141,7 +145,39 @@ final class HeadsetInput {
         double hz = reports > 1 && lastNs > firstNs ? (reports - 1) * 1e9 / (lastNs - firstNs) : 0;
         return new Capture(String.format(Locale.ROOT,
                 "reports=%d elapsed_ms=%d rate_hz=%.1f lengths=%s first_byte_ids_dec=%s first_prefix=%s status=%s",
-                reports, (SystemClock.elapsedRealtimeNanos() - start) / 1000000, hz, lengths, ids, first, status),
+                reports, (SystemClock.elapsedRealtimeNanos() - start) / 1000000, hz, lengths, ids, first, status)
+                        + imu.summary(),
                 reports == 0 && "deadline".equals(status));
+    }
+
+    private static final class ImuStats {
+        int count, clockBreaks;
+        long first, last;
+        double acceleration, angularVelocity;
+
+        void add(ByteBuffer b) {
+            if (b.getInt(12) != 0 || b.getInt(28) != 1) return;
+            double a = magnitude(b, 16), w = magnitude(b, 32);
+            if (!Double.isFinite(a) || !Double.isFinite(w)) return;
+            // Wallex encodes a nanosecond timestamp as two LE words, high word first.
+            long ns = ((long)b.getInt(4) << 32) | Integer.toUnsignedLong(b.getInt(8));
+            if (count == 0) first = ns;
+            else if (ns <= last) clockBreaks++;
+            last = ns;
+            acceleration += a;
+            angularVelocity += w;
+            count++;
+        }
+
+        private double magnitude(ByteBuffer b, int offset) {
+            return Math.hypot(Math.hypot(b.getFloat(offset), b.getFloat(offset + 4)), b.getFloat(offset + 8));
+        }
+
+        String summary() {
+            if (count == 0) return "";
+            double hz = clockBreaks == 0 && last > first ? (count - 1) * 1e9 / (last - first) : Double.NaN;
+            return String.format(Locale.ROOT, " imu=%d device_hz=%.1f clock_breaks=%d mean_g=%.3f mean_deg_s=%.3f",
+                    count, hz, clockBreaks, acceleration / count, angularVelocity / count);
+        }
     }
 }
