@@ -243,6 +243,44 @@
       "SWITCHSCREEN=1": "^SWITCHSCREEN=1 / OK",
       "QUERYEXCEPTION": 0
     },
+    "pcui_usb_interface": {
+      "class_subclass_protocol_hex": [
+        "FF",
+        "13",
+        "12"
+      ],
+      "bulk_out": "01",
+      "bulk_in": "81"
+    },
+    "lcd_query": {
+      "left": {
+        "time_local": "09:27:13",
+        "seconds": 3.011,
+        "reply": "READ LCD timeout!"
+      },
+      "right": {
+        "time_local": "09:27:16",
+        "seconds": 3.01,
+        "reply": "READ LCD timeout!"
+      },
+      "QUERYEXCEPTION_after": 0
+    },
+    "other_pcui_readbacks": {
+      "RUNMODE": "NO PERMISSION",
+      "EARCHECK": "NO PERMISSION"
+    },
+    "esc_event_correlation": {
+      "logs": [
+        "TerminalServices-LocalSessionManager/Operational",
+        "RemoteDesktopServices-RdpCoreTS/Operational"
+      ],
+      "local_windows": [
+        "03:03–03:14",
+        "09:09–09:20"
+      ],
+      "events_in_either_window": 0,
+      "input_source": "unknown"
+    },
     "ddc_ci_power_vcp_d6_win32_error": {
       "read_before": 31,
       "set_on": 31,
