@@ -290,6 +290,7 @@ def probe(vendor, scratch, override, controllers):
         finally:
             unregister()
         print("destroyed session and unregistered callbacks", flush=True)
+        return parameters.raw
 
 
 def main():
@@ -299,6 +300,7 @@ def main():
     mode.add_argument("--parameters", type=Path, help="Use a 2112-byte slam-params.bin for GET_SLAM_PARAMS")
     mode.add_argument("--controllers", action="store_true", help="Exercise the left and right hand tracking module")
     parser.add_argument("--config-xml", type=Path, help="Use a supplied OEM tracking configuration XML")
+    parser.add_argument("--export-config", type=Path, help="Write the OEM XML decoder's binary output to a new file")
     args = parser.parse_args()
     if os.name != "nt" or c.sizeof(c.c_void_p) != 8:
         raise SystemExit("This probe requires 64-bit Windows Python.")
@@ -316,6 +318,9 @@ def main():
         if actual != expected:
             raise SystemExit(f"Unexpected {name} version: {actual}")
     original_directory = Path.cwd()
+    destination = args.export_config.absolute() if args.export_config else None
+    if destination is not None and destination.exists():
+        parser.error("--export-config must name a new file")
     with tempfile.TemporaryDirectory(prefix="cv10-head-slam-") as scratch:
         scratch = Path(scratch)
         config_directory = scratch / "steamVRDriver/huaweiVR/bin/win64"
@@ -323,9 +328,12 @@ def main():
         shutil.copyfile(config_xml, config_directory / "vrglass-handler.xml")
         os.chdir(scratch)
         try:
-            probe(vendor, scratch, override, args.controllers)
+            config = probe(vendor, scratch, override, args.controllers)
         finally:
             os.chdir(original_directory)
+    if destination is not None:
+        with destination.open("xb") as file:
+            file.write(config)
 
 
 if __name__ == "__main__":

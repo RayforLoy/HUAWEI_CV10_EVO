@@ -697,10 +697,10 @@ index 0000000..3492455
 +cv10_controller_create(void);
 diff --git a/src/xrt/targets/openxr_android/src/main/cpp/cv10_kit_slam.cpp b/src/xrt/targets/openxr_android/src/main/cpp/cv10_kit_slam.cpp
 new file mode 100644
-index 0000000..535917e
+index 0000000..60c258a
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/cpp/cv10_kit_slam.cpp
-@@ -0,0 +1,410 @@
+@@ -0,0 +1,610 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +#if defined(__ANDROID__) && defined(__aarch64__)
 +#include <jni.h>
@@ -717,10 +717,12 @@ index 0000000..535917e
 +#include <cstring>
 +#include <memory>
 +#include <new>
++#include <vector>
 +
 +namespace {
 +
 +constexpr size_t parameter_size = 0x840;
++constexpr size_t hand_parameter_size = 0x1c38;
 +constexpr int image_width = 640;
 +constexpr int image_height = 480;
 +constexpr int image_bytes = image_width * image_height;
@@ -771,7 +773,8 @@ index 0000000..535917e
 +	void *unused_40[2];
 +	int (*stop)(void *);
 +	int (*deinit)(void *);
-+	void *unused_60[2];
++	int (*set)(void *, const char *, size_t, const void *);
++	void *unused_68;
 +	int (*push)(void *, Packet *);
 +	int (*get)(void *, Packet *);
 +	void *unused_80[4];
@@ -976,9 +979,206 @@ index 0000000..535917e
 +	}
 +
 +	int
-+	pose(uint8_t (&pose)[0x38])
++	pose(uint8_t (&pose)[0x38], uint64_t ns = 0)
 +	{
-+		Packet packet("fmt:pose@org:slam", sizeof(pose), 0, pose);
++		Packet packet("fmt:pose@org:slam", sizeof(pose), ns, pose);
++		return module->get(instance, &packet);
++	}
++};
++
++struct HandImuPayload {
++	uint8_t valid = 1;
++	char side;
++	uint8_t padding[6] = {};
++	uint64_t ns;
++	float axes[6];
++	float quaternion[4] = {1, 0, 0, 0};
++};
++
++struct HandImu : PacketOwner {
++	HandImuPayload payload;
++	Packet packet;
++
++	HandImu(bool right, uint64_t ns, const std::array<float, 6> &axes)
++	    : payload{1, right ? '1' : '0', {}, ns, {axes[0], axes[1], axes[2], axes[3], axes[4], axes[5]}},
++	      packet{"fmt:imu@org:controller", sizeof(payload), ns, &payload, this}
++	{}
++};
++
++struct HandStereoPayload {
++	uint32_t count = 2;
++	uint32_t padding = 0;
++	std::vector<ImagePayload *> images;
++	alignas(8) uint8_t head_pose[0x38];
++	const Module *head_interface;
++	void *head_instance;
++};
++
++struct HandStereo : PacketOwner {
++	uint8_t pixels[2][image_bytes];
++	ImagePayload images[2];
++	HandStereoPayload payload;
++	Packet packet;
++
++	HandStereo(uint64_t ns, uint32_t frame, int exposure_us, const uint8_t (&head_pose)[0x38],
++	           const Session *head_session)
++	    : images{{frame, ns, exposure_us, pixels[0]}, {frame, ns, exposure_us, pixels[1]}},
++	      payload{2, 0, {&images[0], &images[1]}, {}, head_session ? head_session->module : nullptr,
++	              head_session ? head_session->instance : nullptr},
++	      packet{image_format, sizeof(payload), ns, &payload, this}
++	{
++		std::memcpy(payload.head_pose, head_pose, sizeof(payload.head_pose));
++	}
++};
++
++struct HandPose {
++	char side;
++	uint8_t padding[3];
++	uint32_t state;
++	float position[3];
++	float quaternion[4];
++	uint8_t extra[0x30];
++};
++
++static_assert(sizeof(HandImuPayload) == 0x38 && offsetof(HandImuPayload, axes) == 0x10);
++static_assert(sizeof(HandStereoPayload) == 0x68 && offsetof(HandStereoPayload, head_pose) == 0x20);
++static_assert(sizeof(HandPose) == 0x54 && offsetof(HandPose, quaternion) == 0x14);
++
++template <size_t Capacity>
++struct HandPackets {
++	std::array<Packet *, Capacity> pending{};
++
++	bool
++	hold(Packet &packet)
++	{
++		for (auto &slot : pending) {
++			if (slot && static_cast<PacketOwner *>(slot->owner)->references.load(std::memory_order_acquire) == 1) {
++				release(nullptr, slot);
++				slot = nullptr;
++			}
++			if (!slot) {
++				slot = &packet;
++				return true;
++			}
++		}
++		return false;
++	}
++
++	unsigned
++	clear_after_shutdown()
++	{
++		unsigned unreleased = 0;
++		for (auto &slot : pending) {
++			if (!slot) continue;
++			auto *owner = static_cast<PacketOwner *>(slot->owner);
++			unreleased += owner->references.load(std::memory_order_relaxed) > 1;
++			delete owner;
++			slot = nullptr;
++		}
++		return unreleased;
++	}
++};
++
++struct HandSession {
++	const Module *module = nullptr;
++	void *instance = nullptr;
++	bool registered = false;
++	bool initialized = false;
++	bool started = false;
++	std::array<uint8_t, hand_parameter_size> parameters;
++	Callbacks callbacks{this, set_config, get_config, retain, release, ignore_packet, ignore_packet};
++	HandPackets<512> imu_inputs;
++	HandPackets<32> stereo_inputs;
++	unsigned unreleased_inputs = 0;
++
++	static int64_t
++	get_config(void *context, const char *key, size_t size, void *value)
++	{
++		if (!key || !value) return -1;
++		if (size == 1 && std::strcmp(key, "HSDK_CONFIG_MANAGER_IMPL_GET_CHECK_VALID") == 0) {
++			*static_cast<uint8_t *>(value) = 1;
++			return 1;
++		}
++		const auto &parameters = static_cast<HandSession *>(context)->parameters;
++		if (size != parameters.size() || std::strcmp(key, "HSDK_CONFIG_MANAGER_IMPL_GET_VR_6_DOF_HANDLER_CONFIG") != 0) {
++			return -1;
++		}
++		std::memcpy(value, parameters.data(), size);
++		return size;
++	}
++
++	const char *
++	open(const Module *interface, int &status, const char *model = nullptr)
++	{
++		module = interface;
++		if (!module || module->tag != 0x00000001abcd2012ULL || !module->name ||
++		    std::strcmp(module->name, "VR6Dof") != 0 || !module->create || !module->destroy ||
++		    !module->init || !module->start || !module->stop || !module->deinit || !module->push ||
++		    !module->get || !module->register_callbacks || !module->unregister_callbacks || (model && !module->set)) {
++			return "Unsupported hand-tracking interface";
++		}
++		module->register_callbacks(&callbacks);
++		registered = true;
++		instance = module->create("fmt:yuv@res:480p@rot:0;fmt:imu@org:helmet;fmt:imu@org:controller;fmt:pose@org:slam",
++		                          "fmt:pose@org:vr6dof");
++		if (!instance) return "Hand tracking could not create a session";
++		if (model) {
++			status = module->set(instance, "fmt:ai_path@org:vr6dof", std::strlen(model), model);
++			if (status < 0) return "Hand tracking model path";
++		}
++		status = module->init(instance);
++		if (status != 0) return "Hand tracking init";
++		initialized = true;
++		status = module->start(instance);
++		if (status != 0) return "Hand tracking start";
++		started = true;
++		return nullptr;
++	}
++
++	int
++	close()
++	{
++		int stop_status = started ? module->stop(instance) : 0;
++		int deinit_status = initialized ? module->deinit(instance) : 0;
++		if (instance) module->destroy(instance);
++		if (registered) module->unregister_callbacks();
++		// The PC sample keeps a reference to its last queued frame after the workers have stopped.
++		unreleased_inputs += imu_inputs.clear_after_shutdown() + stereo_inputs.clear_after_shutdown();
++		instance = nullptr;
++		started = initialized = registered = false;
++		return stop_status != 0 ? stop_status : deinit_status;
++	}
++
++	~HandSession() { close(); }
++
++	int
++	push_imu(bool right, uint64_t ns, const std::array<float, 6> &axes)
++	{
++		auto *sample = new (std::nothrow) HandImu(right, ns, axes);
++		if (!sample) return -12;
++		return push(imu_inputs, sample->packet);
++	}
++
++	int
++	push_stereo(HandStereo *stereo)
++	{
++		return push(stereo_inputs, stereo->packet);
++	}
++
++	template <size_t Capacity>
++	int
++	push(HandPackets<Capacity> &pool, Packet &packet)
++	{
++		if (pool.hold(packet)) return module->push(instance, &packet);
++		release(nullptr, &packet);
++		return -11;
++	}
++
++	int
++	poses(std::vector<HandPose> &data, uint64_t ns)
++	{
++		data.resize(2);
++		Packet packet("fmt:pose@org:vr6dof", sizeof(data), ns, &data);
 +		return module->get(instance, &packet);
 +	}
 +};

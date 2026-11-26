@@ -11,8 +11,8 @@
 
 | APK | 包名 | SHA-256 |
 | --- | --- | --- |
-| [Cv10ControllerProbe.apk](dist/Cv10ControllerProbe.apk) | `org.cv10.controllerprobe` | `11a7639c0d5a9b6b4e767769f82b7ca6e3dd2d01a568105ee9070241e720499d` |
-| [Monado-CV10-Controller-arm64-v8a.apk](dist/Monado-CV10-Controller-arm64-v8a.apk) | `org.cv10.monado.out_of_process` | `a0fa951534017bfa09875ecbfd2b0fcf7ba461e7dd71b187f665e9a1e09060d8` |
+| [Cv10ControllerProbe.apk](dist/Cv10ControllerProbe.apk) | `org.cv10.controllerprobe` | `521cc67971122d289c19a9e1a3fa0020066e0138b662897375f5cf6f3106ad12` |
+| [Monado-CV10-Controller-arm64-v8a.apk](dist/Monado-CV10-Controller-arm64-v8a.apk) | `org.cv10.monado.out_of_process` | `863b15d6aab93a06f89e8a116d57af83de1b75fddeacea814ef00cb34e16a9a1` |
 
 两个 APK 均为本地调试构建，最低 Android API 26。本机校验证书 SHA-256 为 `68365fa0904432aaa86a8904c691f9e6487414dc959786d72831a083b9f23fca`。运行时覆盖安装需要与已安装的 APK 签名一致。独立诊断 APK 可与运行时并存。两包已通过 `apksigner verify` 和 `zipalign -c -P 16 4`，运行时包含 `arm64-v8a`。当前工作树未进行真机安装、配对、USB／相机采样或 OpenXR 验收。
 
@@ -36,12 +36,15 @@ python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --control
 python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --controllers --config-xml <原厂_Android_vrglass.xml>
 ```
 
-要核验两份 APK 共用的 C++ 适配层，可在 x64 Native Tools Command Prompt 中运行下列命令。原厂 Windows DLL 的 SHA-256 应为 `6d89d332acfe86f9a9a3309a913de6d6cb8f0da2f49b46f60b96a07599283a7d`。
+用 `--export-config <新文件>` 可保存 PC 助手从 XML 生成的二进制配置。手柄配置大小为 7224 字节。该文件取自所选 XML 的标定值。
+
+要核验 Android 头显适配层和双手 C++ 数据接口，可在 x64 Native Tools Command Prompt 中运行下列命令。原厂 Windows `arvr_slam.dll` 和 `HandlerDLL.dll` 的 SHA-256 分别为 `6d89d332acfe86f9a9a3309a913de6d6cb8f0da2f49b46f60b96a07599283a7d` 和 `0269d56389e7c107cb46f668ca48e789befc07fc236c04ed00867eab0ef98451`。
 
 ```powershell
 New-Item -ItemType Directory -Force .\controller\build | Out-Null
 cl /nologo /EHsc /std:c++17 .\controller\probe\HeadSlamAbi.cpp /Fo:controller\build\HeadSlamAbi.obj /Fe:controller\build\HeadSlamAbi.exe
 .\controller\build\HeadSlamAbi.exe <原厂_arvr_slam.dll> <slam-params.bin>
+.\controller\build\HeadSlamAbi.exe <原厂_HandlerDLL.dll> <hand-config.bin> --controllers
 ```
 
 ## 从源码重建

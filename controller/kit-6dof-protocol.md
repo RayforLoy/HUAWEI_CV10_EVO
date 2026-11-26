@@ -193,6 +193,8 @@ Android `VCtrlThread::PushVCtrlData`（`0xc4b04–0xc5038`）用 `fmt:yuv@res:48
 
 Windows 离线探针分别使用 PC 原厂默认 XML 与 Android APK 的 `assets/vrglass.xml`，两份配置均初始化两路相机和两只手柄。无图像时查询返回 `-1`。加入覆盖两帧时间的双手 IMU 后，两组带合成头部位姿的空白双目帧都由 `+0x70` 接受，随后的查询返回 `0`。两种查询下，两条 `0x54` 字节的记录均保留 ASCII `0`、`1` 标识，`+0x04` 的左右状态均为 `255`。Android `ArvrRuntimeModuleManager::UpdateCtrlPos` 在 `0x922bc–0x922c8` 拒绝该状态，随后从 `+0x08` 读取 f32 位置 `xyz`，从 `+0x14` 读取 f32 四元数 `wxyz`。探针同时核对查询返回码、标识和每只手柄的状态。
 
+[C++ ABI 探针](probe/HeadSlamAbi.cpp) 也用同一原厂 Windows 手柄库和由 Android XML 生成的 7224 字节配置完成回放。88 条惯性记录和两组双目被接收，双手状态为 `255/255`。原厂库销毁并注销回调后仍留有一个输入引用。适配层分别限制惯性与图像缓冲池的大小，已释放的输入可在采样期间回收，余下缓冲在销毁会话后回收。Windows 探针核对两个模块退出时的输入分配数为零。
+
 `libarvr_slam.so` 的 ELF `DT_NEEDED` 只列出 Android 平台库。手柄库 `libVR6Dof.so` 另外链接 `libhiai.so`、`libhiai_ir.so`、`libhcl.so` 和 `libhiai_hcl_model_runtime.so`。Android 还在初始化前通过 `+0x60` 以 `fmt:ai_path@org:vr6dof` 设置 `SDmmm1_fp16_480_640.om` 的路径（`0xc6508`、`0xc6620–0xc6634`）。手柄库的 `BlobDetection::DetectBlobs`（`0x13a7a8`）和 `P3PSolver::CalcPose`（`0x1a3d2c`）分别是斑点检测和位姿求解入口。Android 左右手光学定位仍待接入。
 
 待核实 Fold7 上的相机与 HID 可用性、图像与惯性时间的偏差、头显及双手位姿和 OpenXR 6DoF 输出。
