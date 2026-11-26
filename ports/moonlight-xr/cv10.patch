@@ -1,0 +1,49 @@
+diff --git a/app/build.gradle b/app/build.gradle
+index bb9a2c0..f437d34 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@ -198,13 +198,17 @@ android {
+         }
+ 
+         nonRoot {
++            ndk {
++                abiFilters 'arm64-v8a'
++            }
++
+             externalNativeBuild {
+                 ndkBuild {
+                     arguments "PRODUCT_FLAVOR=nonRoot"
+                 }
+             }
+ 
+-            applicationId "com.gilleece.moonlightxr"
++            applicationId "org.cv10.moonlightxr"
+             dimension "root"
+             buildConfigField "boolean", "ROOT_BUILD", "false"
+         }
+@@ -268,9 +272,7 @@ android {
+                     'proguard-rules.pro', 'proguard-rules-debug.pro'
+         }
+         release {
+-            // This fork ships under its own applicationId, so the unofficial
+-            // suffix upstream asks forks to keep is no longer needed.
+-            resValue "string", "app_label", "Moonlight XR"
++            resValue "string", "app_label", "Moonlight XR CV10"
+             resValue "string", "app_label_root", "Moonlight XR (Root)"
+ 
+             if (canSign) {
+diff --git a/app/proguard-rules.pro b/app/proguard-rules.pro
+index aa6ffd3..cecb81e 100644
+--- a/app/proguard-rules.pro
++++ b/app/proguard-rules.pro
+@@ -7,6 +7,10 @@
+ # Moonlight common
+ -keep class com.limelight.nvstream.jni.* {*;}
+ 
++# Monado loads its Kotlin Android callbacks in the client process. These
++# callbacks resolve the app's Intrinsics class through the parent loader.
++-keep class kotlin.jvm.internal.Intrinsics { *; }
++
+ # LiteRT GPU delegate, loaded by name from native code. The runtime AAR
+ # ships its own rules, the GPU one does not.
+ -keep class org.tensorflow.lite.gpu.** {*;}

@@ -10,6 +10,7 @@
 | --- | --- | --- |
 | Monado CV10 运行时 | [v0.1.3 源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.3/README.md)，本地位于 `ports/Monado_CV10` | [v0.1.3 发行版](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3)，Fold7 选择 arm64-v8a |
 | PiliPlus Monado 播放器 | [源码与移植提交](https://github.com/RayforLoy/piliplus_monado)，本地位于 `ports/piliplus_monado` | 在子模块内运行 `python build.py`，产物为 `dist/PiliPlus-CV10.apk` |
+| Moonlight XR CV10 串流客户端 | [源码补丁、构建及实机记录](ports/moonlight-xr/README.md) | 构建 `nonRootRelease` 的 arm64-v8a APK。正常退出及重进已使用带卸载修复的 Monado 预览包验证 |
 
 新电脑运行以下命令，获取主项目及对应版本的两个子模块：
 
