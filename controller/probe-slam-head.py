@@ -92,17 +92,8 @@ def feed_head_samples(push, get, session, lifetime):
         raise RuntimeError("Expected no pose from blank stereo and synthetic IMU")
 
 
-def feed_hand_samples(push, get, session, lifetime):
-    for ns in (1_000_000_000, 1_004_000_000, 1_008_000_000):
-        for side, label in ((ord("0"), "left"), (ord("1"), "right")):
-            payload = c.create_string_buffer(0x38)
-            struct.pack_into("<BB6xQ10f", payload, 0, 1, side, ns, 0, 0, 9.8, 0, 0, 0, 1, 0, 0, 0)
-            packet = AlgorithmData(HAND_IMU_FORMAT, len(payload), ns, c.addressof(payload), None)
-            lifetime.extend((payload, packet))
-            check_zero(f"push {label} IMU {ns}", push(session, c.byref(packet)))
-
-    # The pinned Windows ABI writes two trivially copyable records into this vector.
-    # Reserve both elements so the buffer stays owned by ctypes.
+def query_hand_pose(get, session, ns):
+    # Reserve space for the two trivially copyable Windows records inside the vector.
     pose_size = 0x54
     poses = c.create_string_buffer(2 * pose_size)
     first = c.addressof(poses)
@@ -114,9 +105,69 @@ def feed_hand_samples(push, get, session, lifetime):
         raise RuntimeError("Unexpected pose vector layout")
     sides = (poses.raw[0], poses.raw[pose_size])
     states = tuple(struct.unpack_from("<I", poses.raw, start + 4)[0] for start in (0, pose_size))
-    print(f"hand poses without images: {code} ({states[0]}, {states[1]})", flush=True)
-    if code != -1 or sides != tuple(b"01") or states != (255, 255):
-        raise RuntimeError("Expected an unsuccessful optical pose query with both hand records")
+    if sides != tuple(b"01") or states != (255, 255):
+        raise RuntimeError("Expected both hand records to have invalid optical poses")
+    return code, states
+
+
+def push_hand_imu(push, session, lifetime, timestamps):
+    count = 0
+    for ns in timestamps:
+        for side, label in ((ord("0"), "left"), (ord("1"), "right")):
+            payload = c.create_string_buffer(0x38)
+            struct.pack_into("<BB6xQ10f", payload, 0, 1, side, ns, 0, 0, 9.8, 0, 0, 0, 1, 0, 0, 0)
+            packet = AlgorithmData(HAND_IMU_FORMAT, len(payload), ns, c.addressof(payload), None)
+            lifetime.extend((payload, packet))
+            result = push(session, c.byref(packet))
+            if result != 0:
+                raise RuntimeError(f"Push {label} IMU at {ns} returned {result}")
+            count += 1
+    print(f"accepted {count} left/right IMU records", flush=True)
+
+def feed_hand_samples(push, get, session, lifetime):
+    push_hand_imu(push, session, lifetime, (1_000_000_000, 1_004_000_000, 1_008_000_000))
+    code, states = query_hand_pose(get, session, 1_008_000_000)
+    if code != -1:
+        raise RuntimeError(f"Unexpected pre-image hand pose query result: {code}")
+    print(f"hand poses before images: {code} {states}", flush=True)
+
+    # Cover the time of both image pairs with inertial data.
+    push_hand_imu(push, session, lifetime, range(1_012_000_000, 1_176_000_000, 4_000_000))
+
+    for index in range(2):
+        ns = 1_086_666_666 + index * 66_666_666
+        images = (c.c_void_p * 2)()
+        for camera in range(2):
+            image = c.create_string_buffer(0x60)
+            pixels = c.create_string_buffer(640 * 480)
+            struct.pack_into("<9I", image, 0, len(pixels) + len(image), 640, 480, 640,
+                             index + 1, 0, 1, 0, 0)
+            struct.pack_into("<d", image, 0x28, ns / 1e9)
+            struct.pack_into("<d", image, 0x38, 0.004)
+            struct.pack_into("<Q", image, 0x48, c.addressof(pixels))
+            images[camera] = c.addressof(image)
+            lifetime.extend((image, pixels))
+        begin = c.addressof(images)
+        end = begin + c.sizeof(images)
+        payload = c.create_string_buffer(0x68)
+        # The OEM checks each position coordinate and all three validity fields before processing images.
+        struct.pack_into("<I4xQQQdII7f", payload, 0, 2, begin, end, end, ns / 1e9,
+                         1, 1, 0.125, 1.25, -0.25, 1, 0, 0, 0)
+        payload[0x50] = b"\x01"
+        packet = AlgorithmData(IMAGE_FORMAT, len(payload), ns, c.addressof(payload), None)
+        lifetime.extend((images, payload, packet))
+        check_zero(f"push blank hand stereo {index + 1}", push(session, c.byref(packet)))
+
+    deadline = time.monotonic() + 1.0
+    while time.monotonic() < deadline:
+        time.sleep(0.025)
+        code, states = query_hand_pose(get, session, ns)
+        if code == 0:
+            print(f"hand poses after blank stereo: {code} {states}", flush=True)
+            return
+        if code != -1:
+            raise RuntimeError(f"Unexpected post-image hand pose query result: {code}")
+    raise RuntimeError("Hand pose query did not advance after stereo input")
 
 
 def probe(vendor, scratch, override, controllers):
@@ -239,6 +290,7 @@ def probe(vendor, scratch, override, controllers):
         finally:
             unregister()
         print("destroyed session and unregistered callbacks", flush=True)
+        return parameters.raw
 
 
 def main():
@@ -247,12 +299,15 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--parameters", type=Path, help="Use a 2112-byte slam-params.bin for GET_SLAM_PARAMS")
     mode.add_argument("--controllers", action="store_true", help="Exercise the left and right hand tracking module")
+    parser.add_argument("--config-xml", type=Path, help="Use a supplied OEM tracking configuration XML")
+    parser.add_argument("--export-config", type=Path, help="Write the OEM XML decoder's binary output to a new file")
     args = parser.parse_args()
     if os.name != "nt" or c.sizeof(c.c_void_p) != 8:
         raise SystemExit("This probe requires 64-bit Windows Python.")
     if c.sizeof(AlgorithmData) != 0x120 or c.sizeof(ImuData) != 0x20:
         raise SystemExit("Unexpected packet alignment.")
     vendor = args.stock_directory.resolve(strict=True)
+    config_xml = args.config_xml.resolve(strict=True) if args.config_xml else vendor / "vrglass-handler-default.xml"
     override = args.parameters.read_bytes() if args.parameters else None
     if override is not None and len(override) != 0x840:
         parser.error("--parameters must contain exactly 2112 bytes")
@@ -263,16 +318,22 @@ def main():
         if actual != expected:
             raise SystemExit(f"Unexpected {name} version: {actual}")
     original_directory = Path.cwd()
+    destination = args.export_config.absolute() if args.export_config else None
+    if destination is not None and destination.exists():
+        parser.error("--export-config must name a new file")
     with tempfile.TemporaryDirectory(prefix="cv10-head-slam-") as scratch:
         scratch = Path(scratch)
         config_directory = scratch / "steamVRDriver/huaweiVR/bin/win64"
         config_directory.mkdir(parents=True)
-        shutil.copyfile(vendor / "vrglass-handler-default.xml", config_directory / "vrglass-handler.xml")
+        shutil.copyfile(config_xml, config_directory / "vrglass-handler.xml")
         os.chdir(scratch)
         try:
-            probe(vendor, scratch, override, args.controllers)
+            config = probe(vendor, scratch, override, args.controllers)
         finally:
             os.chdir(original_directory)
+    if destination is not None:
+        with destination.open("xb") as file:
+            file.write(config)
 
 
 if __name__ == "__main__":

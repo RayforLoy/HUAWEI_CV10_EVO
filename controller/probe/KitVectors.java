@@ -53,6 +53,7 @@ final class KitVectors {
         Cv10KitReport.Hand right = Cv10KitReport.hand(report, true);
         check(left != null && right != null, "two hand records");
         check(left.clockTicks == 0x80000012L && left.clockMultiplier == 2 && right.clockTicks == 2345, "hand clocks");
+        check(left.deviceNs == 4_294_967_285_156L && right.deviceNs == 2_344_999L, "OEM hand nanosecond clock");
         check(left.buttons == Cv10KitReport.Hand.CONFIRM && right.buttons == Cv10KitReport.Hand.BACK,
                 "left and right button independence");
         check(left.batteryField == 88 && right.batteryField == 67, "hand battery fields");
@@ -106,10 +107,33 @@ final class KitVectors {
                 && decodedPose.x == 1 && decodedPose.y == 2 && decodedPose.z == -3
                 && decodedPose.qw == 0.5f && decodedPose.qx == -0.5f && decodedPose.qz == -0.5f,
                 "head pose clock, position, and quaternion order");
+        Cv10KitReport.HmdPose hmd = decodedPose.toHmd();
+        check(hmd != null, "valid calibrated HMD pose");
+        close(hmd.x, 0.9748725f, "HMD position X");
+        close(hmd.y, -3.0437151f, "HMD position Y");
+        close(hmd.z, -1.9541350f, "HMD position Z");
+        close(hmd.qx, 0.1825432f, "HMD orientation X");
+        close(hmd.qy, -0.8233996f, "HMD orientation Y");
+        close(hmd.qz, 0.1162928f, "HMD orientation Z");
+        close(hmd.qw, 0.5245636f, "HMD orientation W");
         pose.putInt(12, 0);
-        check(!Cv10KitReport.headPose(pose.array()).valid(), "head pose missing second state");
+        check(Cv10KitReport.headPose(pose.array()).toHmd() == null, "head pose missing second state");
         pose.putInt(12, 2).putFloat(0x20, Float.NaN);
         check(!Cv10KitReport.headPose(pose.array()).valid(), "head pose nonfinite quaternion");
+
+        ByteBuffer poses = ByteBuffer.allocate(2 * Cv10KitReport.HAND_POSE_BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        int rightPose = Cv10KitReport.HAND_POSE_BYTES;
+        poses.put(0, (byte) '0').putInt(4, 255).putFloat(20, 1);
+        poses.put(rightPose, (byte) '1').putFloat(rightPose + 8, 0.75f).putFloat(rightPose + 16, -0.25f)
+                .putFloat(rightPose + 20, 0.5f).putFloat(rightPose + 24, -0.5f)
+                .putFloat(rightPose + 28, 0.5f).putFloat(rightPose + 32, 0.5f);
+        check(Cv10KitReport.handPose(poses, 0, false) == null, "left hand 255 state is invalid");
+        check(Cv10KitReport.handPose(poses, rightPose, false) == null, "hand ID is required");
+        Cv10KitReport.HmdPose validHand = Cv10KitReport.handPose(poses, rightPose, true);
+        check(validHand != null && validHand.x == 0.75f && validHand.z == -0.25f &&
+                validHand.qx == -0.5f && validHand.qw == 0.5f, "right hand position and orientation");
+        poses.putFloat(rightPose + 20, Float.NaN);
+        check(Cv10KitReport.handPose(poses, rightPose, true) == null, "invalid hand quaternion");
 
         Cv10KitCalibration.Calibration android = Cv10KitCalibration.read(
                 new CalibrationLink(false, false), Cv10KitCalibration.Component.LOCATOR);
@@ -296,6 +320,32 @@ final class KitVectors {
         close(config.getFloat(0x5a8), 0.5f, "SLAM gyroscope misalignment");
         close(config.getFloat(0x5c8), -0.375f, "SLAM gyroscope bias");
         close((float) config.getDouble(0x5f0), 0.05f, "SLAM accelerometer bias noise");
+
+        byte[] hand = new byte[0x32c];
+        ByteBuffer handFields = ByteBuffer.wrap(hand).order(ByteOrder.LITTLE_ENDIAN);
+        putImu(handFields, 0x240, 250);
+        handFields.putDouble(0x58, 1).putDouble(0x60, 0.1).putDouble(0x98, -0.035)
+                .putDouble(0x218, -0.032).putDouble(0x240 + 0x3a, 0.125);
+        Cv10KitCalibration.HandCalibration left = Cv10KitCalibration.hand(hand);
+        handFields.putDouble(0x60, -0.11).putDouble(0x98, 0.037);
+        Cv10KitCalibration.HandCalibration right = Cv10KitCalibration.hand(hand);
+        byte[] template = new byte[Cv10KitHandParameters.SIZE];
+        ByteBuffer.wrap(template).order(ByteOrder.LITTLE_ENDIAN).putFloat(0x1b4, 0.9375f);
+        ByteBuffer optical = ByteBuffer.wrap(Cv10KitHandParameters.encode(template, bytes, cameras[0], imu,
+                left, right)).order(ByteOrder.LITTLE_ENDIAN);
+        close(optical.getFloat(0x7c), 251, "left accelerometer rate");
+        close(optical.getFloat(0x150), 0.125f, "left gyro unscaled misalignment");
+        close(optical.getFloat(0x1a8), -0.035f, "left first LED");
+        close(optical.getFloat(0x1a8 + 0xc18), 0.037f, "right first LED");
+        close(optical.getFloat(0x1b4), 0.9375f, "stock LED normal preserved");
+        close((float) optical.getDouble(0x830), -0.1f, "left IMU-to-handle translation");
+        close((float) optical.getDouble(0x830 + 0xc18), 0.11f, "right IMU-to-handle translation");
+        close((float) optical.getDouble(0x1868 + 0x40), 230, "hand stereo camera calibration");
+        close(optical.getFloat(0x1b14), 501, "actual locator accel rate for hand tracker");
+        close(optical.getFloat(0x1bd8), -0.05f, "hand head IMU calibration");
+        check(ByteBuffer.wrap(template).order(ByteOrder.LITTLE_ENDIAN).getFloat(0x1a8) == 0,
+                "hand calibration preserves the source model");
+
         fields.putDouble(imuStart + 0x22, 0);
         try {
             Cv10KitSlamParameters.encode(cameras, Cv10KitCalibration.locatorImu(locator));

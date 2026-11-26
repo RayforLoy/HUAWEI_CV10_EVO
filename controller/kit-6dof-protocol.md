@@ -38,7 +38,7 @@
 | 偏移 | 格式 | 解释 |
 | --- | --- | --- |
 | `0x00` | u8 位域 | bit 5 确认，bit 4 返回，bit 1 Home，bit 3 摇杆按下 |
-| `0x01` | u32 大端 | 手柄计时。原厂解码对非零倍率作乘法，再除以 `10⁶`；诊断保留原始计数和倍率 |
+| `0x01` | u32 大端 | 手柄计时。原厂先转 f32 并除以 `10⁶`，倍率非零时再用 f32 相乘，最后扩大为 f64 秒。诊断保留原始计数、倍率及送入位姿算法的截断纳秒值 |
 | `0x05/07/09` | s16 × 3 | 加速度，各轴乘 `0.0047884039` |
 | `0x0b/0d/0f` | s16 × 3 | 角速度，各轴乘 `0.0021305280` |
 | `0x11/13/15` | u16 × 3 | 三轴原始值，原厂缩放为 `(value - 32767) × 100 / 1024`，疑似磁传感器 |
@@ -167,7 +167,9 @@ Android `HxrAlgorithmData` 在 64 位程序中占 `0x120` 字节。前 `0x100` �
 
 实时查询使用 `fmt:pose@org:slam`，预测查询使用 `fmt:predictpose@org:slam`，两者为 `0x38` 字节输出缓冲。原厂预测时间在 `0xc05d0–0xc05ec` 计算为最后送入的 IMU 时间加上「请求时间（由微秒乘 1000）减当前 `CLOCK_MONOTONIC` 纳秒」的差。图像和 IMU 同时送入时均采用报文设备时间。两路设备时间实际偏差和 Fold7 的数据延迟仍需采样。
 
-`GetHelmetPosture` 在 `0x91af4–0x91b34` 检查查询返回值和 `0x08`／`0x0c` 两个 u32 状态，任一为零都进入无有效位姿分支。缓冲 `0x00` 为 f64 秒，`0x10` 为 3 个 f32 位置 `xyz`，`0x1c` 为 4 个 f32 四元数 `wxyz`。`0x91b08–0x91b20` 将其循环移位为 `xyzw`，随后使用 `UpdateHelmetCoordinate` 转换到头显坐标。诊断在返回值、状态、有限数和四元数模长均通过检查时显示原始 SLAM 坐标。格式和状态判断已用合成缓冲验证。
+`GetHelmetPosture` 在 `0x91af4–0x91b34` 检查查询返回值和 `0x08`／`0x0c` 两个 u32 状态，任一为零都进入无有效位姿分支。缓冲 `0x00` 为 f64 秒，`0x10` 为 3 个 f32 位置 `xyz`，`0x1c` 为 4 个 f32 四元数 `wxyz`。`0x91b08–0x91b20` 将其循环移位为 `xyzw`，随后使用 `UpdateHelmetCoordinate` 转换到头显坐标。
+
+`TransSlamCoord2Hmd`（`0x92914`）先将 SLAM 四元数右乘出厂对齐四元数 `(0.211309, 0.211309, 0.0468461, 0.953154)`，顺序为 `xyzw`。设结果为 `q`。从位置中减去 `q` 旋转后的偏移向量 `(-0.059, -0.029, 0.018)` 米。`coordToHMD`（`0xbb234`）将位置及四元数向量部的轴都重排为 `(x, z, -y)`，最后将四元数右乘绕 X 轴正 90° 的旋转。诊断同时显示 SLAM 坐标和此变换的头显坐标。合成向量覆盖偏移方向、轴重排、四元数乘法及无效状态。原厂 `UpdateHelmetCoordinate` 后续对偏航角及水平原点的重置独立于此转换。
 
 用 [Windows 离线探针](probe-slam-head.py) 在独立进程载入默认 XML，验证库可创建、初始化、启动、停止、清理及销毁。六条合成 IMU 数据和两组无特征的空白双目图都由 `+0x70` 返回 0。随后 `+0x78` 返回 `-1`，输出缓冲保持为零。此测试覆盖调用与数据入口。生成有效的视觉位姿仍需同步的真实输入。
 
@@ -177,14 +179,42 @@ Android `HxrAlgorithmData` 在 64 位程序中占 `0x120` 字节。前 `0x100` �
 
 实时诊断在同一轮中读取定位器校准、头显 HID 和外接 Y8。每组图像等待设备时钟达到该帧的 IMU 样本，再送入 SLAM。离线回放使用所选校准、合成 IMU 和空白图像。两种诊断都显示位姿查询结果。用 [Windows 共用适配层探针](probe/HeadSlamAbi.cpp) 将相同 C++ 代码编译到 x64，已用原厂 PC `arvr_slam.dll` 和 Android 格式校准完成回放，查询返回 `-1`、输出全零，关闭后所有输入缓冲均已释放。尚未在 Fold7 执行 Android 库加载或测得有效头显位姿。
 
+### Monado OpenXR 头显定位
+
+从套件页面显式启动相机前台服务。服务与 OpenXR 运行时共享应用进程，使用同一套 Y8、HID 和 SLAM 实现。在 HID 到达时间上估算定位器时钟到 Android 单调时钟的偏移，用样本间隔限制偏移的增长，筛掉时间超前或超过 250 毫秒的位姿。启用后的新运行时系统将头显的位姿标记为可跟踪位置。Monado 原生层轮询最新位姿并查询历史，未来时刻先保持最近位姿。断流或停止服务时，回到眼镜原有 USB IMU 旋转，清除位置有效标记。当前实现依赖系统公开外接 Y8，时间映射和实际跟踪性能待实测。[Android 相机前台服务要求](https://developer.android.com/develop/background-work/services/fgs/service-types#camera)
+
 ### 左右手柄位姿接口
 
 Android `VCtrlState::Init`（`0xc631c`）调用 `libVR6Dof.so` 的 `GetVR6DofInterface`（`0x14ba4c`），返回表 `0x636050`。Windows `HandlerDLL.dll` 的同名导出（RVA `0x3f5f0`）返回表 `0x16f940`。两表使用标记 `0x00000001abcd2012` 和名称 `VR6Dof`。创建、初始化、启停、回收、输入、查询和回调注册槽位与头显表的对应槽位相同。输入格式列表为 `fmt:yuv@res:480p@rot:0;fmt:imu@org:helmet;fmt:imu@org:controller;fmt:pose@org:slam`，输出为 `fmt:pose@org:vr6dof`。配置键 `HSDK_CONFIG_MANAGER_IMPL_GET_VR_6_DOF_HANDLER_CONFIG` 返回 `0x1c38` 字节，见 Android `VrConfiguration::GetValue` 中的 `0xba8a8–0xba8bc`。
 
 Android `VCtrlThread::PushCtrlIMU`（`0xc56f8`）把 `fmt:imu@org:controller` 送入 `HxrAlgorithmData`。其 `0x38` 字节载荷的 `0x00` 为 u8 有效标志，`0x01` 为左手 ASCII `0` 或右手 ASCII `1`，`0x08` 为 u64 纳秒时间，`0x10` 开始为六个 f32 惯性轴，`0x28` 开始为四个 f32，原厂填入 `(1, 0, 0, 0)`。`VCtrlThread::GetPosture`（`0xc5948`）将 `0x18` 字节的 64 位 `std::vector<HandlerPose>` 作为输出载荷交给 `+0x78`。查询返回值及每条姿态的状态需要共同检查。
 
-Windows 离线探针用原厂默认手柄校准完成初始化。左手和右手各送入三条合成 IMU 数据，均返回 0。无图像时查询返回 `-1`，两条 `0x54` 字节的手柄记录分别带 ASCII `0`、`1`，且 `+0x04` 的状态均为 `255`。Android `ArvrRuntimeModuleManager::UpdateCtrlPos` 在 `0x922bc–0x922c8` 拒绝状态 `255`，随后从 `+0x08` 读取 f32 位置 `xyz`，从 `+0x14` 读取 f32 四元数 `wxyz`。离线探针对查询返回码、双手标识和状态作回归检查。
+Android `VCtrlThread::PushVCtrlData`（`0xc4b04–0xc5038`）用 `fmt:yuv@res:480p@rot:0` 送入 `0x68` 字节的载荷。`+0x00` 是图像数量 u32（2），`+0x08/+0x10/+0x18` 为 `std::vector` 的首、尾及容量指针，元素直接指向两路各 `0x60` 字节的图像载荷。`CreateVCtrlInputImg`（`0xc51f8`）的布尔参数为真时从 `SlamImage+0x48` 取前半幅，先入队，再放从 `+0x50` 取的后半幅。图像载荷的 `+0x18` 为 A 帧标志，适配层沿用元数据字段为 0 时设置此位的原厂默认行为。`+0x20` 为按帧时间查询的 `0x38` 字节原始头显 SLAM 结果，`+0x58/+0x60` 为头部 SLAM 接口和实例指针。Windows 探针用合成头部位姿，两个 SLAM 指针留空。
 
-`libarvr_slam.so` 的 ELF `DT_NEEDED` 只列出 Android 平台库。手柄库 `libVR6Dof.so` 另外链接 `libhiai.so`、`libhiai_ir.so`、`libhcl.so` 和 `libhiai_hcl_model_runtime.so`。Android 还在初始化前通过 `+0x60` 以 `fmt:ai_path@org:vr6dof` 设置 `SDmmm1_fp16_480_640.om` 的路径（`0xc6508`、`0xc6620–0xc6634`）。手柄库的 `BlobDetection::DetectBlobs`（`0x13a7a8`）和 `P3PSolver::CalcPose`（`0x1a3d2c`）分别是斑点检测和位姿求解入口。Android 左右手光学定位仍待接入。
+Windows 离线探针分别使用 PC 原厂默认 XML 与 Android APK 的 `assets/vrglass.xml`，两份配置均初始化两路相机和两只手柄。无图像时查询返回 `-1`。加入覆盖两帧时间的双手 IMU 后，两组带合成头部位姿的空白双目帧都由 `+0x70` 接受，随后的查询返回 `0`。两种查询下，两条 `0x54` 字节的记录均保留 ASCII `0`、`1` 标识，`+0x04` 的左右状态均为 `255`。Android `ArvrRuntimeModuleManager::UpdateCtrlPos` 在 `0x922bc–0x922c8` 拒绝该状态，随后从 `+0x08` 读取 f32 位置 `xyz`，从 `+0x14` 读取 f32 四元数 `wxyz`。探针同时核对查询返回码、标识和每只手柄的状态。
 
-待核实 Fold7 上的相机与 HID 可用性、图像与惯性时间的偏差、头显及双手位姿和 OpenXR 6DoF 输出。
+[C++ ABI 探针](probe/HeadSlamAbi.cpp) 也用同一原厂 Windows 手柄库和由 Android XML 生成的 7224 字节配置完成回放。88 条惯性记录和两组双目被接收，双手状态为 `255/255`。原厂库销毁并注销回调后仍留有一个输入引用。适配层分别限制惯性与图像缓冲池的大小，已释放的输入可在采样期间回收，余下缓冲在销毁会话后回收。Windows 探针核对两个模块退出时的输入分配数为零。
+
+`libarvr_slam.so` 的 ELF `DT_NEEDED` 只列出 Android 平台库。手柄库 `libVR6Dof.so` 另外链接 `libhiai.so`、`libhiai_ir.so`、`libhcl.so` 和 `libhiai_hcl_model_runtime.so`。Android 还在初始化前通过 `+0x60` 以 `fmt:ai_path@org:vr6dof` 设置 `SDmmm1_fp16_480_640.om` 的路径（`0xc6508`、`0xc6620–0xc6634`）。手柄库的 `BlobDetection::DetectBlobs`（`0x13a7a8`）和 `P3PSolver::CalcPose`（`0x1a3d2c`）分别是斑点检测和位姿求解入口。两个 APK 从所选原厂 APK 提取并校验对应 ARM64 库、C++ 运行库和模型，保存到各自应用私有目录。加载时再次校验。原厂 `libc++_shared.so` 的 ELF `PT_LOAD` 对齐值为 `0x1000`，实际能否加载仍取决于 Android 环境。
+
+### 手柄模块逐机校准
+
+Android `VrConfiguration::GetValue` 从对象的 `+0x850` 复制出 `0x1c38` 字节。`DispatchHandleModulePara`（`0xb8638`）把定位器和手柄字段写入该区域。下表偏移相对于复制出的缓冲区。手柄模块使用默认模型模板，覆盖从三组 HID 校准中解出的字段。
+
+| 偏移 | 字段 |
+| --- | --- |
+| 每手 `0x7c/0x80/0x88/0x98` | f32 加速度计和陀螺仪采样率，f64 相机到 IMU 延时，f64 × 4 加速度计相对陀螺仪的 `xyzw` |
+| 每手 `0x118/0x11c/0x14c` | u32 IMU 补偿标志，以及各 12 个 f32 的加速度计和陀螺仪矩阵与偏置。矩阵对角线为比例，上三角为未缩放失准。末三项为原始偏置 |
+| 每手 `0x180/0x188/0x190/0x198` | f64 陀螺仪噪声、陀螺仪偏置、加速度计噪声、加速度计偏置的标准差 |
+| 每手 `0x1a4 + i × 0x1c` | LED 记录。首项为索引，后接 f32 位置 `xyz` 和 f32 法线。写入 16 个位置，保留模板索引、法线及包围盒 |
+| 每手 `0x810` | f64 × 7 的 `extrinsicThi`，顺序为 `xyzw`、`xyz` |
+| `0x1868/0x1998` | 两路相机校准，布局同头显 SLAM 的相机记录 |
+| `0x1b14/0x1b18/0x1b20/0x1b28/0x1bb0` | 定位器加速度计和陀螺仪采样率、第一相机到 IMU 延时及曝光偏移、按头显 SLAM 布局编码的定位器 IMU 校准 |
+
+右手记录相对左手增加 `0xc18`。用原厂 Android XML 构造定位器和左右手柄输入，并改变两路相机内参、定位器 IMU 系数与双手的延时、IMU、外参及 LED 坐标。Java 编码器与原厂 Windows XML 解析器生成的同一份 7224 字节配置相比，差异限于五个 f64 平移系数，最大绝对差低于 `9e-11` 米。原厂 Windows 手柄库使用 Java 编码的配置完成同样的惯性、双目和清理回放。
+
+### Monado OpenXR 双手定位
+
+选择双手与头显模式时，运行时读取三组 HID 校准并启动两个原厂跟踪模块。双手惯性分别使用报文计算出的设备时间。双目先进入头显 SLAM，下一帧到达时再按上一帧的原始设备时间查询头显位姿并送入手柄模块。应用以定位器时钟偏移映射视觉位姿，按键保留各自的 HID 到达时间。左右手以 `khr/simple_controller` 使用与头显同一跟踪原点。在按键或位姿过期时清除对应状态。原厂 SDK 在手柄输出上另做用户偏航和平面原点重置，Monado 使用 OpenXR 的空间管理。
+
+Fold7 待验收外接 Y8、定位器 HID、HiAI 模型加载、图像和惯性时钟及三个 OpenXR 设备的有效位姿。Windows 离线结果验证调用边界和数据布局，输入为无特征空白图。
