@@ -1,0 +1,2328 @@
+diff --git a/src/xrt/drivers/CMakeLists.txt b/src/xrt/drivers/CMakeLists.txt
+index 93fc67d..ed2ed65 100644
+--- a/src/xrt/drivers/CMakeLists.txt
++++ b/src/xrt/drivers/CMakeLists.txt
+@@ -510,6 +510,7 @@ if(XRT_BUILD_DRIVER_ANDROID)
+ 	add_library(
+ 		drv_android STATIC android/android_prober.c android/android_prober.h
+ 				   android/cv10_device.c android/cv10_device.h
++				   android/cv10_controller.c android/cv10_controller.h
+ 		)
+ 	target_link_libraries(
+ 		drv_android
+diff --git a/src/xrt/drivers/android/android_prober.c b/src/xrt/drivers/android/android_prober.c
+index 5522e6b..36ffbe7 100644
+--- a/src/xrt/drivers/android/android_prober.c
++++ b/src/xrt/drivers/android/android_prober.c
+@@ -18,6 +18,7 @@
+ #include "util/u_logging.h"
+ 
+ #include "android_prober.h"
++#include "cv10_controller.h"
+ #include "cv10_device.h"
+ 
+ 
+@@ -71,7 +72,9 @@ android_prober_autoprobe(struct xrt_auto_prober *xap,
+ {
+ 	if (no_hmds) return 0;
+ 	out_xdevs[0] = cv10_device_create();
+-	return out_xdevs[0] != NULL ? 1 : 0;
++	if (out_xdevs[0] == NULL) return 0;
++	out_xdevs[1] = cv10_controller_create();
++	return out_xdevs[1] != NULL ? 2 : 1;
+ }
+ 
+ 
+diff --git a/src/xrt/drivers/android/cv10_device.c b/src/xrt/drivers/android/cv10_device.c
+index ea5354b..615abb6 100644
+--- a/src/xrt/drivers/android/cv10_device.c
++++ b/src/xrt/drivers/android/cv10_device.c
+@@ -31,8 +31,8 @@ jni_error(JNIEnv *env)
+ 	return true;
+ }
+ 
+-static jclass
+-reader_class(JNIEnv *env, jobject context)
++jclass
++cv10_load_java_class(JNIEnv *env, jobject context, const char *class_name)
+ {
+ 	jclass ctx_class = (*env)->GetObjectClass(env, context);
+ 	if (!ctx_class) return NULL;
+@@ -44,7 +44,7 @@ reader_class(JNIEnv *env, jobject context)
+ 	if (!loader_class) return NULL;
+ 	jmethodID load = (*env)->GetMethodID(env, loader_class, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+ 	if (!load) return NULL;
+-	jstring name = (*env)->NewStringUTF(env, "org.freedesktop.monado.openxr_runtime.Cv10UsbReader");
++	jstring name = (*env)->NewStringUTF(env, class_name);
+ 	if (!name) return NULL;
+ 	return (jclass)(*env)->CallObjectMethod(env, loader, load, name);
+ }
+@@ -60,7 +60,7 @@ cv10_worker(void *ptr)
+ 		U_LOG_E("CV10 JNI context unavailable");
+ 		return NULL;
+ 	}
+-	jclass cls = reader_class(env, context);
++	jclass cls = cv10_load_java_class(env, context, "org.freedesktop.monado.openxr_runtime.Cv10UsbReader");
+ 	if (jni_error(env) || !cls) goto done;
+ 	jmethodID ctor = (*env)->GetMethodID(env, cls, "<init>", "(Landroid/content/Context;)V");
+ 	if (!ctor) goto done;
+diff --git a/src/xrt/drivers/android/cv10_device.h b/src/xrt/drivers/android/cv10_device.h
+index f9b40e2..3b168b4 100644
+--- a/src/xrt/drivers/android/cv10_device.h
++++ b/src/xrt/drivers/android/cv10_device.h
+@@ -1,5 +1,10 @@
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ #pragma once
++#include <jni.h>
++
+ struct xrt_device;
+ struct xrt_device *
+ cv10_device_create(void);
++
++jclass
++cv10_load_java_class(JNIEnv *env, jobject context, const char *class_name);
+diff --git a/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml b/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml
+index 89d548a..5f8c6fe 100644
+--- a/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml
++++ b/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml
+@@ -8,6 +8,15 @@
+     -->
+ 
+     <uses-feature android:name="android.hardware.usb.host" android:required="true" />
++    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
++    <uses-feature android:name="android.hardware.camera" android:required="false" />
++    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
++    <uses-permission android:name="android.permission.CAMERA" />
++    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
++    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
++    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
++    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
++    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+ 
+     <!-- We may try to use OpenGL|ES 3.0 -->
+     <uses-feature
+@@ -71,6 +80,12 @@
+         <activity
+             android:name=".Cv10LauncherActivity"
+             android:exported="false" />
++        <activity
++            android:name=".Cv10ControllerActivity"
++            android:exported="false" />
++        <activity
++            android:name=".Cv10KitActivity"
++            android:exported="false" />
+ 
+         <activity
+             android:name=".Cv10SpatialLauncherActivity"
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/AboutMenuWithCardboard.kt b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/AboutMenuWithCardboard.kt
+index 2c02df5..8259568 100644
+--- a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/AboutMenuWithCardboard.kt
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/AboutMenuWithCardboard.kt
+@@ -29,6 +29,7 @@ class AboutMenuWithCardboard @Inject constructor(private val scanner: ScannerPro
+         menu ?: return
+         menu.findItem(R.id.qrscan).icon = scanner.getIcon()
+         menu.findItem(R.id.cv10_app_launcher).isVisible = !BuildConfig.inProcess
++        menu.findItem(R.id.cv10_controller).isVisible = !BuildConfig.inProcess
+         menu.findItem(R.id.cv10_external_compatibility).apply {
+             setTitle(org.freedesktop.monado.auxiliary.R.string.cv10_external_compatibility_title)
+             isVisible = !BuildConfig.inProcess
+@@ -36,6 +37,10 @@ class AboutMenuWithCardboard @Inject constructor(private val scanner: ScannerPro
+     }
+ 
+     override fun onOptionsItemSelected(context: Context, item: MenuItem): Boolean {
++        if (item.itemId == R.id.cv10_controller) {
++            context.startActivity(Intent(context, Cv10ControllerActivity::class.java))
++            return true
++        }
+         if (item.itemId == R.id.cv10_app_launcher) {
+             context.startActivity(Intent(context, Cv10LauncherActivity::class.java))
+             return true
+diff --git a/src/xrt/targets/openxr_android/src/main/res/menu/menu_runtime.xml b/src/xrt/targets/openxr_android/src/main/res/menu/menu_runtime.xml
+index 9a7c506..f4fb2a6 100644
+--- a/src/xrt/targets/openxr_android/src/main/res/menu/menu_runtime.xml
++++ b/src/xrt/targets/openxr_android/src/main/res/menu/menu_runtime.xml
+@@ -13,6 +13,9 @@
+ 
+     <item
+         android:id="@+id/cv10_external_compatibility" />
++    <item
++        android:id="@+id/cv10_controller"
++        android:title="@string/cv10_controller_title" />
+ 
+     <item
+         android:id="@+id/qrscan"
+diff --git a/src/xrt/targets/openxr_android/src/main/res/values-zh/cv10_launcher_strings.xml b/src/xrt/targets/openxr_android/src/main/res/values-zh/cv10_launcher_strings.xml
+index 7d0acba..5554a2a 100644
+--- a/src/xrt/targets/openxr_android/src/main/res/values-zh/cv10_launcher_strings.xml
++++ b/src/xrt/targets/openxr_android/src/main/res/values-zh/cv10_launcher_strings.xml
+@@ -2,6 +2,7 @@
+ <!-- SPDX-License-Identifier: BSL-1.0 -->
+ <resources>
+     <string name="cv10_app_launcher_title">应用启动器</string>
++    <string name="cv10_controller_title">CV10 蓝牙手柄</string>
+     <string name="cv10_open_spatial_launcher">打开 3D 启动器</string>
+     <string name="cv10_search_apps">搜索已安装应用</string>
+     <string name="cv10_xr_apps_only">仅显示 XR 应用</string>
+diff --git a/src/xrt/targets/openxr_android/src/main/res/values/cv10_launcher_strings.xml b/src/xrt/targets/openxr_android/src/main/res/values/cv10_launcher_strings.xml
+index 522827d..b5b107a 100644
+--- a/src/xrt/targets/openxr_android/src/main/res/values/cv10_launcher_strings.xml
++++ b/src/xrt/targets/openxr_android/src/main/res/values/cv10_launcher_strings.xml
+@@ -2,6 +2,7 @@
+ <!-- SPDX-License-Identifier: BSL-1.0 -->
+ <resources>
+     <string name="cv10_app_launcher_title">Apps</string>
++    <string name="cv10_controller_title">CV10 Bluetooth controller</string>
+     <string name="cv10_open_spatial_launcher">Open 3D launcher</string>
+     <string name="cv10_search_apps">Search installed apps</string>
+     <string name="cv10_xr_apps_only">XR apps only</string>
+diff --git a/src/xrt/drivers/android/cv10_controller.c b/src/xrt/drivers/android/cv10_controller.c
+new file mode 100644
+index 0000000..ada67d4
+--- /dev/null
++++ b/src/xrt/drivers/android/cv10_controller.c
+@@ -0,0 +1,291 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++#include "cv10_controller.h"
++#include "cv10_device.h"
++
++#include <stdbool.h>
++#include <stdio.h>
++
++#include "android/android_globals.h"
++#include "math/m_api.h"
++#include "math/m_relation_history.h"
++#include "os/os_threading.h"
++#include "os/os_time.h"
++#include "util/u_device.h"
++#include "util/u_logging.h"
++#include "util/u_time.h"
++
++#define CV10_CONTROLLER_READER "org.freedesktop.monado.openxr_runtime.Cv10ControllerReader"
++#define CV10_REPORT_TIMEOUT_NS (250 * U_TIME_1MS_IN_NS)
++
++enum cv10_controller_input
++{
++	CV10_SELECT,
++	CV10_MENU,
++	CV10_GRIP,
++	CV10_AIM,
++	CV10_INPUT_COUNT,
++};
++
++struct cv10_controller
++{
++	struct xrt_device base;
++	struct os_thread_helper worker;
++	struct m_relation_history *history;
++	int64_t report_ns;
++	int64_t select_ns;
++	int64_t menu_ns;
++	bool select;
++	bool menu;
++	bool orientation_valid;
++};
++
++static bool
++clear_exception(JNIEnv *env)
++{
++	if (!(*env)->ExceptionCheck(env)) {
++		return false;
++	}
++	(*env)->ExceptionDescribe(env);
++	(*env)->ExceptionClear(env);
++	return true;
++}
++
++static bool
++controller_configured(void)
++{
++	JavaVM *vm = (JavaVM *)android_globals_get_vm();
++	jobject context = android_globals_get_context();
++	JNIEnv *env = NULL;
++	if (vm == NULL || context == NULL) {
++		return false;
++	}
++	jint result = (*vm)->GetEnv(vm, (void **)&env, JNI_VERSION_1_6);
++	bool attached = result == JNI_EDETACHED && (*vm)->AttachCurrentThread(vm, &env, NULL) == JNI_OK;
++	if (!attached && result != JNI_OK) {
++		return false;
++	}
++
++	bool configured = false;
++	if ((*env)->PushLocalFrame(env, 16) == JNI_OK) {
++		jclass cls = cv10_load_java_class(env, context, CV10_CONTROLLER_READER);
++		if (cls != NULL) {
++			jmethodID check = (*env)->GetStaticMethodID(env, cls, "isConfigured", "(Landroid/content/Context;)Z");
++			if (check != NULL) {
++				configured = (*env)->CallStaticBooleanMethod(env, cls, check, context);
++			}
++		}
++		configured = !clear_exception(env) && configured;
++		(*env)->PopLocalFrame(env, NULL);
++	} else {
++		clear_exception(env);
++	}
++	if (attached) {
++		(*vm)->DetachCurrentThread(vm);
++	}
++	return configured;
++}
++
++static bool
++report_is_fresh(int64_t timestamp)
++{
++	return timestamp > 0 && os_monotonic_get_ns() - timestamp <= CV10_REPORT_TIMEOUT_NS;
++}
++
++static void
++update_report(struct cv10_controller *d, int64_t timestamp, const float values[7])
++{
++	os_thread_helper_lock(&d->worker);
++	if (!report_is_fresh(timestamp)) {
++		if (d->report_ns > 0) {
++			m_relation_history_clear(d->history);
++		}
++		d->report_ns = 0;
++		d->orientation_valid = false;
++		d->select = false;
++		d->menu = false;
++	} else if (timestamp != d->report_ns) {
++		const bool select = values[5] != 0;
++		const bool menu = values[6] != 0;
++		if (d->report_ns == 0 || d->select != select) {
++			d->select_ns = timestamp;
++		}
++		if (d->report_ns == 0 || d->menu != menu) {
++			d->menu_ns = timestamp;
++		}
++		d->select = select;
++		d->menu = menu;
++		d->report_ns = timestamp;
++		d->orientation_valid = values[4] != 0;
++		if (d->orientation_valid) {
++			struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
++			relation.pose.orientation = (struct xrt_quat){values[0], values[1], values[2], values[3]};
++			math_quat_normalize(&relation.pose.orientation);
++			// Fixed hand offset for an aim-ray origin. CF20 has no position measurement.
++			relation.pose.position = (struct xrt_vec3){0.20f, -0.30f, -0.35f};
++			relation.relation_flags = XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
++			                          XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT |
++			                          XRT_SPACE_RELATION_POSITION_VALID_BIT;
++			m_relation_history_push(d->history, &relation, timestamp);
++		} else {
++			m_relation_history_clear(d->history);
++		}
++	}
++	os_thread_helper_unlock(&d->worker);
++}
++
++static void *
++controller_worker(void *ptr)
++{
++	struct cv10_controller *d = ptr;
++	JavaVM *vm = (JavaVM *)android_globals_get_vm();
++	jobject context = android_globals_get_context();
++	JNIEnv *env = NULL;
++	if (vm == NULL || context == NULL || (*vm)->AttachCurrentThread(vm, &env, NULL) != JNI_OK) {
++		return NULL;
++	}
++
++	jclass cls = cv10_load_java_class(env, context, CV10_CONTROLLER_READER);
++	if (cls == NULL) {
++		goto done;
++	}
++	jmethodID open = (*env)->GetStaticMethodID(env, cls, "open",
++	                                         "(Landroid/content/Context;)Lorg/freedesktop/monado/"
++	                                         "openxr_runtime/Cv10ControllerReader;");
++	if (open == NULL) {
++		goto done;
++	}
++	jmethodID read = (*env)->GetMethodID(env, cls, "read", "([F)J");
++	if (read == NULL) {
++		goto done;
++	}
++	jmethodID close = (*env)->GetMethodID(env, cls, "close", "()V");
++	if (close == NULL) {
++		goto done;
++	}
++	jfloatArray buffer = (*env)->NewFloatArray(env, 7);
++	if (buffer == NULL) {
++		goto done;
++	}
++	jobject reader = (*env)->CallStaticObjectMethod(env, cls, open, context);
++	if (clear_exception(env) || reader == NULL) {
++		goto done;
++	}
++	int64_t previous = 0;
++	while (os_thread_helper_is_running(&d->worker)) {
++		int64_t timestamp = (*env)->CallLongMethod(env, reader, read, buffer);
++		if (clear_exception(env)) {
++			break;
++		}
++		int64_t current = report_is_fresh(timestamp) ? timestamp : 0;
++		if (current != previous) {
++			if (current == 0) {
++				update_report(d, 0, NULL);
++			} else {
++				float values[7];
++				(*env)->GetFloatArrayRegion(env, buffer, 0, 7, values);
++				if (clear_exception(env)) {
++					break;
++				}
++				update_report(d, current, values);
++			}
++		}
++		previous = current;
++		os_nanosleep((current > 0 ? 4 : 20) * U_TIME_1MS_IN_NS);
++	}
++	update_report(d, 0, NULL);
++	(*env)->CallVoidMethod(env, reader, close);
++
++done:
++	clear_exception(env);
++	(*vm)->DetachCurrentThread(vm);
++	return NULL;
++}
++
++static xrt_result_t
++controller_update_inputs(struct xrt_device *xdev)
++{
++	struct cv10_controller *d = (struct cv10_controller *)xdev;
++	os_thread_helper_lock(&d->worker);
++	bool fresh = report_is_fresh(d->report_ns);
++	xdev->inputs[CV10_SELECT].active = fresh;
++	xdev->inputs[CV10_SELECT].timestamp = d->select_ns;
++	xdev->inputs[CV10_SELECT].value.boolean = fresh && d->select;
++	xdev->inputs[CV10_MENU].active = fresh;
++	xdev->inputs[CV10_MENU].timestamp = d->menu_ns;
++	xdev->inputs[CV10_MENU].value.boolean = fresh && d->menu;
++	xdev->inputs[CV10_GRIP].active = fresh && d->orientation_valid;
++	xdev->inputs[CV10_GRIP].timestamp = d->report_ns;
++	xdev->inputs[CV10_AIM].active = fresh && d->orientation_valid;
++	xdev->inputs[CV10_AIM].timestamp = d->report_ns;
++	os_thread_helper_unlock(&d->worker);
++	return XRT_SUCCESS;
++}
++
++static xrt_result_t
++controller_pose(struct xrt_device *xdev, enum xrt_input_name name, int64_t at_ns, struct xrt_space_relation *out)
++{
++	struct cv10_controller *d = (struct cv10_controller *)xdev;
++	*out = (struct xrt_space_relation)XRT_SPACE_RELATION_ZERO;
++	out->pose.orientation.w = 1;
++	if (name != XRT_INPUT_SIMPLE_GRIP_POSE && name != XRT_INPUT_SIMPLE_AIM_POSE) {
++		return XRT_ERROR_INPUT_UNSUPPORTED;
++	}
++	os_thread_helper_lock(&d->worker);
++	if (report_is_fresh(d->report_ns) && d->orientation_valid) {
++		int64_t query = at_ns > d->report_ns ? d->report_ns : at_ns;
++		if (m_relation_history_get(d->history, query, out) == M_RELATION_HISTORY_RESULT_INVALID) {
++			out->pose.orientation.w = 1;
++		}
++	}
++	os_thread_helper_unlock(&d->worker);
++	return XRT_SUCCESS;
++}
++
++static void
++controller_destroy(struct xrt_device *xdev)
++{
++	struct cv10_controller *d = (struct cv10_controller *)xdev;
++	os_thread_helper_destroy(&d->worker);
++	m_relation_history_destroy(&d->history);
++	u_device_free(xdev);
++}
++
++struct xrt_device *
++cv10_controller_create(void)
++{
++	if (!controller_configured()) {
++		return NULL;
++	}
++	struct cv10_controller *d =
++	    U_DEVICE_ALLOCATE(struct cv10_controller, U_DEVICE_ALLOC_TRACKING_NONE, CV10_INPUT_COUNT, 0);
++	if (d == NULL) {
++		return NULL;
++	}
++	struct xrt_device *xdev = &d->base;
++	xdev->name = XRT_DEVICE_SIMPLE_CONTROLLER;
++	xdev->device_type = XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER;
++	xdev->supported.orientation_tracking = true;
++	snprintf(xdev->str, sizeof(xdev->str), "Huawei CF20 Bluetooth Controller");
++	snprintf(xdev->serial, sizeof(xdev->serial), "Huawei-CF20");
++	u_device_populate_function_pointers(xdev, controller_pose, controller_destroy);
++	xdev->update_inputs = controller_update_inputs;
++	xdev->inputs[CV10_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
++	xdev->inputs[CV10_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
++	xdev->inputs[CV10_GRIP].name = XRT_INPUT_SIMPLE_GRIP_POSE;
++	xdev->inputs[CV10_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE;
++	for (size_t i = 0; i < CV10_INPUT_COUNT; i++) {
++		xdev->inputs[i].active = false;
++	}
++
++	if (os_thread_helper_init(&d->worker) != 0) {
++		u_device_free(xdev);
++		return NULL;
++	}
++	m_relation_history_create(&d->history);
++	if (d->history == NULL || os_thread_helper_start(&d->worker, controller_worker, d) != 0) {
++		controller_destroy(xdev);
++		return NULL;
++	}
++	U_LOG_I("Configured Huawei CF20 as the right OpenXR controller");
++	return xdev;
++}
+diff --git a/src/xrt/drivers/android/cv10_controller.h b/src/xrt/drivers/android/cv10_controller.h
+new file mode 100644
+index 0000000..3492455
+--- /dev/null
++++ b/src/xrt/drivers/android/cv10_controller.h
+@@ -0,0 +1,7 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++#pragma once
++
++struct xrt_device;
++
++struct xrt_device *
++cv10_controller_create(void);
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerActivity.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerActivity.java
+new file mode 100644
+index 0000000..7422f0a
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerActivity.java
+@@ -0,0 +1,406 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import android.Manifest;
++import android.annotation.SuppressLint;
++import android.app.Activity;
++import android.bluetooth.BluetoothAdapter;
++import android.bluetooth.BluetoothDevice;
++import android.bluetooth.le.BluetoothLeScanner;
++import android.bluetooth.le.ScanCallback;
++import android.bluetooth.le.ScanRecord;
++import android.bluetooth.le.ScanResult;
++import android.content.Context;
++import android.content.Intent;
++import android.content.pm.PackageManager;
++import android.os.Build;
++import android.os.Bundle;
++import android.os.Handler;
++import android.os.Looper;
++import android.os.ParcelUuid;
++import android.os.SystemClock;
++import android.text.InputType;
++import android.widget.Button;
++import android.widget.EditText;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++import java.util.HashSet;
++import java.util.Locale;
++import java.util.Set;
++
++@SuppressLint("MissingPermission")
++public class Cv10ControllerActivity extends Activity {
++    private static final String PREFS = "cv10_controller";
++    private static final String ADDRESS = "address";
++    private static final int SCAN_PERMISSION = 1;
++    private static final int SAVE_PERMISSION = 2;
++    private static final long SCAN_MS = 15000;
++    private static final long PAIR_MS = 45000;
++    private static final long VERIFY_MS = 20000;
++
++    private final Handler handler = new Handler(Looper.getMainLooper());
++    private final Set<String> seen = new HashSet<>();
++    private EditText address;
++    private TextView scanStatus, probeStatus;
++    private final Runnable scanTimeout = () -> {
++        stopScan();
++        scanStatus.setText(seen.isEmpty() ? "No CF20 detected. Wake the controller and scan again." : "Scan complete.");
++    };
++    private LinearLayout results;
++    private BluetoothLeScanner scanner;
++    private ScanCallback scanCallback;
++    private BluetoothDevice scanSelection, pairingDevice;
++    private long pairingDeadline;
++    private boolean sawBonding;
++    private Cv10ControllerLink probe;
++    private String verifyingAddress;
++    private long verifyDeadline;
++    private long lastCount, lastRefreshNs;
++
++    static String savedAddress(Context context) {
++        return context.getSharedPreferences(PREFS, MODE_PRIVATE).getString(ADDRESS, "");
++    }
++
++    protected boolean probeMode() {
++        return false;
++    }
++
++    @Override
++    public void onCreate(Bundle state) {
++        super.onCreate(state);
++        setTitle(probeMode() ? "CV10 Controller Probe" : "CV10 Bluetooth Controller");
++        LinearLayout layout = new LinearLayout(this);
++        layout.setOrientation(LinearLayout.VERTICAL);
++        int padding = (int) (16 * getResources().getDisplayMetrics().density);
++        layout.setPadding(padding, padding, padding, padding);
++        ScrollView scroll = new ScrollView(this);
++        scroll.addView(layout);
++        setContentView(scroll);
++
++        address = new EditText(this);
++        address.setSingleLine(true);
++        address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
++        address.setHint("Controller Bluetooth address");
++        address.setText(savedAddress(this));
++        layout.addView(address);
++        addButton(layout, "Scan for CF20", this::requestScan);
++        scanStatus = new TextView(this);
++        layout.addView(scanStatus);
++        results = new LinearLayout(this);
++        results.setOrientation(LinearLayout.VERTICAL);
++        layout.addView(results);
++
++        addButton(layout, probeMode() ? "Pair and connect · 配对并连接" : "Pair and use · 配对并选用",
++                () -> pairSelection(false));
++        addButton(layout, "Pair in Android · Android 系统配对", () -> pairSelection(true));
++        addButton(layout, probeMode() ? "Disconnect" : "Disable controller", () -> {
++            stopPairing();
++            stopProbe();
++            if (probeMode()) {
++                probeStatus.setText("Disconnected.");
++            } else {
++                getSharedPreferences(PREFS, MODE_PRIVATE).edit().remove(ADDRESS).apply();
++                address.setText("");
++                probeStatus.setText("Controller disabled. Restart the OpenXR session to apply.");
++            }
++        });
++        probeStatus = new TextView(this);
++        probeStatus.setTextIsSelectable(true);
++        layout.addView(probeStatus);
++        addButton(layout, "Huawei 6DoF Kit · 定位交互套件",
++                () -> startActivity(new Intent(this, Cv10KitActivity.class)));
++    }
++
++    private void addButton(LinearLayout layout, String label, Runnable action) {
++        Button button = new Button(this);
++        button.setText(label);
++        button.setOnClickListener(view -> action.run());
++        layout.addView(button);
++    }
++
++    private void requestScan() {
++        if (Build.VERSION.SDK_INT >= 31 &&
++                (!Cv10ControllerLink.canConnect(this) ||
++                checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)) {
++            requestPermissions(new String[] {Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
++                    SCAN_PERMISSION);
++        } else if (Build.VERSION.SDK_INT < 31 &&
++                checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
++            requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, SCAN_PERMISSION);
++        } else {
++            startScan();
++        }
++    }
++
++    private void startScan() {
++        stopScan();
++        seen.clear();
++        results.removeAllViews();
++        try {
++            BluetoothAdapter adapter = Cv10ControllerLink.adapter(this);
++            scanner = adapter == null ? null : adapter.getBluetoothLeScanner();
++            if (scanner == null) {
++                scanStatus.setText("Turn Bluetooth on to scan.");
++                return;
++            }
++            scanCallback = new ScanCallback() {
++                @Override
++                public void onScanResult(int callbackType, ScanResult result) {
++                    if (scanCallback != this) return;
++                    ScanRecord record = result.getScanRecord();
++                    String name = record == null ? null : record.getDeviceName();
++                    try {
++                        if (name == null) name = result.getDevice().getName();
++                    } catch (SecurityException ignored) {
++                        return;
++                    }
++                    boolean serviceMatch = record != null && record.getServiceUuids() != null &&
++                            record.getServiceUuids().contains(new ParcelUuid(Cv10ControllerLink.SERVICE));
++                    if (!serviceMatch && (name == null || !(name.startsWith("HUAWEI CF20") ||
++                            name.startsWith("Huawei Controller") || name.startsWith("Testmotion")))) return;
++                    BluetoothDevice device = result.getDevice();
++                    String found = device.getAddress();
++                    if (seen.add(found)) {
++                        addButton(results, (name == null ? "CF20 service" : name) + "\n" + found, () -> {
++                            scanSelection = device;
++                            address.setText(found);
++                            stopScan();
++                            scanStatus.setText("Address selected.");
++                        });
++                    }
++                }
++
++                @Override
++                public void onScanFailed(int error) {
++                    if (scanCallback != this) return;
++                    stopScan();
++                    scanStatus.setText("BLE scan failed (" + error + ").");
++                }
++            };
++            scanner.startScan(scanCallback);
++            scanStatus.setText("Scanning for 15 seconds…");
++            handler.postDelayed(scanTimeout, SCAN_MS);
++        } catch (SecurityException error) {
++            stopScan();
++            scanStatus.setText("Bluetooth scan permission missing.");
++        }
++    }
++
++    private void stopScan() {
++        handler.removeCallbacks(scanTimeout);
++        if (scanner != null && scanCallback != null) {
++            try {
++                scanner.stopScan(scanCallback);
++            } catch (SecurityException ignored) {
++            }
++        }
++        scanCallback = null;
++        scanner = null;
++    }
++
++    private boolean bondAfterPermission;
++
++    private void pairSelection(boolean systemBond) {
++        String selected = address.getText().toString().trim().toUpperCase(Locale.ROOT);
++        if (!BluetoothAdapter.checkBluetoothAddress(selected)) {
++            address.setError("Enter an address in XX:XX:XX:XX:XX:XX format.");
++            return;
++        }
++        if (!Cv10ControllerLink.canConnect(this)) {
++            bondAfterPermission = systemBond;
++            requestPermissions(new String[] {Manifest.permission.BLUETOOTH_CONNECT}, SAVE_PERMISSION);
++            return;
++        }
++        stopScan();
++        stopPairing();
++        stopProbe();
++        try {
++            BluetoothAdapter adapter = Cv10ControllerLink.adapter(this);
++            if (adapter == null || !adapter.isEnabled()) {
++                probeStatus.setText("Turn Bluetooth on to pair.");
++                return;
++            }
++            BluetoothDevice device = scanSelection != null && selected.equals(scanSelection.getAddress())
++                    ? scanSelection : adapter.getRemoteDevice(selected);
++            if (!systemBond) {
++                verifyController(device);
++                return;
++            }
++            int state = device.getBondState();
++            if (state == BluetoothDevice.BOND_BONDED) {
++                verifyController(device);
++                return;
++            }
++            if (state != BluetoothDevice.BOND_BONDING && !device.createBond()) {
++                state = device.getBondState();
++                if (state == BluetoothDevice.BOND_NONE) {
++                    probeStatus.setText("Android could not start pairing. Wake the controller and try again.");
++                    return;
++                }
++            }
++            pairingDevice = device;
++            pairingDeadline = SystemClock.elapsedRealtime() + PAIR_MS;
++            sawBonding = state == BluetoothDevice.BOND_BONDING;
++            probeStatus.setText("Pairing… Accept the Android Bluetooth pairing prompt if it appears.");
++            pollPairing.run();
++        } catch (SecurityException error) {
++            probeStatus.setText("Bluetooth connect permission is missing.");
++        }
++    }
++
++    private final Runnable pollPairing = new Runnable() {
++        @Override
++        public void run() {
++            BluetoothDevice device = pairingDevice;
++            if (device == null) return;
++            int state;
++            try {
++                state = device.getBondState();
++            } catch (SecurityException error) {
++                stopPairing();
++                probeStatus.setText("Bluetooth connect permission is missing.");
++                return;
++            }
++            if (state == BluetoothDevice.BOND_BONDED) {
++                stopPairing();
++                verifyController(device);
++                return;
++            }
++            if (state == BluetoothDevice.BOND_NONE && sawBonding) {
++                stopPairing();
++                probeStatus.setText("Pairing ended. Wake the controller and try again.");
++                return;
++            }
++            if (SystemClock.elapsedRealtime() >= pairingDeadline) {
++                stopPairing();
++                probeStatus.setText("Pairing timed out. Keep the controller awake and try again.");
++                return;
++            }
++            sawBonding |= state == BluetoothDevice.BOND_BONDING;
++            handler.postDelayed(this, 300);
++        }
++    };
++
++    private void stopPairing() {
++        handler.removeCallbacks(pollPairing);
++        pairingDevice = null;
++    }
++
++    private void verifyController(BluetoothDevice device) {
++        stopProbe();
++        verifyingAddress = device.getAddress();
++        verifyDeadline = SystemClock.elapsedRealtime() + VERIFY_MS;
++        probe = new Cv10ControllerLink(this, device);
++        lastCount = 0;
++        lastRefreshNs = System.nanoTime();
++        refreshProbe.run();
++    }
++
++    private final Runnable refreshProbe = new Runnable() {
++        @Override
++        public void run() {
++            if (probe == null) return;
++            long now = System.nanoTime(), count = probe.inputCount;
++            double rate = 1e9 * (count - lastCount) / Math.max(1, now - lastRefreshNs);
++            lastRefreshNs = now;
++            lastCount = count;
++            Cv10ControllerLink.Sample sample = probe.latestInput;
++            Cv10ControllerLink.Sample control = probe.latestControl;
++            if (verifyingAddress != null) {
++                if (sample != null && sample.report != null) {
++                    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(ADDRESS, verifyingAddress).apply();
++                    verifyingAddress = null;
++                    if (!probeMode()) {
++                        stopProbe();
++                        probeStatus.setText("Paired and selected. Start a new OpenXR session to use the controller.");
++                        return;
++                    }
++                } else if (SystemClock.elapsedRealtime() >= verifyDeadline) {
++                    String reason = probe.status;
++                    stopProbe();
++                    probeStatus.setText("CF20 did not send a 20-byte input report: " + reason +
++                            "\nWake the controller and try again, or use Android system pairing.");
++                    return;
++                }
++            }
++            StringBuilder status = new StringBuilder(probe.status);
++            status.append(String.format(Locale.ROOT, "\nInput reports %d · %.1f/s", count, rate));
++            if (sample != null) {
++                status.append("\nInput ").append(hex(sample.bytes));
++                Cv10ControllerReport report = sample.report;
++                if (report == null) {
++                    status.append("\nExpected 20 bytes, got ").append(sample.bytes.length);
++                } else {
++                    status.append(String.format(Locale.ROOT,
++                            "\nButtons 0x%02X%s\nTouch %d, %d (%s)\nBattery field %d\n" +
++                            "Quaternion XYZW %.4f, %.4f, %.4f, %.4f (%s)\n" +
++                            "Accel %.2f, %.2f, %.2f\nGyro %.2f, %.2f, %.2f",
++                            report.buttons, buttons(report), report.touchX, report.touchY,
++                            report.isTouched() ? "contact" : "idle", report.battery,
++                            report.x, report.y, report.z, report.w,
++                            report.orientationValid ? "valid norm" : "invalid norm",
++                            report.accelX, report.accelY, report.accelZ, report.gyroX, report.gyroY, report.gyroZ));
++                }
++            }
++            if (control != null) status.append("\nControl ").append(hex(control.bytes));
++            probeStatus.setText(status);
++            handler.postDelayed(this, 200);
++        }
++    };
++
++    private static String hex(byte[] bytes) {
++        StringBuilder builder = new StringBuilder();
++        for (byte value : bytes) builder.append(String.format(Locale.ROOT, "%02X ", value & 0xff));
++        return builder.toString();
++    }
++
++    private static String buttons(Cv10ControllerReport report) {
++        StringBuilder labels = new StringBuilder();
++        if (report.isPressed(Cv10ControllerReport.TRIGGER)) labels.append(" Trigger");
++        if (report.isPressed(Cv10ControllerReport.CONFIRM)) labels.append(" Confirm");
++        if (report.isPressed(Cv10ControllerReport.BACK)) labels.append(" Back");
++        if (report.isPressed(Cv10ControllerReport.HOME)) labels.append(" Home");
++        if (report.isPressed(Cv10ControllerReport.VOLUME_UP)) labels.append(" Vol+");
++        if (report.isPressed(Cv10ControllerReport.VOLUME_DOWN)) labels.append(" Vol−");
++        return labels.toString();
++    }
++
++    private void stopProbe() {
++        handler.removeCallbacks(refreshProbe);
++        verifyingAddress = null;
++        if (probe != null) {
++            probe.close();
++            probe = null;
++        }
++    }
++
++    @Override
++    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
++        super.onRequestPermissionsResult(requestCode, permissions, results);
++        boolean granted = results.length != 0;
++        for (int result : results) granted &= result == PackageManager.PERMISSION_GRANTED;
++        if (!granted) {
++            scanStatus.setText("Allow Bluetooth permissions to use the controller.");
++        } else if (requestCode == SCAN_PERMISSION) {
++            startScan();
++        } else if (requestCode == SAVE_PERMISSION) {
++            pairSelection(bondAfterPermission);
++        }
++    }
++
++    @Override
++    protected void onStop() {
++        if (scanCallback != null) scanStatus.setText("Scan stopped.");
++        if (probe != null) probeStatus.setText("Disconnected.");
++        stopScan();
++        stopProbe();
++        super.onStop();
++    }
++
++    @Override
++    protected void onDestroy() {
++        stopPairing();
++        super.onDestroy();
++    }
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerLink.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerLink.java
+new file mode 100644
+index 0000000..e9360c3
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerLink.java
+@@ -0,0 +1,243 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import android.Manifest;
++import android.annotation.SuppressLint;
++import android.bluetooth.BluetoothAdapter;
++import android.bluetooth.BluetoothDevice;
++import android.bluetooth.BluetoothGatt;
++import android.bluetooth.BluetoothGattCallback;
++import android.bluetooth.BluetoothGattCharacteristic;
++import android.bluetooth.BluetoothGattDescriptor;
++import android.bluetooth.BluetoothGattService;
++import android.bluetooth.BluetoothManager;
++import android.bluetooth.BluetoothProfile;
++import android.content.Context;
++import android.content.pm.PackageManager;
++import android.os.Build;
++import android.os.Handler;
++import android.os.Looper;
++import android.util.Log;
++import java.util.UUID;
++
++/** One direct BLE connection. GATT operations and callbacks run on the main looper. */
++@SuppressLint("MissingPermission")
++final class Cv10ControllerLink implements AutoCloseable {
++    static final UUID SERVICE = UUID.fromString("622f5b2a-60da-4484-929a-69e3a9140258");
++    private static final UUID INPUT = UUID.fromString("ffb4a651-c224-420b-a134-13d3aba313fb");
++    private static final UUID CONTROL_NOTIFY = UUID.fromString("233827e5-09cc-45a4-a59b-4d024138cbbe");
++    private static final UUID CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
++    private static final String TAG = "Cv10Controller";
++    private static final long RETRY_MS = 3000;
++    private static final long CONNECT_TIMEOUT_MS = 12000;
++
++    static final class Sample {
++        final long arrivalNs = System.nanoTime();
++        final byte[] bytes;
++        final Cv10ControllerReport report;
++
++        Sample(byte[] value) {
++            bytes = value.clone();
++            report = Cv10ControllerReport.decode(bytes);
++        }
++    }
++
++    private final Context context;
++    private final String address;
++    private final BluetoothDevice discoveredDevice;
++    private final Handler handler = new Handler(Looper.getMainLooper());
++    private final Runnable connectTask = this::connect;
++    private final Runnable timeoutTask = () -> retry("GATT setup timeout");
++    private BluetoothGatt gatt;
++    private BluetoothGattCharacteristic input;
++    private BluetoothGattDescriptor pending;
++    private volatile boolean closed;
++    volatile Sample latestInput, latestControl;
++    volatile String status = "Connecting";
++    volatile long inputCount;
++
++    Cv10ControllerLink(Context context, String address) {
++        this(context, address, null);
++    }
++
++    Cv10ControllerLink(Context context, BluetoothDevice device) {
++        this(context, device.getAddress(), device);
++    }
++
++    private Cv10ControllerLink(Context context, String address, BluetoothDevice device) {
++        this.context = context.getApplicationContext();
++        this.address = address;
++        this.discoveredDevice = device;
++        handler.post(connectTask);
++    }
++
++    static BluetoothAdapter adapter(Context context) {
++        BluetoothManager manager = context.getSystemService(BluetoothManager.class);
++        return manager == null ? null : manager.getAdapter();
++    }
++
++    static boolean canConnect(Context context) {
++        return Build.VERSION.SDK_INT < 31 ||
++                context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
++    }
++
++    private void connect() {
++        if (closed) return;
++        try {
++            BluetoothAdapter adapter = adapter(context);
++            if (!canConnect(context) || adapter == null || !adapter.isEnabled()) {
++                retry("Bluetooth unavailable or permission missing");
++                return;
++            }
++            status = "Connecting";
++            BluetoothDevice device = discoveredDevice == null ? adapter.getRemoteDevice(address) : discoveredDevice;
++            gatt = device.connectGatt(context, false, callback,
++                    BluetoothDevice.TRANSPORT_LE, BluetoothDevice.PHY_LE_1M_MASK, handler);
++            if (gatt == null) {
++                retry("connectGatt failed");
++                return;
++            }
++            handler.postDelayed(timeoutTask, CONNECT_TIMEOUT_MS);
++        } catch (SecurityException | IllegalArgumentException | IllegalStateException error) {
++            retry(error.getClass().getSimpleName());
++        }
++    }
++
++    private boolean isCurrent(BluetoothGatt source) {
++        return !closed && gatt == source;
++    }
++
++    private void release() {
++        handler.removeCallbacks(timeoutTask);
++        BluetoothGatt previous = gatt;
++        gatt = null;
++        input = null;
++        pending = null;
++        latestInput = null;
++        latestControl = null;
++        if (previous != null) {
++            // Bluetooth permission may have been revoked since connectGatt.
++            try {
++                previous.disconnect();
++            } catch (SecurityException ignored) {
++            }
++            try {
++                previous.close();
++            } catch (SecurityException ignored) {
++            }
++        }
++    }
++
++    private void retry(String reason) {
++        release();
++        if (closed) return;
++        if (!reason.equals(status)) Log.i(TAG, reason);
++        status = reason;
++        handler.removeCallbacks(connectTask);
++        handler.postDelayed(connectTask, RETRY_MS);
++    }
++
++    private boolean subscribe(BluetoothGattCharacteristic characteristic) {
++        if (characteristic == null ||
++                (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == 0) return false;
++        BluetoothGattDescriptor cccd = characteristic.getDescriptor(CCCD);
++        if (cccd == null || !gatt.setCharacteristicNotification(characteristic, true)) return false;
++        boolean queued;
++        if (Build.VERSION.SDK_INT >= 33) {
++            queued = gatt.writeDescriptor(cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
++                    == BluetoothGatt.GATT_SUCCESS;
++        } else {
++            cccd.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
++            queued = gatt.writeDescriptor(cccd);
++        }
++        pending = queued ? cccd : null;
++        return queued;
++    }
++
++    private void accept(BluetoothGatt source, BluetoothGattCharacteristic characteristic, byte[] value) {
++        if (!isCurrent(source) || value == null) return;
++        UUID uuid = characteristic.getUuid();
++        if (INPUT.equals(uuid)) {
++            latestInput = new Sample(value);
++            inputCount++;
++        } else if (CONTROL_NOTIFY.equals(uuid)) {
++            latestControl = new Sample(value);
++        }
++    }
++
++    private final BluetoothGattCallback callback = new BluetoothGattCallback() {
++        @Override
++        public void onConnectionStateChange(BluetoothGatt source, int result, int state) {
++            if (!isCurrent(source)) return;
++            try {
++                if (result != BluetoothGatt.GATT_SUCCESS || state == BluetoothProfile.STATE_DISCONNECTED) {
++                    retry("GATT disconnected (" + result + ")");
++                } else if (state == BluetoothProfile.STATE_CONNECTED && !source.discoverServices()) {
++                    retry("Service discovery failed to start");
++                }
++            } catch (SecurityException error) {
++                retry("Bluetooth permission missing");
++            }
++        }
++
++        @Override
++        public void onServicesDiscovered(BluetoothGatt source, int result) {
++            if (!isCurrent(source)) return;
++            try {
++                BluetoothGattService service = result == BluetoothGatt.GATT_SUCCESS ? source.getService(SERVICE) : null;
++                if (service == null || (input = service.getCharacteristic(INPUT)) == null) {
++                    retry("CF20 service or input characteristic missing (" + result + ")");
++                    return;
++                }
++                if (!subscribe(service.getCharacteristic(CONTROL_NOTIFY)) && !subscribe(input)) {
++                    retry("Input subscription failed to start");
++                }
++            } catch (SecurityException error) {
++                retry("Bluetooth permission missing");
++            }
++        }
++
++        @Override
++        public void onDescriptorWrite(BluetoothGatt source, BluetoothGattDescriptor descriptor, int result) {
++            if (!isCurrent(source) || descriptor != pending) return;
++            pending = null;
++            try {
++                if (INPUT.equals(descriptor.getCharacteristic().getUuid())) {
++                    if (result != BluetoothGatt.GATT_SUCCESS) {
++                        retry("Input CCCD rejected (" + result + ")");
++                        return;
++                    }
++                    handler.removeCallbacks(timeoutTask);
++                    status = "Input notifications enabled";
++                    Log.i(TAG, status);
++                } else if (!subscribe(input)) {
++                    retry("Input subscription failed to start");
++                }
++            } catch (SecurityException error) {
++                retry("Bluetooth permission missing");
++            }
++        }
++
++        @Override
++        public void onCharacteristicChanged(BluetoothGatt source, BluetoothGattCharacteristic characteristic,
++                                            byte[] value) {
++            accept(source, characteristic, value);
++        }
++
++        @Override
++        public void onCharacteristicChanged(BluetoothGatt source, BluetoothGattCharacteristic characteristic) {
++            accept(source, characteristic, characteristic.getValue());
++        }
++    };
++
++    @Override
++    public void close() {
++        closed = true;
++        handler.removeCallbacks(connectTask);
++        if (Looper.myLooper() == handler.getLooper()) {
++            release();
++        } else {
++            handler.post(this::release);
++        }
++    }
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerReader.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerReader.java
+new file mode 100644
+index 0000000..5c929dd
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerReader.java
+@@ -0,0 +1,43 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import android.bluetooth.BluetoothAdapter;
++import android.content.Context;
++
++/** JNI entry point used by the out-of-process runtime. */
++public final class Cv10ControllerReader {
++    private final Cv10ControllerLink link;
++
++    private Cv10ControllerReader(Context context, String address) {
++        link = new Cv10ControllerLink(context, address);
++    }
++
++    public static boolean isConfigured(Context context) {
++        return BluetoothAdapter.checkBluetoothAddress(Cv10ControllerActivity.savedAddress(context))
++                && Cv10ControllerLink.canConnect(context);
++    }
++
++    public static Cv10ControllerReader open(Context context) {
++        return isConfigured(context) ? new Cv10ControllerReader(context, Cv10ControllerActivity.savedAddress(context))
++                : null;
++    }
++
++    /** Returns zero without an input report; otherwise returns the local monotonic receipt time. */
++    public long read(float[] values) {
++        Cv10ControllerLink.Sample sample = link.latestInput;
++        if (sample == null || sample.report == null) return 0;
++        Cv10ControllerReport report = sample.report;
++        values[0] = report.x;
++        values[1] = report.y;
++        values[2] = report.z;
++        values[3] = report.w;
++        values[4] = report.orientationValid ? 1f : 0f;
++        values[5] = report.isPressed(Cv10ControllerReport.TRIGGER | Cv10ControllerReport.CONFIRM) ? 1f : 0f;
++        values[6] = report.isPressed(Cv10ControllerReport.BACK) ? 1f : 0f;
++        return sample.arrivalNs;
++    }
++
++    public void close() {
++        link.close();
++    }
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerReport.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerReport.java
+new file mode 100644
+index 0000000..cb8add5
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerReport.java
+@@ -0,0 +1,55 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++/** Huawei CF20 input notification, as decoded by Huawei's DefaultController. */
++final class Cv10ControllerReport {
++    static final int SIZE = 20;
++    static final int TRIGGER = 0x01;
++    static final int CONFIRM = 0x02;
++    static final int VOLUME_DOWN = 0x04;
++    static final int VOLUME_UP = 0x08;
++    static final int HOME = 0x10;
++    static final int BACK = 0x20;
++
++    final int buttons;
++    final float x, y, z, w;
++    final float accelX, accelY, accelZ;
++    final float gyroX, gyroY, gyroZ;
++    final int touchX, touchY, battery;
++    final boolean orientationValid;
++
++    private Cv10ControllerReport(byte[] data) {
++        buttons = data[0] & 0xff;
++        x = s16be(data, 1) / 32767f;
++        y = -s16be(data, 3) / 32767f;
++        z = s16be(data, 7) / 32767f;
++        w = -s16be(data, 5) / 32767f;
++        float normSquared = x * x + y * y + z * z + w * w;
++        orientationValid = normSquared >= 0.81f && normSquared <= 1.21f;
++        accelX = data[9] * 16f / 127f;
++        accelY = data[10] * 16f / 127f;
++        accelZ = data[11] * 16f / 127f;
++        gyroX = data[12] * 2000f / 127f;
++        gyroY = data[13] * 2000f / 127f;
++        gyroZ = data[14] * 2000f / 127f;
++        touchX = data[15] & 0xff;
++        touchY = data[16] & 0xff;
++        battery = data[17];
++    }
++
++    private static short s16be(byte[] data, int offset) {
++        return (short) ((data[offset] & 0xff) << 8 | (data[offset + 1] & 0xff));
++    }
++
++    static Cv10ControllerReport decode(byte[] data) {
++        return data != null && data.length == SIZE ? new Cv10ControllerReport(data) : null;
++    }
++
++    boolean isPressed(int mask) {
++        return (buttons & mask) != 0;
++    }
++
++    boolean isTouched() {
++        return touchX != 0 || touchY != 0;
++    }
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
+new file mode 100644
+index 0000000..0b40a4b
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
+@@ -0,0 +1,591 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import android.Manifest;
++import android.app.Activity;
++import android.app.PendingIntent;
++import android.content.BroadcastReceiver;
++import android.content.Context;
++import android.content.Intent;
++import android.content.IntentFilter;
++import android.content.pm.PackageManager;
++import android.hardware.camera2.CameraAccessException;
++import android.hardware.camera2.CameraCaptureSession;
++import android.hardware.camera2.CameraCharacteristics;
++import android.hardware.camera2.CameraDevice;
++import android.hardware.camera2.CameraManager;
++import android.hardware.camera2.CaptureRequest;
++import android.hardware.camera2.params.StreamConfigurationMap;
++import android.hardware.usb.UsbConstants;
++import android.hardware.usb.UsbDevice;
++import android.hardware.usb.UsbDeviceConnection;
++import android.hardware.usb.UsbEndpoint;
++import android.hardware.usb.UsbInterface;
++import android.hardware.usb.UsbManager;
++import android.media.Image;
++import android.media.ImageReader;
++import android.os.Build;
++import android.os.Bundle;
++import android.os.Handler;
++import android.os.Looper;
++import android.os.SystemClock;
++import android.util.AtomicFile;
++import android.util.Size;
++import android.widget.Button;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++import java.io.ByteArrayOutputStream;
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.util.Arrays;
++import java.util.Collections;
++import java.util.Locale;
++import java.util.zip.ZipEntry;
++import java.util.zip.ZipOutputStream;
++
++/** Foreground diagnostics for the original USB 6DoF locator. */
++public final class Cv10KitActivity extends Activity {
++    private static final int USB_CAMERA_PERMISSION = 1;
++    private static final int CAMERA_PREVIEW_PERMISSION = 2;
++    private static final long SAMPLE_MS = 5000;
++    private static final Size CAMERA_SIZE = new Size(Cv10KitReport.FRAME_WIDTH, Cv10KitReport.FRAME_HEIGHT);
++    private final Handler main = new Handler(Looper.getMainLooper());
++    private UsbManager usb;
++    private TextView inventory, hidStatus, cameraStatus;
++    private String permissionAction;
++    private UsbDevice waitingForUsb;
++    private boolean requestedCalibration;
++    private Thread hidWorker;
++    private CameraDevice camera;
++    private CameraCaptureSession capture;
++    private ImageReader images;
++    private int cameraFrames, metadataFrames;
++    private Cv10KitReport.StereoFrame firstStereo;
++    private long firstImageTimestampNs, firstCallbackNs;
++    private Thread cameraSave;
++    private final Runnable endCamera = this::finishCameraSample;
++
++    private final BroadcastReceiver permission = new BroadcastReceiver() {
++        @Override
++        public void onReceive(Context context, Intent intent) {
++            UsbDevice selected = waitingForUsb;
++            if (!permissionAction.equals(intent.getAction()) || selected == null) return;
++            waitingForUsb = null;
++            if (usb.hasPermission(selected)) {
++                beginHid(selected, requestedCalibration);
++            } else {
++                hidStatus.setText("Android USB permission was not granted.");
++            }
++        }
++    };
++
++    @Override
++    protected void onCreate(Bundle saved) {
++        super.onCreate(saved);
++        setTitle("Huawei 6DoF Kit · 定位交互套件");
++        usb = getSystemService(UsbManager.class);
++        permissionAction = getPackageName() + ".KIT_USB_PERMISSION";
++        IntentFilter filter = new IntentFilter(permissionAction);
++        if (Build.VERSION.SDK_INT >= 33) registerReceiver(permission, filter, Context.RECEIVER_NOT_EXPORTED);
++        else registerReceiver(permission, filter);
++
++        LinearLayout content = new LinearLayout(this);
++        content.setOrientation(LinearLayout.VERTICAL);
++        int pad = (int) (16 * getResources().getDisplayMetrics().density);
++        content.setPadding(pad, pad, pad, pad);
++        ScrollView scroll = new ScrollView(this);
++        scroll.addView(content);
++        setContentView(scroll);
++        addButton(content, "Refresh USB and camera devices · 刷新 USB 与相机", this::refresh);
++        inventory = addOutput(content);
++        addButton(content, "Sample locator HID · 采样定位器 HID", () -> requestHid(false));
++        addButton(content, "Read kit calibration · 读取套件校准", () -> requestHid(true));
++        hidStatus = addOutput(content);
++        addButton(content, "Sample OV580 camera · 采样 OV580 相机", this::requestCamera);
++        cameraStatus = addOutput(content);
++        refresh();
++    }
++
++    private void addButton(LinearLayout layout, String label, Runnable onClick) {
++        Button button = new Button(this);
++        button.setText(label);
++        button.setOnClickListener(view -> onClick.run());
++        layout.addView(button);
++    }
++
++    private TextView addOutput(LinearLayout layout) {
++        TextView view = new TextView(this);
++        view.setTextIsSelectable(true);
++        layout.addView(view);
++        return view;
++    }
++
++    private UsbDevice findKit() {
++        UsbDevice found = null;
++        if (usb != null) {
++            for (UsbDevice candidate : usb.getDeviceList().values()) {
++                if (candidate.getVendorId() != Cv10KitReport.VENDOR_ID ||
++                        candidate.getProductId() != Cv10KitReport.PRODUCT_ID) continue;
++                if (found != null) return null;
++                found = candidate;
++            }
++        }
++        return found;
++    }
++
++    private void refresh() {
++        UsbDevice kit = findKit();
++        if (kit == null) {
++            inventory.setText("Connect one Huawei locator (12D1:3A09) to inspect USB and its camera.");
++            return;
++        }
++        StringBuilder details = new StringBuilder("Huawei locator 12D1:3A09");
++        for (int i = 0; i < kit.getInterfaceCount(); ++i) {
++            UsbInterface iface = kit.getInterface(i);
++            details.append(String.format(Locale.ROOT, "\nIF %d alt %d class %02x", iface.getId(),
++                    iface.getAlternateSetting(), iface.getInterfaceClass()));
++            for (int j = 0; j < iface.getEndpointCount(); ++j) {
++                UsbEndpoint endpoint = iface.getEndpoint(j);
++                details.append(String.format(Locale.ROOT, " EP %02x/%d", endpoint.getAddress(),
++                        endpoint.getMaxPacketSize()));
++            }
++        }
++        try {
++            String cameraId = findCamera();
++            details.append(cameraId == null ? "\nCamera2: no unique external 1280×481 Y8 camera."
++                    : "\nCamera2: external 1280×481 Y8 camera " + cameraId);
++        } catch (CameraAccessException | RuntimeException failure) {
++            details.append("\nCamera2: ").append(failure.getMessage());
++        }
++        inventory.setText(details);
++    }
++
++    private void requestHid(boolean calibration) {
++        if (hidWorker != null || waitingForUsb != null) return;
++        UsbDevice kit = findKit();
++        if (kit == null) {
++            refresh();
++            return;
++        }
++        requestedCalibration = calibration;
++        if (usb.hasPermission(kit)) {
++            beginHid(kit, calibration);
++            return;
++        }
++        boolean hasVideo = kit.getDeviceClass() == UsbConstants.USB_CLASS_VIDEO;
++        for (int i = 0; i < kit.getInterfaceCount(); ++i) {
++            hasVideo |= kit.getInterface(i).getInterfaceClass() == UsbConstants.USB_CLASS_VIDEO;
++        }
++        if (hasVideo && Build.VERSION.SDK_INT >= 28 &&
++                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
++            requestPermissions(new String[] {Manifest.permission.CAMERA}, USB_CAMERA_PERMISSION);
++            return;
++        }
++        waitingForUsb = kit;
++        try {
++            PendingIntent result = PendingIntent.getBroadcast(this, 0,
++                    new Intent(permissionAction).setPackage(getPackageName()), PendingIntent.FLAG_IMMUTABLE);
++            usb.requestPermission(kit, result);
++            hidStatus.setText("Waiting for Android USB permission…");
++        } catch (RuntimeException failure) {
++            waitingForUsb = null;
++            hidStatus.setText("USB permission request failed: " + failure.getMessage());
++        }
++    }
++
++    private void beginHid(UsbDevice device, boolean calibration) {
++        if (hidWorker != null) return;
++        hidStatus.setText(calibration ? "Reading locator and controller calibration…"
++                : "Sampling interface 2 interrupt IN for 5 seconds…");
++        hidWorker = new Thread(() -> {
++            Thread job = Thread.currentThread();
++            String result;
++            try {
++                result = runHid(device, calibration);
++            } catch (InterruptedException stopped) {
++                job.interrupt();
++                result = "HID sampling stopped.";
++            } catch (IOException | RuntimeException failure) {
++                result = "Locator read failed: " + failure.getMessage();
++            }
++            String message = result;
++            main.post(() -> {
++                if (hidWorker != job) return;
++                hidWorker = null;
++                if (!job.isInterrupted()) hidStatus.setText(message);
++            });
++        }, "CV10 locator HID");
++        hidWorker.start();
++    }
++
++    private String runHid(UsbDevice device, boolean calibration) throws IOException, InterruptedException {
++        for (int i = 0; i < device.getInterfaceCount(); ++i) {
++            UsbInterface iface = device.getInterface(i);
++            if (iface.getId() != Cv10KitReport.HID_INTERFACE || iface.getAlternateSetting() != 0 ||
++                    iface.getInterfaceClass() != UsbConstants.USB_CLASS_HID) continue;
++            UsbEndpoint input = null, output = null;
++            for (int j = 0; j < iface.getEndpointCount(); ++j) {
++                UsbEndpoint endpoint = iface.getEndpoint(j);
++                if (endpoint.getType() != UsbConstants.USB_ENDPOINT_XFER_INT) continue;
++                if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
++                    if (input == null) input = endpoint;
++                } else if (output == null) {
++                    output = endpoint;
++                }
++            }
++            if (input != null) return runHid(device, iface, input, output, calibration);
++        }
++        return "Interface 2 has no HID interrupt IN endpoint.";
++    }
++
++    private String runHid(UsbDevice device, UsbInterface iface, UsbEndpoint input, UsbEndpoint output,
++            boolean calibration) throws IOException, InterruptedException {
++        UsbDeviceConnection port = usb.openDevice(device);
++        if (port == null) return "Android could not open the locator.";
++        boolean claimed = false;
++        try {
++            claimed = port.claimInterface(iface, false) || port.claimInterface(iface, true);
++            if (!claimed) return "Android could not claim locator HID interface 2.";
++            try (Cv10KitHid hid = new Cv10KitHid(port, iface.getId(), input, output)) {
++                return calibration ? readCalibration(hid) : collectReports(hid, input.getAddress());
++            }
++        } finally {
++            try {
++                if (claimed) port.releaseInterface(iface);
++            } finally {
++                port.close();
++            }
++        }
++    }
++
++    private String readCalibration(Cv10KitHid hid) throws InterruptedException {
++        File parent = getExternalFilesDir("kit-calibration");
++        if (parent == null) parent = getFilesDir();
++        File destination = new File(parent, "kit-" + System.currentTimeMillis());
++        StringBuilder result = new StringBuilder();
++        for (Cv10KitCalibration.Component component : Cv10KitCalibration.Component.values()) {
++            result.append(component.filename).append(": ");
++            try {
++                Cv10KitCalibration.Calibration data = Cv10KitCalibration.read(hid, component);
++                if (data == null) {
++                    result.append("no calibration reply\n");
++                    continue;
++                }
++                if (!destination.isDirectory() && !destination.mkdirs()) {
++                    throw new IOException("Could not create calibration directory");
++                }
++                saveCalibration(destination, component, data);
++                result.append(data.data.length).append(" bytes · ").append(data.protocol()).append('\n');
++                if (component == Cv10KitCalibration.Component.LOCATOR) {
++                    Cv10KitCalibration.CameraCalibration[] cameras = Cv10KitCalibration.locatorCameras(data.data);
++                    for (int i = 0; i < cameras.length; i++) {
++                        Cv10KitCalibration.CameraCalibration cam = cameras[i];
++                        result.append(String.format(Locale.ROOT,
++                                "Camera %d: %.0f Hz · f=(%.2f, %.2f) · c=(%.2f, %.2f) · IMU delay %.2f ms\n",
++                                i, cam.framesPerSecond, cam.intrinsics[0], cam.intrinsics[1],
++                                cam.intrinsics[2], cam.intrinsics[3], cam.cameraToImuDelaySeconds * 1000));
++                    }
++                }
++            } catch (IOException failure) {
++                result.append(failure.getMessage()).append('\n');
++            }
++        }
++        if (destination.isDirectory()) result.append(destination.getAbsolutePath());
++        return result.toString();
++    }
++
++    private static void saveCalibration(File destination, Cv10KitCalibration.Component component,
++            Cv10KitCalibration.Calibration data) throws IOException {
++        ByteArrayOutputStream archive = new ByteArrayOutputStream();
++        try (ZipOutputStream zip = new ZipOutputStream(archive)) {
++            zipEntry(zip, "calibration.bin", data.data);
++            zipEntry(zip, "device.hash", data.deviceHash);
++        }
++        writeArchive(new File(destination, component.filename + ".zip"), archive);
++    }
++
++    private static void zipEntry(ZipOutputStream zip, String name, byte[] content) throws IOException {
++        zip.putNextEntry(new ZipEntry(name));
++        zip.write(content);
++        zip.closeEntry();
++    }
++
++    private static void writeArchive(File destination, ByteArrayOutputStream archive) throws IOException {
++        AtomicFile file = new AtomicFile(destination);
++        FileOutputStream output = file.startWrite();
++        try {
++            archive.writeTo(output);
++            file.finishWrite(output);
++        } catch (IOException | RuntimeException failure) {
++            file.failWrite(output);
++            throw failure;
++        }
++    }
++
++    private String collectReports(Cv10KitHid hid, int endpointAddress) throws IOException {
++        byte[] last = new byte[0];
++        Cv10KitReport.Head head = null;
++        Cv10KitReport.Hand left = null, right = null;
++        int count = 0, headCount = 0, leftCount = 0, rightCount = 0;
++        long end = SystemClock.elapsedRealtime() + SAMPLE_MS;
++        while (SystemClock.elapsedRealtime() < end && !Thread.currentThread().isInterrupted()) {
++            byte[] report = hid.read(200);
++            if (report == null || report.length == 0) continue;
++            last = report;
++            count++;
++            Cv10KitReport.Head currentHead = Cv10KitReport.head(last);
++            Cv10KitReport.Hand currentLeft = Cv10KitReport.hand(last, false);
++            Cv10KitReport.Hand currentRight = Cv10KitReport.hand(last, true);
++            if (currentHead != null) { head = currentHead; headCount++; }
++            if (currentLeft != null) { left = currentLeft; leftCount++; }
++            if (currentRight != null) { right = currentRight; rightCount++; }
++        }
++        StringBuilder result = new StringBuilder(String.format(Locale.ROOT,
++                "EP %02X · USB reports %d\nOV580 records: head %d · left %d · right %d",
++                endpointAddress, count, headCount, leftCount, rightCount));
++        if (head != null) {
++            result.append(String.format(Locale.ROOT, "\nHead %d ns · accel %.3f %.3f %.3f · gyro %.3f %.3f %.3f",
++                    head.deviceNs, head.ax, head.ay, head.az, head.gx, head.gy, head.gz));
++        }
++        appendHand(result, "Left", left);
++        appendHand(result, "Right", right);
++        if (last.length > 0) {
++            result.append("\nLast USB report (").append(last.length).append(" bytes)\n");
++            for (int i = 0; i < Math.min(last.length, Cv10KitReport.HID_REPORT_SIZE); ++i) {
++                result.append(String.format(Locale.ROOT, "%02X ", last[i] & 0xff));
++            }
++        }
++        return result.toString();
++    }
++
++    private static void appendHand(StringBuilder text, String label, Cv10KitReport.Hand hand) {
++        if (hand == null) return;
++        text.append(String.format(Locale.ROOT,
++                "\n%s %d ticks ×%d · buttons %02X · touch %02X/%d · battery %d" +
++                "\nStick %.3f %.3f · trigger %.0f · grip %.0f\nAccel %.3f %.3f %.3f · gyro %.3f %.3f %.3f",
++                label, hand.clockTicks, hand.clockMultiplier, hand.buttons, hand.touches, hand.gripTouch,
++                hand.batteryField, hand.stickX, hand.stickY, hand.trigger, hand.grip,
++                hand.ax, hand.ay, hand.az, hand.gx, hand.gy, hand.gz));
++    }
++
++    private String findCamera() throws CameraAccessException {
++        CameraManager manager = getSystemService(CameraManager.class);
++        String found = null;
++        if (manager == null) return null;
++        for (String id : manager.getCameraIdList()) {
++            CameraCharacteristics flags = manager.getCameraCharacteristics(id);
++            Integer facing = flags.get(CameraCharacteristics.LENS_FACING);
++            if (facing == null || facing != CameraCharacteristics.LENS_FACING_EXTERNAL) continue;
++            StreamConfigurationMap streams = flags.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
++            Size[] sizes = streams == null ? null : streams.getOutputSizes(Cv10KitReport.FRAME_FORMAT);
++            if (sizes == null || !Arrays.asList(sizes).contains(CAMERA_SIZE)) continue;
++            if (found != null) return null;
++            found = id;
++        }
++        return found;
++    }
++
++    private void requestCamera() {
++        if (images != null || cameraSave != null) return;
++        if (findKit() == null) {
++            refresh();
++            return;
++        }
++        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
++            requestPermissions(new String[] {Manifest.permission.CAMERA}, CAMERA_PREVIEW_PERMISSION);
++            return;
++        }
++        try {
++            String id = findCamera();
++            if (id == null) {
++                cameraStatus.setText("Android does not expose a unique external 1280×481 Y8 camera.");
++                return;
++            }
++            CameraManager manager = getSystemService(CameraManager.class);
++            ImageReader reader = ImageReader.newInstance(CAMERA_SIZE.getWidth(), CAMERA_SIZE.getHeight(),
++                    Cv10KitReport.FRAME_FORMAT, 2);
++            images = reader;
++            cameraFrames = 0;
++            metadataFrames = 0;
++            reader.setOnImageAvailableListener(this::readCameraFrame, main);
++            manager.openCamera(id, new CameraDevice.StateCallback() {
++                @Override
++                public void onOpened(CameraDevice opened) {
++                    if (images != reader) {
++                        opened.close();
++                        return;
++                    }
++                    camera = opened;
++                    startCapture(opened, reader);
++                }
++
++                @Override
++                public void onDisconnected(CameraDevice opened) { onError(opened, -1); }
++
++                @Override
++                public void onError(CameraDevice opened, int code) {
++                    opened.close();
++                    if (images == reader) failCamera("Camera disconnected or failed (" + code + ").");
++                }
++            }, main);
++            main.postDelayed(endCamera, SAMPLE_MS);
++            cameraStatus.setText("Sampling the external Y8 camera for 5 seconds…");
++        } catch (CameraAccessException | RuntimeException failure) {
++            failCamera("Camera open failed: " + failure.getMessage());
++        }
++    }
++
++    private void startCapture(CameraDevice opened, ImageReader reader) {
++        try {
++            CaptureRequest.Builder request = opened.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
++            request.addTarget(reader.getSurface());
++            opened.createCaptureSession(Collections.singletonList(reader.getSurface()),
++                    new CameraCaptureSession.StateCallback() {
++                        @Override
++                        public void onConfigured(CameraCaptureSession session) {
++                            if (images != reader) {
++                                session.close();
++                                return;
++                            }
++                            capture = session;
++                            try {
++                                session.setRepeatingRequest(request.build(), null, main);
++                            } catch (CameraAccessException | RuntimeException failure) {
++                                failCamera("Camera capture failed: " + failure.getMessage());
++                            }
++                        }
++
++                        @Override
++                        public void onConfigureFailed(CameraCaptureSession session) {
++                            session.close();
++                            if (images == reader) failCamera("Camera rejected the Y8 capture session.");
++                        }
++                    }, main);
++        } catch (CameraAccessException | RuntimeException failure) {
++            failCamera("Camera session failed: " + failure.getMessage());
++        }
++    }
++
++    private void readCameraFrame(ImageReader source) {
++        if (images != source) return;
++        try (Image frame = source.acquireLatestImage()) {
++            if (frame == null || frame.getPlanes().length != 1) return;
++            cameraFrames++;
++            Image.Plane plane = frame.getPlanes()[0];
++            Cv10KitReport.Frame decoded;
++            if (firstStereo == null) {
++                long callbackNs = SystemClock.elapsedRealtimeNanos();
++                firstStereo = Cv10KitReport.stereo(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
++                if (firstStereo == null) return;
++                firstImageTimestampNs = frame.getTimestamp();
++                firstCallbackNs = callbackNs;
++                decoded = firstStereo.frame;
++            } else {
++                decoded = Cv10KitReport.frame(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
++            }
++            if (decoded != null) {
++                metadataFrames++;
++                if (metadataFrames == 1 || metadataFrames % 15 == 0) {
++                    cameraStatus.setText(String.format(Locale.ROOT,
++                            "OV580 frame %d · device %d ns · exposure %d µs · marker %02X",
++                            decoded.frameNumber, decoded.deviceNs, decoded.exposureUs, decoded.frameMarker));
++                }
++            }
++        } catch (RuntimeException failure) {
++            failCamera("Camera read failed: " + failure.getMessage());
++        }
++    }
++
++    private void finishCameraSample() {
++        Cv10KitReport.StereoFrame sample = firstStereo;
++        closeCamera();
++        cameraStatus.setText(cameraStatus.getText() + "\nY8 frames " + cameraFrames +
++                " · frames with metadata " + metadataFrames);
++        if (sample == null) return;
++        long sensorNs = firstImageTimestampNs;
++        long callbackNs = firstCallbackNs;
++        cameraSave = new Thread(() -> {
++            String result;
++            try {
++                result = "\n" + saveStereo(sample, sensorNs, callbackNs).getAbsolutePath();
++            } catch (IOException | RuntimeException failure) {
++                result = "\nCould not save stereo images: " + failure.getMessage();
++            }
++            String message = result;
++            main.post(() -> {
++                cameraSave = null;
++                if (!isDestroyed()) cameraStatus.append(message);
++            });
++        }, "CV10 stereo sample");
++        cameraSave.start();
++    }
++
++    private File saveStereo(Cv10KitReport.StereoFrame stereo, long imageTimestampNs, long callbackNs)
++            throws IOException {
++        File directory = getExternalFilesDir("kit-stereo");
++        if (directory == null) directory = getFilesDir();
++        File file = new File(directory, "stereo-" + System.currentTimeMillis() + ".zip");
++        Cv10KitReport.Frame frame = stereo.frame;
++        String metadata = String.format(Locale.ROOT,
++                "width=%d\nheight=%d\nformat=Y8\nframe_number=%d\ndevice_ns=%d\nimage_timestamp_ns=%d\n" +
++                "callback_elapsed_realtime_ns=%d\nexposure_us=%d\nmarker=%d\n",
++                Cv10KitReport.CAMERA_WIDTH, Cv10KitReport.CAMERA_HEIGHT, frame.frameNumber, frame.deviceNs,
++                imageTimestampNs, callbackNs, frame.exposureUs, frame.frameMarker);
++        ByteArrayOutputStream archive = new ByteArrayOutputStream();
++        try (ZipOutputStream zip = new ZipOutputStream(archive)) {
++            zipEntry(zip, "camera0.y8", stereo.camera0);
++            zipEntry(zip, "camera1.y8", stereo.camera1);
++            zipEntry(zip, "trailer.bin", stereo.trailer);
++            zipEntry(zip, "frame.txt", metadata.getBytes(StandardCharsets.UTF_8));
++        }
++        writeArchive(file, archive);
++        return file;
++    }
++
++    private void failCamera(String message) {
++        closeCamera();
++        cameraStatus.setText(message);
++    }
++
++    private void closeCamera() {
++        main.removeCallbacks(endCamera);
++        if (capture != null) capture.close();
++        if (camera != null) camera.close();
++        if (images != null) images.close();
++        capture = null;
++        camera = null;
++        images = null;
++        firstStereo = null;
++    }
++
++    @Override
++    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
++        super.onRequestPermissionsResult(requestCode, permissions, results);
++        if (results.length == 0 || results[0] != PackageManager.PERMISSION_GRANTED) {
++            (requestCode == USB_CAMERA_PERMISSION ? hidStatus : cameraStatus).setText("Camera permission denied.");
++        } else if (requestCode == USB_CAMERA_PERMISSION) {
++            requestHid(requestedCalibration);
++        } else if (requestCode == CAMERA_PREVIEW_PERMISSION) {
++            requestCamera();
++        }
++    }
++
++    @Override
++    protected void onStop() {
++        closeCamera();
++        if (hidWorker != null) {
++            hidWorker.interrupt();
++            hidStatus.setText("HID sampling stopped.");
++        }
++        super.onStop();
++    }
++
++    @Override
++    protected void onDestroy() {
++        unregisterReceiver(permission);
++        super.onDestroy();
++    }
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCalibration.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCalibration.java
+new file mode 100644
+index 0000000..d6b9cbc
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCalibration.java
+@@ -0,0 +1,206 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.nio.ByteBuffer;
++import java.nio.ByteOrder;
++import java.util.Arrays;
++import java.util.concurrent.TimeUnit;
++
++final class Cv10KitCalibration {
++    private static final int HASH = 0x2a;
++    private static final int CHUNK = 0x29;
++    private static final int ANDROID = 0x02;
++    private static final int WINDOWS = 0x05;
++    private static final int REPLY_TIMEOUT_MS = 600;
++    private static final int MAX_CHUNKS = 64;
++    private static final int MAX_CALIBRATION_BYTES = 2048;
++
++    enum Component {
++        LOCATOR("locator", 0x81, 22, 0x3de),
++        LEFT("left", 0x83, 29, 0x32c),
++        RIGHT("right", 0x82, 29, 0x32c);
++
++        final String filename;
++        final int selector;
++        final int windowsChunks;
++        final int windowsBytes;
++
++        Component(String filename, int selector, int windowsChunks, int windowsBytes) {
++            this.filename = filename;
++            this.selector = selector;
++            this.windowsChunks = windowsChunks;
++            this.windowsBytes = windowsBytes;
++        }
++    }
++
++    interface Link {
++        byte[] read(int timeoutMs) throws IOException, InterruptedException;
++        void write(byte[] report) throws IOException, InterruptedException;
++    }
++
++    static final class Calibration {
++        final byte[] deviceHash, data;
++        final int dialect;
++
++        Calibration(byte[] deviceHash, byte[] data, int dialect) {
++            this.deviceHash = deviceHash;
++            this.data = data;
++            this.dialect = dialect;
++        }
++
++        String protocol() {
++            return dialect == ANDROID ? "Android" : "Windows";
++        }
++    }
++
++    static final class CameraCalibration {
++        final int id, width, height, rollingMode, distortionMode;
++        final float framesPerSecond, autofocusCode, pixelSigma;
++        final double readoutSeconds, exposureShiftSeconds, cameraToImuDelaySeconds;
++        final boolean needsUndistortion;
++        final double[] intrinsics, distortion, autofocusCompensation, tbc, tcm;
++
++        CameraCalibration(ByteBuffer fields) {
++            id = unsigned(fields.get());
++            width = fields.getInt();
++            height = fields.getInt();
++            framesPerSecond = fields.getFloat();
++            rollingMode = unsigned(fields.get());
++            readoutSeconds = fields.getDouble();
++            exposureShiftSeconds = fields.getDouble();
++            cameraToImuDelaySeconds = fields.getDouble();
++            intrinsics = readDoubles(fields, 4);
++            needsUndistortion = fields.get() != 0;
++            distortionMode = unsigned(fields.get());
++            distortion = readDoubles(fields, 8);
++            autofocusCode = fields.getFloat();
++            autofocusCompensation = new double[4];
++            for (int i = 0; i < autofocusCompensation.length; i++) {
++                autofocusCompensation[i] = fields.getFloat();
++            }
++            tbc = readDoubles(fields, 7);
++            tcm = readDoubles(fields, 7);
++            pixelSigma = fields.getFloat();
++        }
++
++        private boolean isUsable() {
++            return width == Cv10KitReport.CAMERA_WIDTH && height == Cv10KitReport.CAMERA_HEIGHT &&
++                    Float.isFinite(framesPerSecond) && framesPerSecond > 0 &&
++                    Double.isFinite(readoutSeconds) && Double.isFinite(exposureShiftSeconds) &&
++                    Double.isFinite(cameraToImuDelaySeconds) &&
++                    intrinsics[0] > 0 && intrinsics[1] > 0 && Arrays.stream(intrinsics).allMatch(Double::isFinite) &&
++                    Arrays.stream(distortion).allMatch(Double::isFinite) &&
++                    Arrays.stream(tbc).allMatch(Double::isFinite) && Arrays.stream(tcm).allMatch(Double::isFinite);
++        }
++    }
++
++    static CameraCalibration[] locatorCameras(byte[] data) throws IOException {
++        // SaveHelmet skips a 0x40-byte header. GetCamPara advances by 0x130 bytes per camera.
++        final int cameraStart = 0x40;
++        final int cameraSize = 0x130;
++        if (data.length < cameraStart + (2 * cameraSize)) throw new IOException("Truncated stereo calibration");
++        ByteBuffer fields = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
++        fields.position(cameraStart);
++        CameraCalibration first = new CameraCalibration(fields);
++        fields.position(cameraStart + cameraSize);
++        CameraCalibration second = new CameraCalibration(fields);
++        if (!first.isUsable() || !second.isUsable()) throw new IOException("Invalid 640×480 stereo calibration");
++        return new CameraCalibration[] {first, second};
++    }
++
++    private static double[] readDoubles(ByteBuffer fields, int count) {
++        double[] values = new double[count];
++        for (int i = 0; i < count; i++) values[i] = fields.getDouble();
++        return values;
++    }
++
++    static Calibration read(Link link, Component component) throws IOException, InterruptedException {
++        int dialect = ANDROID;
++        byte[] hash = exchange(link, component, dialect, HASH, 0);
++        if (hash == null) {
++            dialect = WINDOWS;
++            hash = exchange(link, component, dialect, HASH, 0);
++        }
++        if (hash == null) return null;
++
++        int hashLength = dialect == WINDOWS ? 33 : unsigned(hash[0x2f]);
++        byte[] deviceHash = Arrays.copyOfRange(hash, 0x31, 0x31 + hashLength);
++        ByteArrayOutputStream data = new ByteArrayOutputStream();
++        int chunkCount = 1;
++        for (int index = 1; index <= chunkCount; index++) {
++            byte[] reply = exchange(link, component, dialect, CHUNK, index);
++            if (reply == null) {
++                throw new IOException(component.filename + " calibration chunk " + index + " timed out");
++            }
++            if (index == 1) {
++                chunkCount = dialect == WINDOWS ? component.windowsChunks : unsigned(reply[0x31]);
++                if (chunkCount < 1 || chunkCount > MAX_CHUNKS) {
++                    throw new IOException(component.filename + " calibration has an invalid chunk count: " + chunkCount);
++                }
++            }
++            int length = payloadLength(reply, dialect) - 3;
++            if (data.size() + length > MAX_CALIBRATION_BYTES) {
++                throw new IOException(component.filename + " calibration exceeds its buffer");
++            }
++            data.write(reply, 0x33, length);
++        }
++        if (dialect == WINDOWS && data.size() != component.windowsBytes) {
++            throw new IOException(component.filename + " calibration has an unexpected size: " + data.size());
++        }
++        return new Calibration(deviceHash, data.toByteArray(), dialect);
++    }
++
++    private static byte[] exchange(Link link, Component component, int dialect, int command, int sequence)
++            throws IOException, InterruptedException {
++        checkInterrupted();
++        byte[] request = new byte[64];
++        request[0] = 2;
++        request[1] = (byte) component.selector;
++        request[2] = (byte) 0x80;
++        request[4] = (byte) dialect;
++        request[5] = (byte) command;
++        request[6] = (byte) sequence;
++        link.write(request);
++        long end = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(REPLY_TIMEOUT_MS);
++        for (long left = end - System.nanoTime(); left > 0; left = end - System.nanoTime()) {
++            checkInterrupted();
++            byte[] report = link.read((int) Math.max(1, TimeUnit.NANOSECONDS.toMillis(left)));
++            if (report == null) return null;
++            if (matches(report, component, dialect, command, sequence)) return report;
++        }
++        return null;
++    }
++
++    private static boolean matches(byte[] report, Component component, int dialect, int command, int sequence) {
++        if (report.length < 0x31 || unsigned(report[0x30]) != command ||
++                unsigned(report[0x2d]) != component.selector) return false;
++        if (command == HASH) {
++            int length = dialect == WINDOWS ? 33 : unsigned(report[0x2f]);
++            if (length == 0 || length > report.length - 0x31) return false;
++            for (int i = 0x31; i < 0x31 + length; i++) {
++                if (report[i] != 0) return true;
++            }
++            return false;
++        }
++        if (report.length < 0x33 || unsigned(report[0x32]) != sequence ||
++                (dialect == ANDROID && unsigned(report[0x2c]) != 0x80)) return false;
++        int length = payloadLength(report, dialect);
++        return length > 3 && length - 3 <= report.length - 0x33;
++    }
++
++    private static int payloadLength(byte[] report, int dialect) {
++        return (dialect == WINDOWS ? unsigned(report[0x2e]) << 8 : 0) | unsigned(report[0x2f]);
++    }
++
++    private static int unsigned(byte value) {
++        return value & 0xff;
++    }
++
++    private static void checkInterrupted() throws InterruptedException {
++        if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
++    }
++
++    private Cv10KitCalibration() {}
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java
+new file mode 100644
+index 0000000..24650d6
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java
+@@ -0,0 +1,110 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import android.hardware.usb.UsbDeviceConnection;
++import android.hardware.usb.UsbEndpoint;
++import android.hardware.usb.UsbRequest;
++import java.io.IOException;
++import java.nio.ByteBuffer;
++import java.util.concurrent.TimeoutException;
++
++/** Serial HID input/output on an already claimed locator interface. */
++final class Cv10KitHid implements Cv10KitCalibration.Link, AutoCloseable {
++    private static final int USB_TIMEOUT_MS = 300;
++    private static final int HID_CLASS_INTERFACE_OUT = 0x21;
++    private static final int SET_REPORT = 9;
++    private static final int OUTPUT_REPORT_ID_2 = 0x0202;
++
++    private final UsbDeviceConnection port;
++    private final int interfaceId;
++    private final UsbRequest input = new UsbRequest();
++    private final UsbEndpoint output;
++    private final ByteBuffer incoming;
++    private boolean queued;
++
++    Cv10KitHid(UsbDeviceConnection port, int interfaceId, UsbEndpoint input, UsbEndpoint output) throws IOException {
++        this.port = port;
++        this.interfaceId = interfaceId;
++        this.output = output;
++        incoming = ByteBuffer.allocateDirect(Math.max(Cv10KitReport.HID_REPORT_SIZE, input.getMaxPacketSize()));
++        if (!this.input.initialize(port, input)) {
++            this.input.close();
++            throw new IOException("Android could not open the HID input endpoint");
++        }
++    }
++
++    @Override
++    public byte[] read(int timeoutMs) throws IOException {
++        if (!queued) {
++            incoming.clear();
++            if (!input.queue(incoming)) throw new IOException("Could not queue locator HID input");
++            queued = true;
++        }
++        try {
++            if (port.requestWait(timeoutMs) != input) throw new IOException("HID input request failed");
++        } catch (TimeoutException timeout) {
++            return null;
++        }
++        queued = false;
++        byte[] report = new byte[incoming.position()];
++        incoming.flip();
++        incoming.get(report);
++        return report;
++    }
++
++    @Override
++    public void write(byte[] report) throws IOException {
++        discardPendingInput();
++        if (output == null) {
++            int size = port.controlTransfer(HID_CLASS_INTERFACE_OUT, SET_REPORT, OUTPUT_REPORT_ID_2, interfaceId,
++                    report, report.length, USB_TIMEOUT_MS);
++            if (size != report.length) throw new IOException("HID SET_REPORT returned " + size + " bytes");
++            return;
++        }
++        UsbRequest request = new UsbRequest();
++        try {
++            ByteBuffer buffer = ByteBuffer.allocateDirect(report.length);
++            buffer.put(report).flip();
++            if (!request.initialize(port, output) || !request.queue(buffer)) {
++                throw new IOException("Could not queue locator HID output");
++            }
++            try {
++                if (port.requestWait(USB_TIMEOUT_MS) != request || buffer.position() != report.length) {
++                    throw new IOException("HID output report was not sent in full");
++                }
++            } catch (TimeoutException timeout) {
++                request.cancel();
++                awaitCancelledRequest(request);
++                throw new IOException("HID output report timed out", timeout);
++            }
++        } finally {
++            request.close();
++        }
++    }
++
++    private void discardPendingInput() throws IOException {
++        if (!queued) return;
++        input.cancel();
++        awaitCancelledRequest(input);
++        queued = false;
++    }
++
++    private void awaitCancelledRequest(UsbRequest request) throws IOException {
++        try {
++            if (port.requestWait(USB_TIMEOUT_MS) != request) throw new IOException("Could not drain HID request");
++        } catch (TimeoutException timeout) {
++            throw new IOException("Could not drain timed-out HID request", timeout);
++        }
++    }
++
++    @Override
++    public void close() {
++        try {
++            discardPendingInput();
++        } catch (IOException ignored) {
++            // The owner closes the connection immediately after releasing the interface.
++        } finally {
++            input.close();
++        }
++    }
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java
+new file mode 100644
+index 0000000..d4948a6
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java
+@@ -0,0 +1,139 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import java.nio.ByteBuffer;
++import java.nio.ByteOrder;
++
++/** OV580 records accepted by the Huawei runtime. The physical USB framing is device-dependent. */
++final class Cv10KitReport {
++    static final int VENDOR_ID = 0x12d1;
++    static final int PRODUCT_ID = 0x3a09;
++    static final int HID_INTERFACE = 2;
++    static final int HID_REPORT_SIZE = 128;
++    static final int FRAME_WIDTH = 1280;
++    static final int FRAME_HEIGHT = 481;
++    static final int FRAME_FORMAT = 0x20203859; // Y8
++    static final int CAMERA_WIDTH = FRAME_WIDTH / 2;
++    static final int CAMERA_HEIGHT = FRAME_HEIGHT - 1;
++    private static final int HAND_RECORD = 0x31;
++    private static final int HAND_STRIDE = 0x24;
++    private static final float HAND_ACCEL = 0x1.39d016p-8f;
++    private static final float HAND_GYRO = 0x1.1740a8p-9f;
++
++    static final class Head {
++        final long deviceNs;
++        final float ax, ay, az, gx, gy, gz;
++
++        private Head(ByteBuffer data) {
++            deviceNs = Long.reverseBytes(data.getLong(12));
++            ax = data.getShort(23) * 0.000244f * -9.8f;
++            ay = data.getShort(21) * 0.000244f * 9.8f;
++            az = data.getShort(25) * 0.000244f * 9.8f;
++            gx = data.getShort(30) * 0.07f * (float) -Math.PI / 180f;
++            gy = data.getShort(28) * 0.07f * (float) Math.PI / 180f;
++            gz = data.getShort(32) * 0.07f * (float) Math.PI / 180f;
++        }
++    }
++
++    static final class Hand {
++        static final int CONFIRM = 0x20;
++        static final int BACK = 0x10;
++        static final int HOME = 0x02;
++        static final int STICK_CLICK = 0x08;
++        final long clockTicks;
++        final int clockMultiplier, buttons, touches, gripTouch, batteryField;
++        final float ax, ay, az, gx, gy, gz, stickX, stickY, trigger, grip;
++        final int mx, my, mz;
++
++        private Hand(ByteBuffer data, int start) {
++            buttons = u8(data, start);
++            clockTicks = Integer.toUnsignedLong(Integer.reverseBytes(data.getInt(start + 1)));
++            clockMultiplier = u8(data, start + 0x17);
++            ax = data.getShort(start + 5) * HAND_ACCEL;
++            ay = data.getShort(start + 7) * HAND_ACCEL;
++            az = data.getShort(start + 9) * HAND_ACCEL;
++            gx = data.getShort(start + 0x0b) * HAND_GYRO;
++            gy = data.getShort(start + 0x0d) * HAND_GYRO;
++            gz = data.getShort(start + 0x0f) * HAND_GYRO;
++            mx = Short.toUnsignedInt(data.getShort(start + 0x11));
++            my = Short.toUnsignedInt(data.getShort(start + 0x13));
++            mz = Short.toUnsignedInt(data.getShort(start + 0x15));
++            batteryField = u8(data, start + 0x18);
++            trigger = 25f * data.getShort(start + 0x19);
++            grip = 25f * data.getShort(start + 0x1b);
++            stickX = (data.getShort(start + 0x1d) + 1499) / 3046f;
++            stickY = 1f - (data.getShort(start + 0x1f) + 1642) / 3035f;
++            touches = u8(data, start + 0x21);
++            gripTouch = u8(data, start + 0x22) & 1;
++        }
++    }
++
++    static final class Frame {
++        final long deviceNs;
++        final long frameNumber;
++        final int exposureUs;
++        final int frameMarker;
++
++        private Frame(ByteBuffer metadata) {
++            deviceNs = metadata.getLong(0);
++            frameNumber = Integer.toUnsignedLong(metadata.getInt(0x12));
++            exposureUs = Short.toUnsignedInt(metadata.getShort(0x16));
++            frameMarker = u8(metadata, 0x1c);
++        }
++    }
++
++    static final class StereoFrame {
++        final Frame frame;
++        final byte[] camera0 = new byte[CAMERA_WIDTH * CAMERA_HEIGHT];
++        final byte[] camera1 = new byte[CAMERA_WIDTH * CAMERA_HEIGHT];
++        final byte[] trailer;
++
++        private StereoFrame(Frame frame, ByteBuffer plane, int rowStride) {
++            this.frame = frame;
++            ByteBuffer pixels = plane.duplicate();
++            int start = plane.position();
++            for (int row = 0; row < CAMERA_HEIGHT; row++) {
++                pixels.position(start + row * rowStride);
++                pixels.get(camera0, row * CAMERA_WIDTH, CAMERA_WIDTH);
++                pixels.get(camera1, row * CAMERA_WIDTH, CAMERA_WIDTH);
++            }
++            pixels.position(start + CAMERA_HEIGHT * rowStride);
++            trailer = new byte[Math.min(FRAME_WIDTH, pixels.remaining())];
++            pixels.get(trailer);
++        }
++    }
++
++    static Head head(byte[] report) {
++        if (report.length < 34 || report[20] != 0 || report[27] != 1) return null;
++        Head head = new Head(ByteBuffer.wrap(report).order(ByteOrder.LITTLE_ENDIAN));
++        return head.deviceNs > 0 ? head : null;
++    }
++
++    static Hand hand(byte[] report, boolean right) {
++        int start = HAND_RECORD + (right ? HAND_STRIDE : 0);
++        if (report.length < start + 0x23 || report[0x30] != 0x20) return null;
++        Hand hand = new Hand(ByteBuffer.wrap(report).order(ByteOrder.LITTLE_ENDIAN), start);
++        return hand.clockTicks != 0 ? hand : null;
++    }
++
++    static Frame frame(ByteBuffer plane, int rowStride, int pixelStride) {
++        if (rowStride < FRAME_WIDTH || pixelStride != 1 ||
++                (long) rowStride * CAMERA_HEIGHT + 0x1d > plane.remaining()) return null;
++        int metadataStart = plane.position() + CAMERA_HEIGHT * rowStride;
++        ByteBuffer metadata = plane.duplicate().order(ByteOrder.LITTLE_ENDIAN);
++        metadata.position(metadataStart);
++        Frame frame = new Frame(metadata.slice().order(ByteOrder.LITTLE_ENDIAN));
++        return frame.deviceNs > 0 ? frame : null;
++    }
++
++    static StereoFrame stereo(ByteBuffer plane, int rowStride, int pixelStride) {
++        Frame metadata = frame(plane, rowStride, pixelStride);
++        return metadata == null ? null : new StereoFrame(metadata, plane, rowStride);
++    }
++
++    private static int u8(ByteBuffer buffer, int at) {
++        return buffer.get(at) & 0xff;
++    }
++
++    private Cv10KitReport() {}
++}
