@@ -91,7 +91,7 @@
       -1
     ],
     "usb_parent": "Microsoft usbccgp; two HID functions enumerated",
-    "pcui_mi00": "Code 28 before binding. Signed Huawei hwusb_cdcacm then reported Code 39. WinUSB model not selected. No confirmed PCUI screen-on from this PC.",
+    "pcui_mi00": "03:03 trial: Code 28 before binding. Signed Huawei hwusb_cdcacm then reported Code 39. WinUSB model not selected in that trial.",
     "pcui_driver": {
       "setupapi_local_time": "2026-11-26T03:03:21+08:00",
       "version": "1.0.26.0",
@@ -151,6 +151,24 @@
       "test": "Range override, PC source, wear and IMU HID writes",
       "raw_sha256": "dad3449536f99e1f04942bb6dd46f04c697992eedc4f0c38a36683c27a422cce",
       "observed": "Both optical windows visible. Room reflections; neither L nor R visible."
+    },
+    {
+      "capture_time_local": "20261126-091941",
+      "test": "After PCUI wake, left/right pattern",
+      "raw_sha256": "4a4b9b5e66a78c789f8d00d92ed4ada7c70b89f2c4d553949dbf2d3f27d50c4d",
+      "observed": "Both lenses show reflections. Neither test glyph is visible."
+    },
+    {
+      "capture_time_local": "20261126-092052",
+      "test": "Full-field magenta",
+      "raw_sha256": "a765f28a741bd4178ef41454d9e85816ad3677a7a5797b717683efa5045456bf",
+      "observed": "Both lenses show reflections. No magenta field is visible."
+    },
+    {
+      "capture_time_local": "20261126-092100",
+      "test": "Full-field green",
+      "raw_sha256": "7b4d94cd57a9fc65273ed0d57d5a5a3bec11bc28e78f29a2431b27bd8dbe7346",
+      "observed": "The same reflections remain visible. No corresponding transition to green."
     }
   ],
   "published_optics": {
@@ -163,23 +181,26 @@
   },
   "observer": {
     "source": "Windows QueryDisplayConfig and enumeration of the headset HID. Every fifth iteration sampled AMD ADL and P40 ADB transport.",
+    "requested_cutoff": "2026-11-26T09:30:00+08:00",
     "first": "2026-11-26T02:51:47+08:00",
-    "last": "2026-11-26T03:29:28+08:00",
-    "samples": 42,
+    "last": "2026-11-26T09:25:05+08:00",
+    "samples": 429,
+    "complete_source_records_sha256": "3135f62accb8f9e33410ed46b73ef8246b203a6c1b6e15fab310eb879c9a1005",
+    "unreadable_source_lines": 0,
     "maximum_sampling_gap_seconds": 56,
     "secondary_signal_samples": {
-      "640x480": 42
+      "640x480": 429
     },
     "primary_signal_samples": {
-      "2560x1440": 42
+      "2560x1440": 429
     },
-    "both_hid_samples": 42,
+    "both_hid_samples": 429,
     "amd_dce_samples": {
       "DCE ret=0 rateEnum=0 active=0 total=4": 1,
-      "DCE ret=0 rateEnum=1 active=1 total=4": 8
+      "DCE ret=0 rateEnum=1 active=1 total=4": 85
     },
     "p40_adb_samples": {
-      "device": 9
+      "device": 86
     },
     "display_runs": [
       {
@@ -196,10 +217,77 @@
       },
       {
         "first": "2026-11-26T03:08:20+08:00",
-        "last": "2026-11-26T03:29:28+08:00",
-        "observations": 24,
+        "last": "2026-11-26T09:25:05+08:00",
+        "observations": 411,
         "state": "DISPLAY103 / desktop 640x480 / signal 640x480 / 60000:1001 Hz"
       }
     ]
+  },
+  "morning_retest": {
+    "pcui_driver": {
+      "time_local": "2026-11-26T09:18:50+08:00",
+      "interface": "headset MI_00",
+      "inf": "winusb.inf",
+      "service": "WINUSB",
+      "device_problem": 0,
+      "reboot": false,
+      "previous_service": "hwusb_cdcacm",
+      "previous_problem": 39
+    },
+    "pcui_after_wake": {
+      "DEVMODEL": "CV10",
+      "MAINVER": "CV10AC10.0.1.357",
+      "GETSOURCE": 1,
+      "TYPECSTATE": 1,
+      "CABLEINFO": "10C094906255+280",
+      "SWITCHSCREEN=1": "^SWITCHSCREEN=1 / OK",
+      "QUERYEXCEPTION": 0
+    },
+    "ddc_ci_power_vcp_d6_win32_error": {
+      "read_before": 31,
+      "set_on": 31,
+      "read_after": 31
+    },
+    "native_timing_after_wake": {
+      "explicit_ccd_validate_70_90": [
+        1610,
+        1610
+      ],
+      "source_3200x1600_driver_selected_signal": {
+        "requested_refresh_hz": [
+          70,
+          90,
+          0
+        ],
+        "validate_win32": [
+          87,
+          87,
+          0
+        ],
+        "auto_refresh_apply_win32": 0,
+        "actual_source": [
+          640,
+          480
+        ],
+        "actual_target_signal": [
+          640,
+          480
+        ]
+      }
+    },
+    "published_optics": {
+      "filename": "pc-original-cable-morning-optics-20261126.jpg",
+      "sha256": "4d78ff79cfe2de7787744ecb088862705e13c188ffae7c4e8bd94f3d3166b119",
+      "dimensions": [
+        642,
+        806
+      ],
+      "order": [
+        "L/R",
+        "magenta",
+        "green"
+      ],
+      "description": "Identical crops of the two lenses, chronological from top to bottom."
+    }
   }
 }
