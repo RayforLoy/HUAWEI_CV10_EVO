@@ -96,6 +96,21 @@ final class KitVectors {
         y8.limit(y8.limit() - 1);
         check(Cv10KitReport.frame(y8, stride, 1) == null && y8.position() == position, "truncated Y8 camera frame");
 
+        ByteBuffer pose = ByteBuffer.allocate(Cv10KitReport.HeadPose.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        check(!Cv10KitReport.headPose(pose.array()).valid(), "blank head pose");
+        pose.putDouble(0, 2.5).putInt(8, 1).putInt(12, 2);
+        pose.putFloat(0x10, 1).putFloat(0x14, 2).putFloat(0x18, -3);
+        pose.putFloat(0x1c, 0.5f).putFloat(0x20, -0.5f).putFloat(0x24, 0.5f).putFloat(0x28, -0.5f);
+        Cv10KitReport.HeadPose decodedPose = Cv10KitReport.headPose(pose.array());
+        check(decodedPose.valid() && decodedPose.deviceSeconds == 2.5 && decodedPose.state1 == 2
+                && decodedPose.x == 1 && decodedPose.y == 2 && decodedPose.z == -3
+                && decodedPose.qw == 0.5f && decodedPose.qx == -0.5f && decodedPose.qz == -0.5f,
+                "head pose clock, position, and quaternion order");
+        pose.putInt(12, 0);
+        check(!Cv10KitReport.headPose(pose.array()).valid(), "head pose missing second state");
+        pose.putInt(12, 2).putFloat(0x20, Float.NaN);
+        check(!Cv10KitReport.headPose(pose.array()).valid(), "head pose nonfinite quaternion");
+
         Cv10KitCalibration.Calibration android = Cv10KitCalibration.read(
                 new CalibrationLink(false, false), Cv10KitCalibration.Component.LOCATOR);
         check(android != null && android.protocol().equals("Android") &&

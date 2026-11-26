@@ -167,8 +167,24 @@ Android `HxrAlgorithmData` 在 64 位程序中占 `0x120` 字节。前 `0x100` �
 
 实时查询使用 `fmt:pose@org:slam`，预测查询使用 `fmt:predictpose@org:slam`，两者为 `0x38` 字节输出缓冲。原厂预测时间在 `0xc05d0–0xc05ec` 计算为最后送入的 IMU 时间加上「请求时间（由微秒乘 1000）减当前 `CLOCK_MONOTONIC` 纳秒」的差。图像和 IMU 同时送入时均采用报文设备时间。两路设备时间实际偏差和 Fold7 的数据延迟仍需采样。
 
+`GetHelmetPosture` 在 `0x91af4–0x91b34` 检查查询返回值和 `0x08`／`0x0c` 两个 u32 状态，任一为零都进入无有效位姿分支。缓冲 `0x00` 为 f64 秒，`0x10` 为 3 个 f32 位置 `xyz`，`0x1c` 为 4 个 f32 四元数 `wxyz`。`0x91b08–0x91b20` 将其循环移位为 `xyzw`，随后使用 `UpdateHelmetCoordinate` 转换到头显坐标。诊断在返回值、状态、有限数和四元数模长均通过检查时显示原始 SLAM 坐标。格式和状态判断已用合成缓冲验证。
+
 用 [Windows 离线探针](probe-slam-head.py) 在独立进程载入默认 XML，验证库可创建、初始化、启动、停止、清理及销毁。六条合成 IMU 数据和两组无特征的空白双目图都由 `+0x70` 返回 0。随后 `+0x78` 返回 `-1`，输出缓冲保持为零。此测试覆盖调用与数据入口。生成有效的视觉位姿仍需同步的真实输入。
 
-`libarvr_slam.so` 的 ELF `DT_NEEDED` 只列出 Android 平台库。手柄库 `libVR6Dof.so` 另外链接 `libhiai.so`、`libhiai_ir.so`、`libhcl.so` 和 `libhiai_hcl_model_runtime.so`。手柄库的 `BlobDetection::DetectBlobs`（`0x13a7a8`）和 `P3PSolver::CalcPose`（`0x1a3d2c`）分别提供斑点检测和位姿求解的追踪入口。当前两份 APK 均未打包或调用这两个厂商库。
+### Android 头显诊断接入
 
-当前诊断可请求并导出三个组件的校准数据，解析定位器双目、三路 IMU 和左右手 LED 模型，读取原始头部与左右手报告，拆分并保存一组外部相机图像。图像与 IMU 的时钟映射、头显视觉惯性融合、左右手光学定位及 OpenXR 6DoF 位姿输出仍待完成。
+运行时和独立诊断 APK 共用 C++ 头显适配层。用户通过 Android 文档选择器导入原厂 ARM64 `libarvr_slam.so`。应用仅接受 SHA-256 为 `2268ff5e2b26e67da395af6c57980f15f23e6199c4cb942d5fb959b3eb9b46a9` 的样本，并从应用私有目录加载。两份 APK 只打包适配层。适配层用相同的引用计数持有组合包、两路图像和像素，直到调用方和原厂库都释放引用。两路特征指针置空，输入为原始灰度像素。
+
+实时诊断在同一轮中读取定位器校准、头显 HID 和外接 Y8。每组图像等待设备时钟达到该帧的 IMU 样本，再送入 SLAM。离线回放使用所选校准、合成 IMU 和空白图像。两种诊断都显示位姿查询结果。用 [Windows 共用适配层探针](probe/HeadSlamAbi.cpp) 将相同 C++ 代码编译到 x64，已用原厂 PC `arvr_slam.dll` 和 Android 格式校准完成回放，查询返回 `-1`、输出全零，关闭后所有输入缓冲均已释放。尚未在 Fold7 执行 Android 库加载或测得有效头显位姿。
+
+### 左右手柄位姿接口
+
+Android `VCtrlState::Init`（`0xc631c`）调用 `libVR6Dof.so` 的 `GetVR6DofInterface`（`0x14ba4c`），返回表 `0x636050`。Windows `HandlerDLL.dll` 的同名导出（RVA `0x3f5f0`）返回表 `0x16f940`。两表使用标记 `0x00000001abcd2012` 和名称 `VR6Dof`。创建、初始化、启停、回收、输入、查询和回调注册槽位与头显表的对应槽位相同。输入格式列表为 `fmt:yuv@res:480p@rot:0;fmt:imu@org:helmet;fmt:imu@org:controller;fmt:pose@org:slam`，输出为 `fmt:pose@org:vr6dof`。配置键 `HSDK_CONFIG_MANAGER_IMPL_GET_VR_6_DOF_HANDLER_CONFIG` 返回 `0x1c38` 字节，见 Android `VrConfiguration::GetValue` 中的 `0xba8a8–0xba8bc`。
+
+Android `VCtrlThread::PushCtrlIMU`（`0xc56f8`）把 `fmt:imu@org:controller` 送入 `HxrAlgorithmData`。其 `0x38` 字节载荷的 `0x00` 为 u8 有效标志，`0x01` 为左手 ASCII `0` 或右手 ASCII `1`，`0x08` 为 u64 纳秒时间，`0x10` 开始为六个 f32 惯性轴，`0x28` 开始为四个 f32，原厂填入 `(1, 0, 0, 0)`。`VCtrlThread::GetPosture`（`0xc5948`）将 `0x18` 字节的 64 位 `std::vector<HandlerPose>` 作为输出载荷交给 `+0x78`。查询返回值及每条姿态的状态需要共同检查。
+
+Windows 离线探针用原厂默认手柄校准完成初始化。左手和右手各送入三条合成 IMU 数据，均返回 0。无图像时查询返回 `-1`，两条 `0x54` 字节的手柄记录分别带 ASCII `0`、`1`，且 `+0x04` 的状态均为 `255`。Android `ArvrRuntimeModuleManager::UpdateCtrlPos` 在 `0x922bc–0x922c8` 拒绝状态 `255`，随后从 `+0x08` 读取 f32 位置 `xyz`，从 `+0x14` 读取 f32 四元数 `wxyz`。离线探针对查询返回码、双手标识和状态作回归检查。
+
+`libarvr_slam.so` 的 ELF `DT_NEEDED` 只列出 Android 平台库。手柄库 `libVR6Dof.so` 另外链接 `libhiai.so`、`libhiai_ir.so`、`libhcl.so` 和 `libhiai_hcl_model_runtime.so`。Android 还在初始化前通过 `+0x60` 以 `fmt:ai_path@org:vr6dof` 设置 `SDmmm1_fp16_480_640.om` 的路径（`0xc6508`、`0xc6620–0xc6634`）。手柄库的 `BlobDetection::DetectBlobs`（`0x13a7a8`）和 `P3PSolver::CalcPose`（`0x1a3d2c`）分别是斑点检测和位姿求解入口。Android 左右手光学定位仍待接入。
+
+待核实 Fold7 上的相机与 HID 可用性、图像与惯性时间的偏差、头显及双手位姿和 OpenXR 6DoF 输出。
