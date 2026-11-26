@@ -1,0 +1,126 @@
+{
+  "date": "2026-11-26",
+  "timezone": "Asia/Hong_Kong",
+  "setup": "Windows, RTX 3070 Laptop GPU, NOLO HOME 1.23.2.0, original mobile cable on the PC with external 5 V / 2 A, sensor covered, camera on right lens. Cable firmware reported by owner as 2 A. Flash was not read or modified in this run.",
+  "prior_422": {
+    "15:26:46.956": "huaweicv1pro: Activate HuaWei VR Glass & NOLO Enable IMU:1",
+    "15:26:47.836": "Headset display is on desktop",
+    "15:26:47.890": "Invalid adapter output specified! (-1) 887A0002",
+    "15:26:47.896": "Failed to start compositor: VRInitError_Compositor_InvalidOutputDesktop"
+  },
+  "verified_session": {
+    "startup": "Before launch PCUI confirmed CV10, original cable, source PC (1), and acknowledged panel wake. Owner clicked Connect in NOLO. Checked that huaweicv1pro was registered, then ran SteamVR/bin/win64/vrstartup.exe.",
+    "16:34:14.515": "NOLO logged Enable IMU:1; active HMD huaweicv1pro.disco.",
+    "16:34:17.193": "Headset is using direct mode",
+    "16:34:18.028": "NVIDIA offered 3200x1600 at 90 and 70 Hz, selected 90 Hz.",
+    "16:34:18.559": "[NvAPI] Current headset frequency: 90.00Hz",
+    "16:34:19.740": "Done initializing CGraphicsDevice resources",
+    "16:37:49.353": "Right lens shows the welcome to SteamVR dashboard. No test color overlay in this frame.",
+    "right_lens_jpeg": "pc-original-2a-steamvr-right-20261126.jpg",
+    "standby_example": "At 16:36:51.194 SteamVR left standby on client connection. At 16:36:56.203 it entered standby again and the camera went black."
+  },
+  "usb_pose_before_replug": "XHC1 CV10 hub. Port 1 audio 12d1:1092 and port 5 2109:8888 connected; port 2 control 12d1:107e absent at 16:37:46.551. OpenVR reported connected and valid with a constant identity rotation. This does not establish physical head tracking.",
+  "sources": [
+    "Steam/logs/vrserver.txt",
+    "Steam/logs/vrcompositor.txt",
+    "Windows USB hub IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+    "IVRSystem::GetDeviceToAbsoluteTrackingPose",
+    "right-lens USB camera"
+  ],
+  "first_glasses_end_reconnect": {
+    "other_connections_unchanged": true,
+    "hub_absent_at": "16:44:16.864",
+    "control_usb_restored_at": "16:44:20.256",
+    "steamvr_left_standby_at": "16:44:20.954",
+    "end_observed_at": "16:46:17.794",
+    "continuous_control_present_observed_s": 117.538,
+    "reported_activity_after_wake": "UserInteraction",
+    "physical_action": "Operator turned headset and returned it to the camera. Dashboard remained lit after settling. The individual clockwise and counterclockwise movements were not time-marked.",
+    "pose_samples": [
+      {
+        "time": "2026-11-26T16:44:31.984",
+        "rotation": [
+          -0.91945,
+          -0.25591,
+          -0.2983,
+          -0.19836,
+          0.95739,
+          -0.20988,
+          0.3393,
+          -0.13381,
+          -0.93104
+        ]
+      },
+      {
+        "time": "2026-11-26T16:44:35.904",
+        "rotation": [
+          -0.95875,
+          -0.05026,
+          -0.2798,
+          -0.0432,
+          0.99857,
+          -0.03134,
+          0.28098,
+          -0.01796,
+          -0.95956
+        ]
+      }
+    ],
+    "relative_rotation_deg_between_samples": 14.05,
+    "measured_compositor": {
+      "frame_indices": [
+        12763,
+        12943
+      ],
+      "seconds": [
+        712.7241577115843,
+        714.724211711162
+      ],
+      "frame_index_rate_hz": 90.0
+    },
+    "right_lens_after_turn_jpeg": "pc-original-2a-steamvr-after-turn-right-20261126.jpg"
+  },
+  "software_restart": {
+    "procedure": "No foreground scene app. Closed SteamVR normally, left NOLO and cable in place, waited for graceful exit; ran vrstartup.exe again. No driver or SteamVR settings edited.",
+    "16:46:21.846": "vrserver graceful exit",
+    "before_restart": "Windows and NVIDIA both exposed CV10 EDID HWV0003 after exit, native signal 3200x1600/90; USB control was absent.",
+    "16:47:26.473": "Active HMD huaweicv1pro.disco, Enable IMU:0",
+    "16:47:30.052": "Headset is using direct mode",
+    "16:47:36.560": "[NvAPI] Current headset frequency: 90.00Hz",
+    "16:47:37.783": "Done initializing CGraphicsDevice resources",
+    "observed_limitation": "16:51:57 NVIDIA logged Invalid refresh: 0 and WaitForPresent failed. Reinserting only the glasses restored USB at 16:54:08.850 and nonconstant poses, but the camera remained dark in this session even during a dashboard wake. PCUI acknowledged panel wake at 16:54:51.152.",
+    "recovery": "Exited this session normally; vrserver logged graceful exit at 16:57:49.401."
+  },
+  "launcher_test": {
+    "before_launch": "At 16:58:00 Windows and NVIDIA exposed HWV0003, native 3200x1600/90; COM24/25 returned CV10 and PC source. No additional physical change.",
+    "startup": "tools/start-cv10-steamvr.ps1 started SteamVR with NOLO still registered.",
+    "16:58:15.786": "Enable IMU:1",
+    "16:58:20.168": "NVIDIA reported current headset frequency 90 Hz.",
+    "16:58:20.686": "First hub sample with port 2 disconnected (0.518 s after NVIDIA frequency log; timing alone does not establish a cause).",
+    "16:58:22.814": "Camera luminance rose; subsequent frames showed the SteamVR scene.",
+    "third_session_pid": 38720
+  },
+  "last_glasses_end_reconnect": {
+    "wiring": "Operator reinserted only glasses end, turned the glasses and returned them to the camera. Original 5 V and PC connection intact; same SteamVR process.",
+    "usb_at": "2026-11-26T17:01:06.102",
+    "usb_last_sample_at": "2026-11-26T17:03:27.226",
+    "port_2_present_every_sample": true,
+    "samples": 710,
+    "observed_s": 141.12,
+    "pose": "OpenVR returned varying rotations during the user action, activity UserInteraction at 17:01:06.677. After coming to rest SteamVR entered standby.",
+    "right_lens_jpeg": "pc-original-2a-steamvr-reconnect-right-20261126.jpg",
+    "compositor_awake": {
+      "frame_indices": [
+        4568,
+        4748
+      ],
+      "seconds": [
+        254.8898259109176,
+        256.88986161124296
+      ],
+      "frame_index_rate_hz": 90.0,
+      "stimulus": "Opening an OpenVR overlay client woke SteamVR from standby. No power settings changed."
+    },
+    "last_activity": 3
+  }
+}

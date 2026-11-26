@@ -1,0 +1,127 @@
+{
+  "date": "2026-11-26",
+  "timezone": "Asia/Hong_Kong",
+  "phone": "Galaxy Z Fold7 SM-F9660",
+  "hardware": "Original mobile cable with owner-installed 2 A firmware, external 5 V, right-eye camera. No cable or headset flash in this investigation.",
+  "initial_black": {
+    "android_external_display": 73,
+    "display_added": "17:06:38.837",
+    "control_usb_added": "17:06:41.281",
+    "focused": "17:07:10.912",
+    "source_mobile_ack_panel_on": "17:07:11.367",
+    "initial_imu_device_ns": 35303178050,
+    "external_active_hz": 90,
+    "layer_hz": 89.96,
+    "right_lens": "black while external screenshot showed stereo cubes"
+  },
+  "black_state_tests": [
+    "Warm foreground relaunch and full cold restart of both processes remained black.",
+    "External display power-off verified OFF, then reset to ON; still black. Logical disable and enable also did not restore the image.",
+    "Repeated SWITCHSCREEN=1, then a separately acknowledged SWITCHSCREEN=0/1 cycle; still black.",
+    "Restored the actual brightness setting 4 with a two-byte HID write; still black.",
+    "USB port reset detached and re-added audio and HID at the same bus addresses without removing logical display 73 or resetting the headset IMU counter."
+  ],
+  "old_runtime_usb_reopen": {
+    "apk_sha256": "2ac6ff0d627ab6259aeb8dd9afe1a0e472fb2fd36bef1f61b1fce5e1a7ea2fd5",
+    "ports": "001/003 and 001/004 reused after reset",
+    "hid_reopened": "17:29:06.327",
+    "pcui_retry": false
+  },
+  "new_runtime": {
+    "apk_sha256": "989c7b43ecd369ed5aa49776542db4511e02ac0d0257395d9c4fd40fdf9f26c5",
+    "package": "org.cv10.monado.out_of_process",
+    "source_change": "On successful HID acquisition allow the PCUI initialization to run again even when Android reuses the device ID. Serialize overlapping panel jobs and discard superseded queued attempts.",
+    "same_address_software_reset": {
+      "hid_reopened": "17:35:35.134",
+      "pcui_ack": "17:35:35.182",
+      "right_lens": "still black on this attachment"
+    }
+  },
+  "glasses_end_replug": {
+    "old_display": 73,
+    "new_display": 74,
+    "new_display_added": "17:36:12.364",
+    "hid_reopened": "17:36:16.533",
+    "pcui_ack": "17:36:16.577",
+    "imu_ns_before": 1763731270400,
+    "imu_ns_after": 7162184568,
+    "right_lens": "fold7-original-2a-reattach-right-20261126.jpg",
+    "layer_hz": 89.96
+  },
+  "application_cold_starts_on_working_connection": [
+    {
+      "trial": 1,
+      "time": "2026-11-26T17:37:33.336",
+      "both_processes_stopped": true,
+      "cold": true,
+      "right_lens": "blue cube confirmed in saved right-eye photo",
+      "activity_events": [
+        "11-26 17:37:34.610 30481 30512 I MonadoCV10: CV10 valid IMU samples=1 deviceNs=84907773268",
+        "11-26 17:37:34.655 30481 30519 I MonadoCV10: CV10 PCUI AT^SWITCHSCREEN=1 OK",
+        "11-26 17:37:34.989 30415 30442 V hello_xr: [17:37:34.989][Info   ] XrEventDataSessionStateChanged: state XR_SESSION_STATE_VISIBLE->XR_SESSION_STATE_FOCUSED session=-5476376638598498384 time=2520403727083"
+      ]
+    },
+    {
+      "trial": 2,
+      "time": "2026-11-26T17:37:40.460",
+      "both_processes_stopped": true,
+      "cold": true,
+      "right_lens": "blue cube confirmed in saved right-eye photo",
+      "activity_events": [
+        "11-26 17:37:41.820 30866 30883 I MonadoCV10: CV10 valid IMU samples=1 deviceNs=92110232931",
+        "11-26 17:37:41.863 30866 30886 I MonadoCV10: CV10 PCUI AT^SWITCHSCREEN=1 OK",
+        "11-26 17:37:42.231 30807 30842 V hello_xr: [17:37:42.231][Info   ] XrEventDataSessionStateChanged: state XR_SESSION_STATE_VISIBLE->XR_SESSION_STATE_FOCUSED session=-5476376638598498384 time=2520422631406"
+      ]
+    },
+    {
+      "trial": 3,
+      "time": "2026-11-26T17:37:47.550",
+      "both_processes_stopped": true,
+      "cold": true,
+      "right_lens": "blue cube confirmed in saved right-eye photo",
+      "activity_events": [
+        "11-26 17:37:49.087 31200 31217 I MonadoCV10: CV10 valid IMU samples=1 deviceNs=99370381287",
+        "11-26 17:37:49.132 31200 31220 I MonadoCV10: CV10 PCUI AT^SWITCHSCREEN=1 OK",
+        "11-26 17:37:49.492 31154 31179 V hello_xr: [17:37:49.492][Info   ] XrEventDataSessionStateChanged: state XR_SESSION_STATE_VISIBLE->XR_SESSION_STATE_FOCUSED session=-5476376638598498384 time=2520419017343"
+      ]
+    }
+  ],
+  "phone_end_replug_with_xr_running": {
+    "external_id": 75,
+    "native_hz": 90,
+    "usb_pcui_ack": "17:38:39.648",
+    "imu_ns": 8078221993,
+    "sample_launched_again": false,
+    "lens_local": "phone-warm-replug.jpg"
+  },
+  "delayed_start_after_fresh_attachment": {
+    "procedure": "Both apps stopped. Replugged only the phone end, kept auxiliary power and glasses connected, then waited 35 seconds before opening Monado CV10 and hello_xr from their normal entry points.",
+    "external_display_detected": "17:44:45.772",
+    "external_display_id": 76,
+    "display_mode": "3200x1600@90Hz",
+    "runtime_activity_start": "17:45:21.217",
+    "hello_xr_start": "17:45:23.064",
+    "session_focused": "17:45:26.424",
+    "proximity_worn": "17:45:26.528",
+    "pcui_panel_on_ack": "17:45:26.573",
+    "first_imu_device_ns": 45192184862,
+    "right_lens_photo_time": "17:45:30.498",
+    "right_lens": "fold7-original-2a-delayed-start-right-20261126.jpg",
+    "observed_image": "blue hello_xr cube",
+    "layer_unique_presentations_hz": 89.96
+  },
+  "owner_follow_up": {
+    "reported_successful_tests": 2,
+    "source": "Owner confirmation after the recorded runs. Individual reconnect sequences and additional camera captures were not supplied."
+  },
+  "published_runtime": {
+    "release": "https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3",
+    "source_commit": "471f889e1637850f6beb3f59c62a910d7daaa277",
+    "version_code": 103,
+    "apk_sha256": {
+      "arm64-v8a": "44e028120dbbc2f1622cc97b60e47adb98cd615b8d8f9fcf4786f4e6655aefe0",
+      "armeabi-v7a": "34c7e5488151d08858755bfd5c57853e4c71ad5f87e1cf3c8f6e05a851820333"
+    },
+    "verification": "Both public APKs were downloaded. Their SHA-256 values match GitHub and their signing certificate matches the tested ARM64 candidate. Cv10PanelWake.java and Cv10UsbReader.java match the tested sources. Optical testing used the candidate recorded in new_runtime."
+  }
+}

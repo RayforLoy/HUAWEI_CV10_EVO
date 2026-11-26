@@ -2,6 +2,44 @@
 
 2026-11-25，香港时间。用户确认 P40 Pro+ 普通 C-C 直连可见画面，Windows 上 HiSuite、NOLO Home、SteamVR 的 C-C 接法也能出图。P40 Pro+ 换原厂连接线后能识别 VR，镜片黑屏。以下 Fold7 记录来自普通 C-C 直连。
 
+## Fold7 与外接 5 V / 2 A 的原厂手机线
+
+**Fold7 独立启动已在右镜片验收。** 眼镜端保持接好，将手机端和辅助电源都拔下约 10 秒，先接回 5 V，再直接接 Fold7。解锁手机，从普通入口打开原版 Khronos OpenGLES `hello_xr`，允许 Monado CV10 访问 HUAWEI GLASS HID。此轮没有经 P40，右镜片拍到蓝色方块，眼镜保持 3200×1600、90 Hz，图层约 90 次/秒。返回退出后，最低刷新率恢复为原值。左镜片本轮未拍摄。[Fold7 独立启动右镜片](../research/evidence/fold7-original-2a-independent-right-20261126.jpg)
+
+11 月 26 日下午，用户在这根原厂线上装入了固定 2 A 输入上限的测试固件。Android 报告 Fold7 的 Type-C 数据角色为 host，电源角色为 sink。Monado 通过头显 `12d1:107e` 的 PCUI 读到了原厂线版本字段 `0C094906`。线盒仍接 5 V；本次未测量实际电流。
+
+同签名 arm64 测试版在头显 HID 接口 3 上启用接近传感器，读到佩戴状态 1，随后 `AT^SWITCHSCREEN=1` 收到 OK。原版 Khronos `hello_xr` 进入 FOCUSED，眼镜端点 `0x84` 在 10.018 秒内提供了 10,000 个有效 IMU 样本。打开手机上的 Shizuku 管理器后，Monado 能连接其 UserService，主屏进入 120 Hz。外屏 `HUAWEIAV03` 为 3200×1600、90 Hz，Monado 图层的不同呈现时间戳折算为 89.95 次/秒。
+
+首次接线下，外显软件截图有双眼蓝块，右镜片实拍全黑。用户在移开、恢复佩戴遮挡前后也均看到黑屏。Android 接受了 70 Hz 模式偏好，但回读活动时序仍为 90 Hz，随后恢复原偏好。软件截图、开屏 OK 和 IMU 计数各有独立证据，镜片验收以实拍为准。[本轮 APK 摘要、运行记录与测量](../research/evidence/fold7-original-2a-openxr-20261126.json)
+
+16:09 只读诊断还发现头显把 Fold7 标成了 PC，`AT^GETSOURCE?` 返回 1，`AT^QUERYEXCEPTION` 返回 0。第二个测试版只在识别到原厂手机线且回读为 PC 时发送 `AT^SETSOURCE=0`。16:11:48 确认手机来源为 0，开屏应答 OK，右眼仍黑。修正来源标签本身不足以点亮这次接线。
+
+16:20，原厂线接到 P40 Pro+，无线 ADB 在华为 VR 正常占用 USB 时记录了原生服务调用。P40 先公布 3200×1600、70 Hz，随后枚举音频和头显。服务读取佩戴状态、启用接近传感器及温度控制、写亮度 4，再查询佩戴状态。电池查询回了 `EPIPE`，右眼仍然拍到了华为 VR 界面。16:24 换回 Fold7 后，右眼首次拍到 `hello_xr`，外显仍为 90 Hz。16:26 按上面的 Fold7 独立接线顺序复测通过。手上这根线在两部手机上都能出图；本组实验没有逐项隔离供电先后和每条启动命令的作用。[P40 原生 VR 右镜片](../research/evidence/p40-original-2a-vr-right-20261126.jpg) · [Fold7 换回后右镜片](../research/evidence/fold7-original-2a-hello-right-20261126.jpg)
+
+### 原厂线重接时的黑屏
+
+11 月 26 日 17:07，Fold7 正确识别原厂线、确认手机来源并收到开屏应答。眼镜 IMU 持续输出，Android 外显截图有双目方块，图层呈现约 90 次/秒，右镜片仍黑。单独重发开屏、头显关屏再开屏、重写已读回的亮度档位 4、手机外显断电再恢复，以及重启两个应用，都没有恢复这次坏状态。
+
+手机软件重置 USB 时，音频和头显控制接口重新使用同一对总线地址，外显仍为 73，眼镜的 IMU 时钟也连续递增。旧运行时凭 Android USB 设备 ID 去重，重新取得 HID 权限后跳过了 PCUI 初始化。新版改为在成功重开 HID 时重新识别原厂线、检查手机来源并开屏。用相同的软件重置验证，17:35:35.134 重开 HID，17:35:35.182 再次收到开屏应答。该次镜片仍黑，表明现场还有需单独恢复的视频或头显状态。
+
+保持应用运行、辅助 5 V 和手机端不动，只重插眼镜端后，外显从 73 变为 74，眼镜 IMU 时间从约 1,764 秒回到 7 秒。USB 重新授权后，同一会话在右眼显示蓝块，图层实测 89.96 次/秒。保持接线连续三次冷启动 Monado 与原版 `hello_xr`，三次均有蓝块。随后只重插手机端，外显变为 75，同样恢复了双目渲染并拍到右眼蓝块。遇到相同黑屏时可保留供电、只重插眼镜端，并允许系统再次询问的 USB 权限。[重连与冷启动实测](../research/evidence/fold7-original-2a-reattach-20261126.json) · [重连后右镜片](../research/evidence/fold7-original-2a-reattach-right-20261126.jpg)
+
+另按用户的日常启动顺序验证了一次。先完全退出两个应用，重插手机端，保持眼镜和辅助电源接好。Fold7 检出外显 76 后等待 35 秒，从普通入口依次打开 Monado CV10 和原版 `hello_xr`。17:45:26 会话进入 FOCUSED，读到已佩戴并收到开屏应答，17:45:30 右镜片拍到蓝块。外显为 3200×1600、90 Hz，图层实测 89.96 次/秒。[先接线后启动的右镜片实拍](../research/evidence/fold7-original-2a-delayed-start-right-20261126.jpg)
+
+用户随后在同一台 Fold7 上自行复测两次，均确认可以出图。该反馈与上面的三次应用冷启动、一次延迟启动分别记数。
+
+## Windows 原厂手机线与 NOLO SteamVR
+
+11 月 26 日，在同一根用户已刷 2 A 版的原厂手机线和外接 5 V / 2 A 下，右眼相机拍到了可读的「欢迎来到 SteamVR」。本次接线先由头显控制口确认 PC 来源并应答开屏，在 NOLO HOME 1.23.2.0 点「连接」后检查到 `huaweicv1pro` 驱动已注册，再运行 SteamVR 的 `bin/win64/vrstartup.exe`。NVIDIA 直连模式报告 3200×1600、90 Hz。[右镜片照片](../research/evidence/pc-original-2a-steamvr-right-20261126.jpg)
+
+15:26 那轮 422 出在合成器选择桌面输出时，输出索引为 `-1`。16:34 成功那轮使用 NVIDIA 直连显示，正常创建图形设备。两轮都记录了 NOLO 启用 IMU 成功。随后实测 SteamVR 静置进入待机，右眼变黑；同轮还观察到眼镜 USB 集线器的控制接口 `12d1:107e` 消失，而音频 `12d1:1092` 保持连接。此时 OpenVR 仍返回有效姿态，旋转矩阵却始终是单位矩阵。物理头动需要与实测姿态一起核对。[两个会话的日志、USB 与光学观测](../research/evidence/pc-original-2a-steamvr-20261126.json)
+
+**头部旋转已验证。** 保持电脑、外部电源和 SteamVR 运行，只重插眼镜端。16:44:20 控制接口恢复，SteamVR 自动退出待机。用户转动眼镜并放回后，两次姿态采样相差约 14°，右眼相机持续拍到 SteamVR 场景。控制接口随后连续在线 117 秒，合成器帧号在 2.000 秒内增加 180。随后正常退出、保持接线并重开 SteamVR，第二次同样建立了 90 Hz 直连。[转动后右眼](../research/evidence/pc-original-2a-steamvr-after-turn-right-20261126.jpg)
+
+复测时，在 NOLO HOME 中选择华为 VR Glass 并点「连接」，然后在仓库根目录运行 `powershell -File .\tools\start-cv10-steamvr.ps1`。脚本从本机 OpenVR 配置找到已注册的 NOLO 驱动和 SteamVR，可启动或检查当前会话，并分别报告合成器结果和 USB 控制接口。若出现 `Enable IMU:0`，先看控制接口当前是否存在；运行期间单独重插眼镜端后，启动时的这一行日志会保留原值。[Windows 启动与检查脚本](../tools/start-cv10-steamvr.ps1)
+
+第二次会话曾出现 `Invalid refresh: 0` 和 `WaitForPresent failed`。单独重插眼镜端恢复了 USB 和姿态，镜片仍黑。正常退出 SteamVR 后，Windows 和 NVIDIA 都重新识别了 `HWV0003`，眼镜控制口也已在线。保持接线，用脚本重新启动 SteamVR，第三次拍到场景。该次在 NVIDIA 报告 90 Hz 后 0.52 秒观察到控制口消失；时间先后无法判定电气原因。保持这次会话运行，再单独重插眼镜端、轻转并放回，右眼拍到 SteamVR 菜单，头动恢复，控制接口连续在线超过 100 秒。静置待机会熄屏，唤醒后实测合成器 2 秒推进 180 帧。[最后一次重接后的右眼](../research/evidence/pc-original-2a-steamvr-reconnect-right-20261126.jpg)
+
 ## 两台手机与无线调试
 
 | 设备 | 实测系统与 ABI | 无线调试 |

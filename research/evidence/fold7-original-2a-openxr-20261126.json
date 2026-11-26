@@ -1,0 +1,100 @@
+{
+  "date_local": "2026-11-26",
+  "device": "Galaxy Z Fold7 SM-F9660",
+  "connection": "Original CV10 mobile cable with auxiliary 5 V / 2 A supply. Operator installed the fixed 2 A image. No cable flash or input current measurement in this run.",
+  "headset_usb": "12d1:107e",
+  "audio_usb": "12d1:1092",
+  "android_typec": {"mode": "dfp", "power_role": "sink", "data_role": "host"},
+  "broker_active": "org.cv10.monado.out_of_process",
+  "hello_xr_opengles_sha256": "29ae01ef6a4fea41d67816f7051698f2694ab08ced4c16c02bdd978e62975962",
+  "reference_runtime": {
+    "apk_sha256": "ee2ee28b44ef7342723a68f00e94d536edbeb8be0f7547f2bc0561d500301b6e",
+    "headset_mode_hz": 90,
+    "before_opening_shizuku_manager": {"primary_hz": 60, "layer_hz": 60.32, "starter_error": "provider is null moe.shizuku.privileged.api.shizuku 0"},
+    "after_opening_manager": {"primary_hz": 120, "layer_hz": 89.42, "physical_right_lens": "camera black"},
+    "min_refresh_rate_after_back": null
+  },
+  "wear_sensor_runtime": {
+    "submodule_base": "89d0f79e7c8e454ea72d68ba9c729fd75c7e7986",
+    "apk_sha256": "edc7aebf10d38d2a126b460971797a15ed6cdeb1c56019e9761d5ae91e54b6ec",
+    "package": "org.cv10.monado.out_of_process",
+    "installed_with": "same-certificate adb install -r",
+    "cableinfo_version": "0C094906",
+    "first_launch_local": {
+      "proximity_enabled_state_1": "15:57:40.943",
+      "imu_enabled_endpoint_84": "15:57:40.943",
+      "switchscreen_1_ok": "15:57:40.946",
+      "cable_identified": "15:57:40.987",
+      "focused": "15:57:41.293",
+      "valid_imu_counts": [["15:59:46.376", 125000], ["15:59:56.394", 135000]]
+    },
+    "external_display": {"name": "HUAWEIAV03", "size": [3200,1600], "mode_hz": 90, "negotiated_dp_lanes": null},
+    "monado_layer": {"span_s": 1.4, "distinct_presentations_hz": 89.95, "interval_p50_p95_ms": [8.3,16.6]},
+    "optical": "Right camera black at baseline and after proximity enable; operator saw complete darkness before and after uncover/recover. SurfaceFlinger screenshot of the reference runtime showed stereo blue cubes.",
+    "mode_trial": "Both transient Android preference and display-probe mode request selected 3200x1600@70 as a preference; the observed active mode stayed at 90 Hz. Previous display preference restored. External display power reset and normal client relaunch still yielded a black right-camera frame."
+  },
+  "phone_source_runtime": {
+    "apk_sha256": "2ac6ff0d627ab6259aeb8dd9afe1a0e472fb2fd36bef1f61b1fce5e1a7ea2fd5",
+    "pretest_at_queries_at": "16:09:33.097",
+    "headset_version": "CV10AC10.0.1.357",
+    "cableinfo": "10C094906255+280",
+    "typecstate_raw": 2,
+    "getsource_before": 1,
+    "queryexception_raw": 0,
+    "proximity_state": 1,
+    "phone_source_confirmed_then_panel_ack_at": "16:11:48.261",
+    "getsource_after": 0,
+    "panel_ack": "OK",
+    "external_hz": 90,
+    "primary_hz": 120,
+    "layer_hz": 89.95,
+    "optical": "Right camera still black with phone source confirmed; no replug in this A/B.",
+    "independent_readback_at_16_15_47": {"source": 0, "exception": 0, "hid_proximity": 1, "hid_brightness": 4}
+  },
+  "p40_working_reference": {
+    "capture": "Wireless ADB over an already-enabled connection. Huawei apps owned USB. Times are P40 logcat; optical frame filename time is from the PC.",
+    "device": "P40 Pro+ ELS-AN10",
+    "events": [
+      ["16:20:03.129", "HUAWEI VR Display, 3200x1600, only 70 Hz advertised"],
+      ["16:20:04.244", "12d1:1092 audio added"],
+      ["16:20:04.999", "12d1:107e headset control added"],
+      ["16:20:05.471", "Glass version succeeds after one EPIPE retry"],
+      ["16:20:05.534", "IoGetProximityStatus succeeds"],
+      ["16:20:05.596", "IoOpenProximity succeeds"],
+      ["16:20:05.656", "IoOpenTemperatureControl succeeds"],
+      ["16:20:05.720", "IoSetBrightness 4 succeeds"],
+      ["16:20:05.781", "IoGetProximityStatus succeeds"],
+      ["16:20:05.906", "IoGetBatteryStatus EPIPE"],
+      ["16:20:05.967", "IoSetHeadsetPlugState succeeds"],
+      ["16:20:59.680", "Right-lens camera shows the Huawei VR interface; operator independently confirmed it"]
+    ],
+    "active_mode_hz_surfaceflinger": 70,
+    "power_data_roles": ["sink","host"],
+    "right_lens_jpeg": "p40-original-2a-vr-right-20261126.jpg",
+    "capture_limit": "Service-level events and OS state; no raw USB control-packet capture."
+  },
+  "fold7_positive_after_p40": {
+    "logical_display": 71,
+    "panel_ack_at": "16:24:14.059",
+    "external_hz": 90,
+    "layer_hz": 89.22,
+    "imu_samples": [["16:24:29.349",15000],["16:24:44.349",30000]],
+    "right_lens_jpeg": "fold7-original-2a-hello-right-20261126.jpg"
+  },
+  "fold7_independent_positive": {
+    "procedure": "Operator removed both phone and auxiliary supply for approximately 10 s, leaving the glasses attached; reconnected auxiliary 5 V first, Fold7 second. No intermediate P40. No measurement of internal cell power.",
+    "apk": "phone_source_runtime",
+    "display_id": 72,
+    "focused_at": "16:26:21.940",
+    "usb_permission": "Android access approved for this attachment",
+    "proximity_state": 1,
+    "phone_source_confirmed_and_panel_ack_at": "16:26:22.427",
+    "external_active_hz": 90,
+    "primary_active_hz": 120,
+    "layer_hz_over_1_39_s": 90.48,
+    "imu_samples": [["16:26:47.707",25000],["16:26:57.707",35000]],
+    "right_lens_jpeg": "fold7-original-2a-independent-right-20261126.jpg",
+    "min_refresh_rate_after_back": null,
+    "left_lens": "Not filmed in this original-cable run"
+  }
+}
