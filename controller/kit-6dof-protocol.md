@@ -179,6 +179,10 @@ Android `HxrAlgorithmData` 在 64 位程序中占 `0x120` 字节。前 `0x100` �
 
 实时诊断在同一轮中读取定位器校准、头显 HID 和外接 Y8。每组图像等待设备时钟达到该帧的 IMU 样本，再送入 SLAM。离线回放使用所选校准、合成 IMU 和空白图像。两种诊断都显示位姿查询结果。用 [Windows 共用适配层探针](probe/HeadSlamAbi.cpp) 将相同 C++ 代码编译到 x64，已用原厂 PC `arvr_slam.dll` 和 Android 格式校准完成回放，查询返回 `-1`、输出全零，关闭后所有输入缓冲均已释放。尚未在 Fold7 执行 Android 库加载或测得有效头显位姿。
 
+### Monado OpenXR 头显定位
+
+从套件页面显式启动相机前台服务。服务与 OpenXR 运行时共享应用进程，使用同一套 Y8、HID 和 SLAM 实现。在 HID 到达时间上估算定位器时钟到 Android 单调时钟的偏移，用样本间隔限制偏移的增长，筛掉时间超前或超过 250 毫秒的位姿。启用后的新运行时系统将头显的位姿标记为可跟踪位置。Monado 原生层轮询最新位姿并查询历史，未来时刻先保持最近位姿。断流或停止服务时，回到眼镜原有 USB IMU 旋转，清除位置有效标记。当前实现依赖系统公开外接 Y8，时间映射和实际跟踪性能待实测。[Android 相机前台服务要求](https://developer.android.com/develop/background-work/services/fgs/service-types#camera)
+
 ### 左右手柄位姿接口
 
 Android `VCtrlState::Init`（`0xc631c`）调用 `libVR6Dof.so` 的 `GetVR6DofInterface`（`0x14ba4c`），返回表 `0x636050`。Windows `HandlerDLL.dll` 的同名导出（RVA `0x3f5f0`）返回表 `0x16f940`。两表使用标记 `0x00000001abcd2012` 和名称 `VR6Dof`。创建、初始化、启停、回收、输入、查询和回调注册槽位与头显表的对应槽位相同。输入格式列表为 `fmt:yuv@res:480p@rot:0;fmt:imu@org:helmet;fmt:imu@org:controller;fmt:pose@org:slam`，输出为 `fmt:pose@org:vr6dof`。配置键 `HSDK_CONFIG_MANAGER_IMPL_GET_VR_6_DOF_HANDLER_CONFIG` 返回 `0x1c38` 字节，见 Android `VrConfiguration::GetValue` 中的 `0xba8a8–0xba8bc`。

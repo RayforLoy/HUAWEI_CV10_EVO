@@ -3,7 +3,7 @@
 | 硬件 | Monado CV10 | 独立诊断 APK | 验证 |
 | --- | --- | --- | --- |
 | CF20 蓝牙 3DoF 手柄 | 应用内搜索、选用、Android 系统配对、会话自动连接和右手 OpenXR 输入 | GATT 状态、报告频率、原始包、四元数、按键、触控、惯性和电量 | 通过构建和协议测试向量。Fold7 待验收 |
-| 原厂 6DoF 套件 | 可从手柄菜单进入诊断并调用原厂头显 SLAM | USB 枚举、头显及左右手原始记录、双目和三路 IMU 校准、头显 SLAM 参数导出、每只手柄的 LED 模型和外参、外接 Y8 双目图像导出、头显 SLAM 及转换后的头显坐标 | 已通过构建、协议向量、Windows 共用头显适配层回放及左右手惯性和双目输入回放。Fold7 的外接 Y8 和有效位姿待验证，6DoF 位姿待接入 OpenXR |
+| 原厂 6DoF 套件 | 菜单可启用 OpenXR 头显定位，由前台服务采集定位器数据并发布有效头显位姿 | USB 枚举、头显及左右手原始记录、双目和三路 IMU 校准、头显 SLAM 参数导出、每只手柄的 LED 模型和外参、外接 Y8 双目图像导出、头显 SLAM 及转换后的头显坐标 | 已通过构建、协议向量、Windows 共用头显适配层回放及左右手惯性和双目输入回放。Fold7 的外接 Y8、有效位姿和 OpenXR 头显输出待验证。左右手 OpenXR 位姿待接入 |
 
 两条协议独立记录在 [CF20 蓝牙协议](cf20-protocol.md) 和 [6DoF 套件协议](kit-6dof-protocol.md)。诊断 APK 与运行时共用发现、配对及报告解码源码。
 
@@ -11,8 +11,8 @@
 
 | APK | 包名 | SHA-256 |
 | --- | --- | --- |
-| [Cv10ControllerProbe.apk](dist/Cv10ControllerProbe.apk) | `org.cv10.controllerprobe` | `d2c90b4c268eb3b2c350da28863d0fbdd5687e47eb4ef57a1674de67e2cb979e` |
-| [Monado-CV10-Controller-arm64-v8a.apk](dist/Monado-CV10-Controller-arm64-v8a.apk) | `org.cv10.monado.out_of_process` | `c9325d51cdd0c2ea0680e315db8645f263aa090b41580582e5a5a9e555b0e40c` |
+| [Cv10ControllerProbe.apk](dist/Cv10ControllerProbe.apk) | `org.cv10.controllerprobe` | `11a7639c0d5a9b6b4e767769f82b7ca6e3dd2d01a568105ee9070241e720499d` |
+| [Monado-CV10-Controller-arm64-v8a.apk](dist/Monado-CV10-Controller-arm64-v8a.apk) | `org.cv10.monado.out_of_process` | `a0fa951534017bfa09875ecbfd2b0fcf7ba461e7dd71b187f665e9a1e09060d8` |
 
 两个 APK 均为本地调试构建，最低 Android API 26。本机校验证书 SHA-256 为 `68365fa0904432aaa86a8904c691f9e6487414dc959786d72831a083b9f23fca`。运行时覆盖安装需要与已安装的 APK 签名一致。独立诊断 APK 可与运行时并存。两包已通过 `apksigner verify` 和 `zipalign -c -P 16 4`，运行时包含 `arm64-v8a`。当前工作树未进行真机安装、配对、USB／相机采样或 OpenXR 验收。
 
@@ -22,7 +22,8 @@
 2. 点 **配对并选用**。Monado 收到报告后保存地址，新建 OpenXR 会话时自动连接。**Android 系统配对**可另外尝试建立系统蓝牙绑定。独立诊断 APK 用 **配对并连接** 保持连接并实时显示输入。
 3. 套件在同页的 **定位交互套件** 中。**采样定位器 HID** 显示头部、左手、右手原始记录。**采样 OV580 相机** 显示帧计数，并将首个带有效元数据的双目帧保存为 ZIP。
 4. 点击 **读取套件校准**，查看双目、各组件 IMU 采样率及手柄 LED 模型的摘要。定位器、左手、右手的完整回复各保存为独立 ZIP（`locator.zip`、`left.zip`、`right.zip`），每包包含 `calibration.bin` 和 `device.hash`。定位器校准可解码时，额外保存 2112 字节的 `slam-params.bin`。保存路径显示在诊断页中。
-5. 使用 **导入原厂头显 SLAM 模块** 选择原厂 APK 内的 `assets/arm64-v8a/libarvr_slam.so`。**离线回放头显 SLAM** 读取从 `locator.zip` 解出的 `slam-params.bin`，向原厂库送入合成 IMU 和空白图像。**实时采样头显 SLAM** 从定位器重新读取校准，同时采样头部 IMU 和外接 Y8 双目，并显示实际送入的记录数及位姿。套件的 6DoF 位姿尚未提供给 OpenXR。
+5. 使用 **导入原厂头显 SLAM 模块** 选择原厂 APK 内的 `assets/arm64-v8a/libarvr_slam.so`。**离线回放头显 SLAM** 读取从 `locator.zip` 解出的 `slam-params.bin`，向原厂库送入合成 IMU 和空白图像。**实时采样头显 SLAM** 从定位器重新读取校准，同时采样头部 IMU 和外接 Y8 双目，并显示实际送入的记录数及位姿。
+6. 在 Monado CV10 的套件页面点 **启用 OpenXR 头显定位** 并授予相机和定位器 USB 权限。在状态显示服务已经启动后，再启动 OpenXR 客户端。Monado 在运行时系统创建时公布位置跟踪能力，已运行的系统须退出并重新创建。可从同一页面或服务通知停止跟踪。
 
 ## Windows 位姿接口离线验证
 

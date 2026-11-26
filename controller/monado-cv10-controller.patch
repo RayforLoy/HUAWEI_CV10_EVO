@@ -34,10 +34,31 @@ index 5522e6b..36ffbe7 100644
  
  
 diff --git a/src/xrt/drivers/android/cv10_device.c b/src/xrt/drivers/android/cv10_device.c
-index ea5354b..615abb6 100644
+index ea5354b..b0a75f6 100644
 --- a/src/xrt/drivers/android/cv10_device.c
 +++ b/src/xrt/drivers/android/cv10_device.c
-@@ -31,8 +31,8 @@ jni_error(JNIEnv *env)
+@@ -10,6 +10,7 @@
+ #include "util/u_device.h"
+ #include "util/u_distortion_mesh.h"
+ #include "util/u_logging.h"
++#include "util/u_tracking_origin.h"
+ #include <jni.h>
+ #include <stdio.h>
+ #include <math.h>
+@@ -20,8 +21,12 @@ struct cv10_device
+ 	struct os_thread_helper worker;
+ 	struct m_relation_history *history;
+ 	struct m_imu_3dof fusion;
++	struct os_thread_helper kit_worker;
++	struct m_relation_history *kit_history;
+ };
+ 
++static const char *kit_class = "org.freedesktop.monado.openxr_runtime.Cv10KitTrackingService";
++
+ static bool
+ jni_error(JNIEnv *env)
+ {
+@@ -31,8 +36,8 @@ jni_error(JNIEnv *env)
  	return true;
  }
  
@@ -48,7 +69,7 @@ index ea5354b..615abb6 100644
  {
  	jclass ctx_class = (*env)->GetObjectClass(env, context);
  	if (!ctx_class) return NULL;
-@@ -44,7 +44,7 @@ reader_class(JNIEnv *env, jobject context)
+@@ -44,11 +49,80 @@ reader_class(JNIEnv *env, jobject context)
  	if (!loader_class) return NULL;
  	jmethodID load = (*env)->GetMethodID(env, loader_class, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
  	if (!load) return NULL;
@@ -57,7 +78,80 @@ index ea5354b..615abb6 100644
  	if (!name) return NULL;
  	return (jclass)(*env)->CallObjectMethod(env, loader, load, name);
  }
-@@ -60,7 +60,7 @@ cv10_worker(void *ptr)
+ 
++static bool
++cv10_kit_requested(void)
++{
++	JavaVM *vm = (JavaVM *)android_globals_get_vm();
++	jobject context = android_globals_get_context();
++	JNIEnv *env = NULL;
++	if (!vm || !context) return false;
++	bool attached = (*vm)->GetEnv(vm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED;
++	if (attached && (*vm)->AttachCurrentThread(vm, &env, NULL) != JNI_OK) return false;
++	bool requested = false;
++	if (env && (*env)->PushLocalFrame(env, 16) == JNI_OK) {
++		jclass cls = cv10_load_java_class(env, context, kit_class);
++		if (!jni_error(env) && cls) {
++			jmethodID method = (*env)->GetStaticMethodID(env, cls, "trackingRequested", "()Z");
++			if (method) requested = (*env)->CallStaticBooleanMethod(env, cls, method);
++			if (jni_error(env)) requested = false;
++		}
++		(*env)->PopLocalFrame(env, NULL);
++	}
++	if (env) jni_error(env);
++	if (attached) (*vm)->DetachCurrentThread(vm);
++	return requested;
++}
++
++static void *
++cv10_kit_worker(void *ptr)
++{
++	struct cv10_device *d = ptr;
++	JavaVM *vm = (JavaVM *)android_globals_get_vm();
++	jobject context = android_globals_get_context();
++	JNIEnv *env = NULL;
++	if (!vm || !context || (*vm)->AttachCurrentThread(vm, &env, NULL) != JNI_OK) return NULL;
++	jclass cls = cv10_load_java_class(env, context, kit_class);
++	if (jni_error(env) || !cls) goto done;
++	jmethodID read = (*env)->GetStaticMethodID(env, cls, "readPose", "([F)J");
++	if (!read) goto done;
++	jfloatArray buffer = (*env)->NewFloatArray(env, 7);
++	if (!buffer) goto done;
++
++	int64_t previous = 0;
++	while (os_thread_helper_is_running(&d->kit_worker)) {
++		int64_t time_ns = (*env)->CallStaticLongMethod(env, cls, read, buffer);
++		if (jni_error(env)) break;
++		if (time_ns > previous) {
++			float v[7];
++			(*env)->GetFloatArrayRegion(env, buffer, 0, 7, v);
++			if (jni_error(env)) break;
++			struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
++			relation.pose.position = (struct xrt_vec3){v[0], v[1], v[2]};
++			relation.pose.orientation = (struct xrt_quat){v[3], v[4], v[5], v[6]};
++			relation.relation_flags = XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
++			                          XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT |
++			                          XRT_SPACE_RELATION_POSITION_VALID_BIT |
++			                          XRT_SPACE_RELATION_POSITION_TRACKED_BIT;
++			m_relation_history_push(d->kit_history, &relation, time_ns);
++			previous = time_ns;
++		} else if (time_ns == 0 && previous != 0) {
++			m_relation_history_clear(d->kit_history);
++			previous = 0;
++		}
++		os_nanosleep(10000000);
++	}
++done:
++	m_relation_history_clear(d->kit_history);
++	jni_error(env);
++	(*vm)->DetachCurrentThread(vm);
++	return NULL;
++}
++
+ static void *
+ cv10_worker(void *ptr)
+ {
+@@ -60,7 +134,7 @@ cv10_worker(void *ptr)
  		U_LOG_E("CV10 JNI context unavailable");
  		return NULL;
  	}
@@ -66,6 +160,58 @@ index ea5354b..615abb6 100644
  	if (jni_error(env) || !cls) goto done;
  	jmethodID ctor = (*env)->GetMethodID(env, cls, "<init>", "(Landroid/content/Context;)V");
  	if (!ctor) goto done;
+@@ -143,11 +217,23 @@ cv10_pose(struct xrt_device *xdev, enum xrt_input_name name, int64_t at_ns, stru
+ 	if (name != XRT_INPUT_GENERIC_HEAD_POSE) return XRT_ERROR_INPUT_UNSUPPORTED;
+ 	int64_t latest = 0;
+ 	struct xrt_space_relation last;
+-	if (!m_relation_history_get_latest(d->history, &latest, &last) || os_monotonic_get_ns() - latest > 250000000)
++	int64_t now = os_monotonic_get_ns();
++	if (d->kit_history && m_relation_history_get_latest(d->kit_history, &latest, &last) && now - latest <= 250000000) {
++		*out = last;
++		if (at_ns < latest) {
++			struct xrt_space_relation historic;
++			if (m_relation_history_get(d->kit_history, at_ns, &historic) != M_RELATION_HISTORY_RESULT_INVALID) {
++				*out = historic;
++			}
++		}
++		return XRT_SUCCESS;
++	}
++	if (!m_relation_history_get_latest(d->history, &latest, &last) || now - latest > 250000000)
+ 		return XRT_SUCCESS;
+ 	// Cap prediction even if a client requests a distant future pose.
+ 	int64_t query = at_ns > latest + 50000000 ? latest + 50000000 : at_ns;
+ 	m_relation_history_get(d->history, query, out);
++	if (d->kit_history) out->relation_flags &= ~XRT_SPACE_RELATION_POSITION_VALID_BIT;
+ 	return XRT_SUCCESS;
+ }
+ 
+@@ -155,6 +241,10 @@ static void
+ cv10_destroy(struct xrt_device *xdev)
+ {
+ 	struct cv10_device *d = (struct cv10_device *)xdev;
++	if (d->kit_history) {
++		os_thread_helper_destroy(&d->kit_worker);
++		m_relation_history_destroy(&d->kit_history);
++	}
+ 	os_thread_helper_destroy(&d->worker);
+ 	m_relation_history_destroy(&d->history);
+ 	m_imu_3dof_close(&d->fusion);
+@@ -196,5 +286,15 @@ cv10_device_create(void)
+ 		cv10_destroy(xdev);
+ 		return NULL;
+ 	}
++	if (cv10_kit_requested() && os_thread_helper_init(&d->kit_worker) == 0) {
++		m_relation_history_create(&d->kit_history);
++		if (d->kit_history && os_thread_helper_start(&d->kit_worker, cv10_kit_worker, d) == 0) {
++			xdev->supported.position_tracking = true;
++			u_tracking_origin_init(xdev->tracking_origin, XRT_TRACKING_TYPE_EXTERNAL_SLAM, "Huawei CV10 locator");
++		} else {
++			os_thread_helper_destroy(&d->kit_worker);
++			m_relation_history_destroy(&d->kit_history);
++		}
++	}
+ 	return xdev;
+ }
 diff --git a/src/xrt/drivers/android/cv10_device.h b/src/xrt/drivers/android/cv10_device.h
 index f9b40e2..3b168b4 100644
 --- a/src/xrt/drivers/android/cv10_device.h
@@ -117,10 +263,10 @@ index 48e4241..902cae7 100644
          flavor.resValue "string", "app_name", appName
      }
 diff --git a/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml b/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml
-index 89d548a..5f8c6fe 100644
+index 89d548a..2efd651 100644
 --- a/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml
 +++ b/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml
-@@ -8,6 +8,15 @@
+@@ -8,6 +8,17 @@
      -->
  
      <uses-feature android:name="android.hardware.usb.host" android:required="true" />
@@ -128,6 +274,8 @@ index 89d548a..5f8c6fe 100644
 +    <uses-feature android:name="android.hardware.camera" android:required="false" />
 +    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 +    <uses-permission android:name="android.permission.CAMERA" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
 +    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
 +    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
 +    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
@@ -136,7 +284,7 @@ index 89d548a..5f8c6fe 100644
  
      <!-- We may try to use OpenGL|ES 3.0 -->
      <uses-feature
-@@ -71,6 +80,12 @@
+@@ -71,6 +82,17 @@
          <activity
              android:name=".Cv10LauncherActivity"
              android:exported="false" />
@@ -146,6 +294,11 @@ index 89d548a..5f8c6fe 100644
 +        <activity
 +            android:name=".Cv10KitActivity"
 +            android:exported="false" />
++
++        <service
++            android:name=".Cv10KitTrackingService"
++            android:exported="false"
++            android:foregroundServiceType="camera" />
  
          <activity
              android:name=".Cv10SpatialLauncherActivity"
@@ -1731,10 +1884,10 @@ index 0000000..cb8add5
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
 new file mode 100644
-index 0000000..841f719
+index 0000000..bdf5c9e
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
-@@ -0,0 +1,763 @@
+@@ -0,0 +1,679 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -1747,20 +1900,12 @@ index 0000000..841f719
 +import android.content.IntentFilter;
 +import android.content.pm.PackageManager;
 +import android.hardware.camera2.CameraAccessException;
-+import android.hardware.camera2.CameraCaptureSession;
-+import android.hardware.camera2.CameraCharacteristics;
-+import android.hardware.camera2.CameraDevice;
-+import android.hardware.camera2.CameraManager;
-+import android.hardware.camera2.CaptureRequest;
-+import android.hardware.camera2.params.StreamConfigurationMap;
 +import android.hardware.usb.UsbConstants;
 +import android.hardware.usb.UsbDevice;
-+import android.hardware.usb.UsbDeviceConnection;
 +import android.hardware.usb.UsbEndpoint;
 +import android.hardware.usb.UsbInterface;
 +import android.hardware.usb.UsbManager;
 +import android.media.Image;
-+import android.media.ImageReader;
 +import android.net.Uri;
 +import android.os.Build;
 +import android.os.Bundle;
@@ -1768,7 +1913,6 @@ index 0000000..841f719
 +import android.os.Looper;
 +import android.os.SystemClock;
 +import android.util.AtomicFile;
-+import android.util.Size;
 +import android.widget.Button;
 +import android.widget.LinearLayout;
 +import android.widget.ScrollView;
@@ -1779,8 +1923,6 @@ index 0000000..841f719
 +import java.io.IOException;
 +import java.io.InputStream;
 +import java.nio.charset.StandardCharsets;
-+import java.util.Arrays;
-+import java.util.Collections;
 +import java.util.Locale;
 +import java.util.concurrent.atomic.AtomicReference;
 +import java.util.zip.ZipEntry;
@@ -1794,18 +1936,16 @@ index 0000000..841f719
 +    private static final int REPLAY_SLAM_PARAMETERS = 4;
 +    private static final long SAMPLE_MS = 5000;
 +    private static final long HEAD_SLAM_SAMPLE_MS = 8000;
-+    private static final Size CAMERA_SIZE = new Size(Cv10KitReport.FRAME_WIDTH, Cv10KitReport.FRAME_HEIGHT);
 +    private final Handler main = new Handler(Looper.getMainLooper());
 +    private UsbManager usb;
 +    private TextView inventory, hidStatus, cameraStatus, slamStatus;
++    private TextView trackingStatus;
 +    private String permissionAction;
 +    private UsbDevice waitingForUsb;
-+    private enum HidAction { SAMPLE, CALIBRATION, HEAD_SLAM }
++    private enum HidAction { SAMPLE, CALIBRATION, HEAD_SLAM, OPENXR }
 +    private HidAction requestedHid;
 +    private Thread hidWorker;
-+    private CameraDevice camera;
-+    private CameraCaptureSession capture;
-+    private ImageReader images;
++    private Cv10KitCamera camera;
 +    private int cameraFrames, metadataFrames;
 +    private Cv10KitReport.StereoFrame firstStereo;
 +    private long firstImageTimestampNs, firstCallbackNs;
@@ -1813,6 +1953,13 @@ index 0000000..841f719
 +    private Thread slamWorker;
 +    private HeadSample headSample;
 +    private final Runnable endCamera = this::finishCameraSample;
++    private final Runnable refreshTracking = new Runnable() {
++        @Override
++        public void run() {
++            trackingStatus.setText(Cv10KitTrackingService.status());
++            main.postDelayed(this, 500);
++        }
++    };
 +
 +    private static final class HeadSample {
 +        final AtomicReference<Cv10KitReport.StereoFrame> frame = new AtomicReference<>();
@@ -1863,6 +2010,12 @@ index 0000000..841f719
 +        addButton(content, "Replay head SLAM · 离线回放头显 SLAM",
 +                () -> selectSlamFile(REPLAY_SLAM_PARAMETERS));
 +        slamStatus = addOutput(content);
++        if (Cv10KitTrackingService.available(this)) {
++            addButton(content, "Start OpenXR head tracking · 启用 OpenXR 头显定位", () -> requestHid(HidAction.OPENXR));
++            addButton(content, "Stop OpenXR head tracking · 停止 OpenXR 头显定位",
++                    () -> stopService(new Intent(this, Cv10KitTrackingService.class)));
++            trackingStatus = addOutput(content);
++        }
 +        if (Cv10KitSlam.module(this).isFile()) slamStatus.setText("Huawei SLAM module imported.");
 +        refresh();
 +    }
@@ -1912,7 +2065,7 @@ index 0000000..841f719
 +            }
 +        }
 +        try {
-+            String cameraId = findCamera();
++            String cameraId = Cv10KitCamera.find(this);
 +            details.append(cameraId == null ? "\nCamera2: no unique external 1280×481 Y8 camera."
 +                    : "\nCamera2: external 1280×481 Y8 camera " + cameraId);
 +        } catch (CameraAccessException | RuntimeException failure) {
@@ -1923,8 +2076,12 @@ index 0000000..841f719
 +
 +    private void requestHid(HidAction operation) {
 +        if (hidWorker != null || waitingForUsb != null) return;
-+        if (operation == HidAction.HEAD_SLAM) {
-+            if (images != null || cameraSave != null || slamWorker != null) return;
++        if (Cv10KitTrackingService.busy()) {
++            hidStatus.setText("OpenXR locator tracking is using the HID interface.");
++            return;
++        }
++        if (operation == HidAction.HEAD_SLAM || operation == HidAction.OPENXR) {
++            if (camera != null || cameraSave != null || slamWorker != null) return;
 +            if (!Cv10KitSlam.module(this).isFile()) {
 +                hidStatus.setText("Import the original ARM64 libarvr_slam.so first.");
 +                return;
@@ -1940,7 +2097,8 @@ index 0000000..841f719
 +        for (int i = 0; i < kit.getInterfaceCount(); ++i) {
 +            hasVideo |= kit.getInterface(i).getInterfaceClass() == UsbConstants.USB_CLASS_VIDEO;
 +        }
-+        if ((operation == HidAction.HEAD_SLAM || hasVideo && Build.VERSION.SDK_INT >= 28) &&
++        if ((operation == HidAction.HEAD_SLAM || operation == HidAction.OPENXR ||
++                hasVideo && Build.VERSION.SDK_INT >= 28) &&
 +                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
 +            requestPermissions(new String[] {Manifest.permission.CAMERA}, USB_CAMERA_PERMISSION);
 +            return;
@@ -1963,6 +2121,16 @@ index 0000000..841f719
 +
 +    private void beginHid(UsbDevice device, HidAction operation) {
 +        if (hidWorker != null) return;
++        if (operation == HidAction.OPENXR) {
++            try {
++                startForegroundService(new Intent(this, Cv10KitTrackingService.class)
++                        .putExtra(UsbManager.EXTRA_DEVICE, device));
++                hidStatus.setText("");
++            } catch (RuntimeException failure) {
++                hidStatus.setText("Could not start OpenXR locator tracking: " + failure.getMessage());
++            }
++            return;
++        }
 +        switch (operation) {
 +            case CALIBRATION: hidStatus.setText("Reading locator and controller calibration…"); break;
 +            case HEAD_SLAM: hidStatus.setText("Reading locator calibration for head SLAM…"); break;
@@ -1990,44 +2158,10 @@ index 0000000..841f719
 +    }
 +
 +    private String runHid(UsbDevice device, HidAction operation) throws IOException, InterruptedException {
-+        for (int i = 0; i < device.getInterfaceCount(); ++i) {
-+            UsbInterface iface = device.getInterface(i);
-+            if (iface.getId() != Cv10KitReport.HID_INTERFACE || iface.getAlternateSetting() != 0 ||
-+                    iface.getInterfaceClass() != UsbConstants.USB_CLASS_HID) continue;
-+            UsbEndpoint input = null, output = null;
-+            for (int j = 0; j < iface.getEndpointCount(); ++j) {
-+                UsbEndpoint endpoint = iface.getEndpoint(j);
-+                if (endpoint.getType() != UsbConstants.USB_ENDPOINT_XFER_INT) continue;
-+                if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
-+                    if (input == null) input = endpoint;
-+                } else if (output == null) {
-+                    output = endpoint;
-+                }
-+            }
-+            if (input != null) return runHid(device, iface, input, output, operation);
-+        }
-+        return "Interface 2 has no HID interrupt IN endpoint.";
-+    }
-+
-+    private String runHid(UsbDevice device, UsbInterface iface, UsbEndpoint input, UsbEndpoint output,
-+            HidAction operation) throws IOException, InterruptedException {
-+        UsbDeviceConnection port = usb.openDevice(device);
-+        if (port == null) return "Android could not open the locator.";
-+        boolean claimed = false;
-+        try {
-+            claimed = port.claimInterface(iface, false) || port.claimInterface(iface, true);
-+            if (!claimed) return "Android could not claim locator HID interface 2.";
-+            try (Cv10KitHid hid = new Cv10KitHid(port, iface.getId(), input, output)) {
-+                if (operation == HidAction.CALIBRATION) return readCalibration(hid);
-+                if (operation == HidAction.HEAD_SLAM) return sampleHeadSlam(hid);
-+                return collectReports(hid, input.getAddress());
-+            }
-+        } finally {
-+            try {
-+                if (claimed) port.releaseInterface(iface);
-+            } finally {
-+                port.close();
-+            }
++        try (Cv10KitHid hid = Cv10KitHid.open(usb, device)) {
++            if (operation == HidAction.CALIBRATION) return readCalibration(hid);
++            if (operation == HidAction.HEAD_SLAM) return sampleHeadSlam(hid);
++            return collectReports(hid, hid.endpointAddress);
 +        }
 +    }
 +
@@ -2159,7 +2293,7 @@ index 0000000..841f719
 +        try (Cv10KitSlam slam = new Cv10KitSlam(Cv10KitSlam.module(this), parameters)) {
 +            main.post(() -> {
 +                if (job.isInterrupted() || isFinishing() || isDestroyed()) return;
-+                if (images != null || cameraSave != null) {
++                if (camera != null || cameraSave != null) {
 +                    sample.cameraFailure = "The camera is being sampled.";
 +                    return;
 +                }
@@ -2213,25 +2347,12 @@ index 0000000..841f719
 +                hand.ax, hand.ay, hand.az, hand.gx, hand.gy, hand.gz));
 +    }
 +
-+    private String findCamera() throws CameraAccessException {
-+        CameraManager manager = getSystemService(CameraManager.class);
-+        String found = null;
-+        if (manager == null) return null;
-+        for (String id : manager.getCameraIdList()) {
-+            CameraCharacteristics flags = manager.getCameraCharacteristics(id);
-+            Integer facing = flags.get(CameraCharacteristics.LENS_FACING);
-+            if (facing == null || facing != CameraCharacteristics.LENS_FACING_EXTERNAL) continue;
-+            StreamConfigurationMap streams = flags.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-+            Size[] sizes = streams == null ? null : streams.getOutputSizes(Cv10KitReport.FRAME_FORMAT);
-+            if (sizes == null || !Arrays.asList(sizes).contains(CAMERA_SIZE)) continue;
-+            if (found != null) return null;
-+            found = id;
-+        }
-+        return found;
-+    }
-+
 +    private void requestCamera() {
-+        if (images != null || cameraSave != null) return;
++        if (camera != null || cameraSave != null) return;
++        if (Cv10KitTrackingService.busy()) {
++            cameraStatus.setText("OpenXR locator tracking is using the camera.");
++            return;
++        }
 +        if (findKit() == null) {
 +            refresh();
 +            return;
@@ -2245,38 +2366,16 @@ index 0000000..841f719
 +
 +    private void openCamera() {
 +        try {
-+            String id = findCamera();
-+            if (id == null) {
-+                failCamera("Android does not expose a unique external 1280×481 Y8 camera.");
-+                return;
-+            }
-+            CameraManager manager = getSystemService(CameraManager.class);
-+            ImageReader reader = ImageReader.newInstance(CAMERA_SIZE.getWidth(), CAMERA_SIZE.getHeight(),
-+                    Cv10KitReport.FRAME_FORMAT, 2);
-+            images = reader;
++            camera = new Cv10KitCamera(main, new Cv10KitCamera.Frames() {
++                @Override
++                public void onImage(Image image) { readCameraFrame(image); }
++
++                @Override
++                public void onFailure(String message) { failCamera(message); }
++            });
 +            cameraFrames = 0;
 +            metadataFrames = 0;
-+            reader.setOnImageAvailableListener(this::readCameraFrame, main);
-+            manager.openCamera(id, new CameraDevice.StateCallback() {
-+                @Override
-+                public void onOpened(CameraDevice opened) {
-+                    if (images != reader) {
-+                        opened.close();
-+                        return;
-+                    }
-+                    camera = opened;
-+                    startCapture(opened, reader);
-+                }
-+
-+                @Override
-+                public void onDisconnected(CameraDevice opened) { onError(opened, -1); }
-+
-+                @Override
-+                public void onError(CameraDevice opened, int code) {
-+                    opened.close();
-+                    if (images == reader) failCamera("Camera disconnected or failed (" + code + ").");
-+                }
-+            }, main);
++            camera.open(this);
 +            if (headSample == null) main.postDelayed(endCamera, SAMPLE_MS);
 +            cameraStatus.setText(headSample == null ? "Sampling the external Y8 camera for 5 seconds…"
 +                    : "Streaming external Y8 frames into head SLAM…");
@@ -2285,70 +2384,33 @@ index 0000000..841f719
 +        }
 +    }
 +
-+    private void startCapture(CameraDevice opened, ImageReader reader) {
-+        try {
-+            CaptureRequest.Builder request = opened.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-+            request.addTarget(reader.getSurface());
-+            opened.createCaptureSession(Collections.singletonList(reader.getSurface()),
-+                    new CameraCaptureSession.StateCallback() {
-+                        @Override
-+                        public void onConfigured(CameraCaptureSession session) {
-+                            if (images != reader) {
-+                                session.close();
-+                                return;
-+                            }
-+                            capture = session;
-+                            try {
-+                                session.setRepeatingRequest(request.build(), null, main);
-+                            } catch (CameraAccessException | RuntimeException failure) {
-+                                failCamera("Camera capture failed: " + failure.getMessage());
-+                            }
-+                        }
-+
-+                        @Override
-+                        public void onConfigureFailed(CameraCaptureSession session) {
-+                            session.close();
-+                            if (images == reader) failCamera("Camera rejected the Y8 capture session.");
-+                        }
-+                    }, main);
-+        } catch (CameraAccessException | RuntimeException failure) {
-+            failCamera("Camera session failed: " + failure.getMessage());
++    private void readCameraFrame(Image frame) {
++        cameraFrames++;
++        Image.Plane plane = frame.getPlanes()[0];
++        Cv10KitReport.Frame decoded;
++        if (headSample != null) {
++            Cv10KitReport.StereoFrame stereo =
++                    Cv10KitReport.stereo(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
++            if (stereo == null) return;
++            headSample.frame.set(stereo);
++            decoded = stereo.frame;
++        } else if (firstStereo == null) {
++            long callbackNs = SystemClock.elapsedRealtimeNanos();
++            firstStereo = Cv10KitReport.stereo(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
++            if (firstStereo == null) return;
++            firstImageTimestampNs = frame.getTimestamp();
++            firstCallbackNs = callbackNs;
++            decoded = firstStereo.frame;
++        } else {
++            decoded = Cv10KitReport.frame(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
 +        }
-+    }
-+
-+    private void readCameraFrame(ImageReader source) {
-+        if (images != source) return;
-+        try (Image frame = source.acquireLatestImage()) {
-+            if (frame == null || frame.getPlanes().length != 1) return;
-+            cameraFrames++;
-+            Image.Plane plane = frame.getPlanes()[0];
-+            Cv10KitReport.Frame decoded;
-+            if (headSample != null) {
-+                Cv10KitReport.StereoFrame stereo =
-+                        Cv10KitReport.stereo(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
-+                if (stereo == null) return;
-+                headSample.frame.set(stereo);
-+                decoded = stereo.frame;
-+            } else if (firstStereo == null) {
-+                long callbackNs = SystemClock.elapsedRealtimeNanos();
-+                firstStereo = Cv10KitReport.stereo(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
-+                if (firstStereo == null) return;
-+                firstImageTimestampNs = frame.getTimestamp();
-+                firstCallbackNs = callbackNs;
-+                decoded = firstStereo.frame;
-+            } else {
-+                decoded = Cv10KitReport.frame(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
++        if (decoded != null) {
++            metadataFrames++;
++            if (metadataFrames == 1 || metadataFrames % 15 == 0) {
++                cameraStatus.setText(String.format(Locale.ROOT,
++                        "OV580 frame %d · device %d ns · exposure %d µs · marker %02X",
++                        decoded.frameNumber, decoded.deviceNs, decoded.exposureUs, decoded.frameMarker));
 +            }
-+            if (decoded != null) {
-+                metadataFrames++;
-+                if (metadataFrames == 1 || metadataFrames % 15 == 0) {
-+                    cameraStatus.setText(String.format(Locale.ROOT,
-+                            "OV580 frame %d · device %d ns · exposure %d µs · marker %02X",
-+                            decoded.frameNumber, decoded.deviceNs, decoded.exposureUs, decoded.frameMarker));
-+                }
-+            }
-+        } catch (RuntimeException failure) {
-+            failCamera("Camera read failed: " + failure.getMessage());
 +        }
 +    }
 +
@@ -2406,17 +2468,17 @@ index 0000000..841f719
 +
 +    private void closeCamera() {
 +        main.removeCallbacks(endCamera);
-+        if (capture != null) capture.close();
 +        if (camera != null) camera.close();
-+        if (images != null) images.close();
-+        capture = null;
 +        camera = null;
-+        images = null;
 +        firstStereo = null;
 +        headSample = null;
 +    }
 +
 +    private void selectSlamFile(int operation) {
++        if (Cv10KitTrackingService.busy()) {
++            slamStatus.setText("Stop OpenXR locator tracking before opening another SLAM session.");
++            return;
++        }
 +        if (slamWorker != null || hidWorker != null && requestedHid == HidAction.HEAD_SLAM) return;
 +        if (operation == REPLAY_SLAM_PARAMETERS && !Cv10KitSlam.module(this).isFile()) {
 +            slamStatus.setText("Import the original ARM64 libarvr_slam.so first.");
@@ -2482,7 +2544,14 @@ index 0000000..841f719
 +    }
 +
 +    @Override
++    protected void onStart() {
++        super.onStart();
++        if (trackingStatus != null) main.post(refreshTracking);
++    }
++
++    @Override
 +    protected void onStop() {
++        main.removeCallbacks(refreshTracking);
 +        closeCamera();
 +        if (hidWorker != null) {
 +            hidWorker.interrupt();
@@ -2795,23 +2864,175 @@ index 0000000..3e9dd73
 +
 +    private Cv10KitCalibration() {}
 +}
-diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCamera.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCamera.java
 new file mode 100644
-index 0000000..24650d6
+index 0000000..b8afb9c
 --- /dev/null
-+++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java
-@@ -0,0 +1,110 @@
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCamera.java
+@@ -0,0 +1,142 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
++import android.content.Context;
++import android.hardware.camera2.CameraAccessException;
++import android.hardware.camera2.CameraCaptureSession;
++import android.hardware.camera2.CameraCharacteristics;
++import android.hardware.camera2.CameraDevice;
++import android.hardware.camera2.CameraManager;
++import android.hardware.camera2.CaptureRequest;
++import android.hardware.camera2.params.StreamConfigurationMap;
++import android.media.Image;
++import android.media.ImageReader;
++import android.os.Handler;
++import android.util.Size;
++import java.util.Arrays;
++import java.util.Collections;
++
++/** The locator's only supported Camera2 stream. Open, callbacks and close share one handler. */
++final class Cv10KitCamera implements AutoCloseable {
++    interface Frames {
++        void onImage(Image image);
++        void onFailure(String message);
++    }
++
++    private static final Size SIZE = new Size(Cv10KitReport.FRAME_WIDTH, Cv10KitReport.FRAME_HEIGHT);
++    private final Handler handler;
++    private final Frames frames;
++    private ImageReader images;
++    private CameraDevice camera;
++    private CameraCaptureSession capture;
++
++    Cv10KitCamera(Handler handler, Frames frames) {
++        this.handler = handler;
++        this.frames = frames;
++    }
++
++    static String find(Context context) throws CameraAccessException {
++        CameraManager manager = context.getSystemService(CameraManager.class);
++        if (manager == null) return null;
++        String found = null;
++        for (String id : manager.getCameraIdList()) {
++            CameraCharacteristics flags = manager.getCameraCharacteristics(id);
++            Integer facing = flags.get(CameraCharacteristics.LENS_FACING);
++            if (facing == null || facing != CameraCharacteristics.LENS_FACING_EXTERNAL) continue;
++            StreamConfigurationMap streams = flags.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
++            Size[] sizes = streams == null ? null : streams.getOutputSizes(Cv10KitReport.FRAME_FORMAT);
++            if (sizes == null || !Arrays.asList(sizes).contains(SIZE)) continue;
++            if (found != null) return null;
++            found = id;
++        }
++        return found;
++    }
++
++    void open(Context context) throws CameraAccessException {
++        String id = find(context);
++        if (id == null) throw new IllegalStateException("Android does not expose a unique external 1280×481 Y8 camera.");
++        CameraManager manager = context.getSystemService(CameraManager.class);
++        final ImageReader reader = ImageReader.newInstance(SIZE.getWidth(), SIZE.getHeight(),
++                Cv10KitReport.FRAME_FORMAT, 2);
++        images = reader;
++        reader.setOnImageAvailableListener(source -> {
++            if (images != source) return;
++            try (Image image = source.acquireLatestImage()) {
++                if (image != null && image.getPlanes().length == 1) frames.onImage(image);
++            } catch (RuntimeException failure) {
++                fail("Camera read failed: " + failure.getMessage());
++            }
++        }, handler);
++        try {
++            manager.openCamera(id, new CameraDevice.StateCallback() {
++                @Override
++                public void onOpened(CameraDevice opened) {
++                    if (images != reader) {
++                        opened.close();
++                        return;
++                    }
++                    camera = opened;
++                    startCapture(opened, reader);
++                }
++
++                @Override
++                public void onDisconnected(CameraDevice opened) { onError(opened, -1); }
++
++                @Override
++                public void onError(CameraDevice opened, int code) {
++                    opened.close();
++                    if (images == reader) fail("External camera disconnected or failed (" + code + ").");
++                }
++            }, handler);
++        } catch (CameraAccessException | RuntimeException failure) {
++            close();
++            throw failure;
++        }
++    }
++
++    private void startCapture(CameraDevice opened, ImageReader reader) {
++        try {
++            CaptureRequest.Builder request = opened.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
++            request.addTarget(reader.getSurface());
++            opened.createCaptureSession(Collections.singletonList(reader.getSurface()),
++                    new CameraCaptureSession.StateCallback() {
++                        @Override
++                        public void onConfigured(CameraCaptureSession session) {
++                            if (images != reader) {
++                                session.close();
++                                return;
++                            }
++                            capture = session;
++                            try {
++                                session.setRepeatingRequest(request.build(), null, handler);
++                            } catch (CameraAccessException | RuntimeException failure) {
++                                fail("Camera capture failed: " + failure.getMessage());
++                            }
++                        }
++
++                        @Override
++                        public void onConfigureFailed(CameraCaptureSession session) {
++                            session.close();
++                            if (images == reader) fail("Camera rejected the external Y8 capture session.");
++                        }
++                    }, handler);
++        } catch (CameraAccessException | RuntimeException failure) {
++            fail("Camera session failed: " + failure.getMessage());
++        }
++    }
++
++    private void fail(String message) {
++        close();
++        frames.onFailure(message);
++    }
++
++    @Override
++    public void close() {
++        if (capture != null) capture.close();
++        if (camera != null) camera.close();
++        if (images != null) images.close();
++        capture = null;
++        camera = null;
++        images = null;
++    }
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java
+new file mode 100644
+index 0000000..40ac7ea
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitHid.java
+@@ -0,0 +1,161 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import android.hardware.usb.UsbConstants;
++import android.hardware.usb.UsbDevice;
 +import android.hardware.usb.UsbDeviceConnection;
 +import android.hardware.usb.UsbEndpoint;
++import android.hardware.usb.UsbInterface;
++import android.hardware.usb.UsbManager;
 +import android.hardware.usb.UsbRequest;
 +import java.io.IOException;
 +import java.nio.ByteBuffer;
 +import java.util.concurrent.TimeoutException;
 +
-+/** Serial HID input/output on an already claimed locator interface. */
++/** Owns the locator interface and serializes its HID input and output. */
 +final class Cv10KitHid implements Cv10KitCalibration.Link, AutoCloseable {
 +    private static final int USB_TIMEOUT_MS = 300;
 +    private static final int HID_CLASS_INTERFACE_OUT = 0x21;
@@ -2819,21 +3040,56 @@ index 0000000..24650d6
 +    private static final int OUTPUT_REPORT_ID_2 = 0x0202;
 +
 +    private final UsbDeviceConnection port;
-+    private final int interfaceId;
++    private final UsbInterface iface;
 +    private final UsbRequest input = new UsbRequest();
++    final int endpointAddress;
 +    private final UsbEndpoint output;
 +    private final ByteBuffer incoming;
 +    private boolean queued;
 +
-+    Cv10KitHid(UsbDeviceConnection port, int interfaceId, UsbEndpoint input, UsbEndpoint output) throws IOException {
++    private Cv10KitHid(UsbDeviceConnection port, UsbInterface iface, UsbEndpoint input, UsbEndpoint output)
++            throws IOException {
 +        this.port = port;
-+        this.interfaceId = interfaceId;
++        this.iface = iface;
 +        this.output = output;
++        endpointAddress = input.getAddress();
 +        incoming = ByteBuffer.allocateDirect(Math.max(Cv10KitReport.HID_REPORT_SIZE, input.getMaxPacketSize()));
 +        if (!this.input.initialize(port, input)) {
 +            this.input.close();
 +            throw new IOException("Android could not open the HID input endpoint");
 +        }
++    }
++
++    static Cv10KitHid open(UsbManager usb, UsbDevice device) throws IOException {
++        for (int i = 0; i < device.getInterfaceCount(); ++i) {
++            UsbInterface iface = device.getInterface(i);
++            if (iface.getId() != Cv10KitReport.HID_INTERFACE || iface.getAlternateSetting() != 0 ||
++                    iface.getInterfaceClass() != UsbConstants.USB_CLASS_HID) continue;
++            UsbEndpoint input = null, output = null;
++            for (int j = 0; j < iface.getEndpointCount(); ++j) {
++                UsbEndpoint endpoint = iface.getEndpoint(j);
++                if (endpoint.getType() != UsbConstants.USB_ENDPOINT_XFER_INT) continue;
++                if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
++                    if (input == null) input = endpoint;
++                } else if (output == null) {
++                    output = endpoint;
++                }
++            }
++            if (input == null) continue;
++            UsbDeviceConnection port = usb.openDevice(device);
++            if (port == null) throw new IOException("Android could not open the locator.");
++            boolean claimed = false, opened = false;
++            try {
++                claimed = port.claimInterface(iface, false) || port.claimInterface(iface, true);
++                if (!claimed) throw new IOException("Android could not claim locator HID interface 2.");
++                Cv10KitHid hid = new Cv10KitHid(port, iface, input, output);
++                opened = true;
++                return hid;
++            } finally {
++                if (!opened) release(port, iface, claimed);
++            }
++        }
++        throw new IOException("Interface 2 has no HID interrupt IN endpoint.");
 +    }
 +
 +    @Override
@@ -2859,7 +3115,7 @@ index 0000000..24650d6
 +    public void write(byte[] report) throws IOException {
 +        discardPendingInput();
 +        if (output == null) {
-+            int size = port.controlTransfer(HID_CLASS_INTERFACE_OUT, SET_REPORT, OUTPUT_REPORT_ID_2, interfaceId,
++            int size = port.controlTransfer(HID_CLASS_INTERFACE_OUT, SET_REPORT, OUTPUT_REPORT_ID_2, iface.getId(),
 +                    report, report.length, USB_TIMEOUT_MS);
 +            if (size != report.length) throw new IOException("HID SET_REPORT returned " + size + " bytes");
 +            return;
@@ -2905,9 +3161,21 @@ index 0000000..24650d6
 +        try {
 +            discardPendingInput();
 +        } catch (IOException ignored) {
-+            // The owner closes the connection immediately after releasing the interface.
++            // USB disconnect can invalidate the pending request before it is drained.
 +        } finally {
-+            input.close();
++            try {
++                input.close();
++            } finally {
++                release(port, iface, true);
++            }
++        }
++    }
++
++    private static void release(UsbDeviceConnection port, UsbInterface iface, boolean claimed) {
++        try {
++            if (claimed) port.releaseInterface(iface);
++        } finally {
++            port.close();
 +        }
 +    }
 +}
@@ -3126,10 +3394,10 @@ index 0000000..be63227
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java
 new file mode 100644
-index 0000000..284cd90
+index 0000000..035b996
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,180 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -3261,6 +3529,12 @@ index 0000000..284cd90
 +        Cv10KitReport.Frame frame = stereo.frame;
 +        check("Y8 stereo", nativeStereo(session, frame.deviceNs, (int) frame.frameNumber, frame.exposureUs,
 +                stereo.camera0, stereo.camera1));
++    }
++
++    Cv10KitReport.HeadPose readPose(byte[] pose) {
++        if (nativePose(session, pose) != 0) return null;
++        Cv10KitReport.HeadPose head = Cv10KitReport.headPose(pose);
++        return head != null && head.valid() ? head : null;
 +    }
 +
 +    String poseStatus() {
@@ -3456,4 +3730,254 @@ index 0000000..569bcc7
 +    }
 +
 +    private Cv10KitSlamParameters() {}
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitTrackingService.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitTrackingService.java
+new file mode 100644
+index 0000000..ca61fe7
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitTrackingService.java
+@@ -0,0 +1,244 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import android.app.Notification;
++import android.app.NotificationChannel;
++import android.app.NotificationManager;
++import android.app.PendingIntent;
++import android.app.Service;
++import android.content.ComponentName;
++import android.content.Context;
++import android.content.Intent;
++import android.content.pm.PackageManager;
++import android.content.pm.ServiceInfo;
++import android.hardware.camera2.CameraAccessException;
++import android.hardware.usb.UsbDevice;
++import android.hardware.usb.UsbManager;
++import android.media.Image;
++import android.os.Build;
++import android.os.Handler;
++import android.os.IBinder;
++import android.os.Looper;
++import java.io.IOException;
++import java.util.concurrent.atomic.AtomicReference;
++
++/** User-started camera access for the runtime's optional locator tracking. */
++public final class Cv10KitTrackingService extends Service implements Cv10KitCamera.Frames {
++    private static final String CHANNEL = "cv10_locator_tracking";
++    private static final String STOP = "cv10.locator.STOP";
++    private static final int NOTIFICATION = 610;
++    private static final long STALE_NS = 250_000_000L;
++    private static final long INPUT_TIMEOUT_NS = 5_000_000_000L;
++
++    private static volatile Thread trackingWorker;
++    private static volatile String status = "OpenXR locator tracking is stopped.";
++    private static volatile TimedPose latest;
++
++    private final Handler main = new Handler(Looper.getMainLooper());
++    private final AtomicReference<Cv10KitReport.StereoFrame> stereo = new AtomicReference<>();
++    private Cv10KitCamera camera;
++    private Thread worker;
++    private volatile String cameraFailure;
++
++    private static final class TimedPose {
++        final long timeNs;
++        final Cv10KitReport.HmdPose pose;
++
++        TimedPose(long timeNs, Cv10KitReport.HmdPose pose) {
++            this.timeNs = timeNs;
++            this.pose = pose;
++        }
++    }
++
++    static boolean available(Context context) {
++        try {
++            context.getPackageManager().getServiceInfo(new ComponentName(context, Cv10KitTrackingService.class), 0);
++            return true;
++        } catch (PackageManager.NameNotFoundException ignored) {
++            return false;
++        }
++    }
++
++    // The OpenXR service and this service both use the application process.
++    static boolean trackingRequested() {
++        Thread job = trackingWorker;
++        return job != null && !job.isInterrupted();
++    }
++
++    static boolean busy() { return trackingWorker != null; }
++
++    static String status() { return status; }
++
++    static long readPose(float[] out) {
++        TimedPose sample = latest;
++        if (!trackingRequested() || sample == null || System.nanoTime() - sample.timeNs > STALE_NS) return 0;
++        Cv10KitReport.HmdPose pose = sample.pose;
++        out[0] = pose.x;
++        out[1] = pose.y;
++        out[2] = pose.z;
++        out[3] = pose.qx;
++        out[4] = pose.qy;
++        out[5] = pose.qz;
++        out[6] = pose.qw;
++        return sample.timeNs;
++    }
++
++    @Override
++    public IBinder onBind(Intent intent) { return null; }
++
++    @Override
++    public int onStartCommand(Intent intent, int flags, int startId) {
++        if (intent == null || STOP.equals(intent.getAction())) {
++            stopSelf(startId);
++            return START_NOT_STICKY;
++        }
++        if (worker != null) return START_NOT_STICKY;
++        try {
++            showNotification();
++            if (trackingWorker != null) throw new IOException("Wait for the previous locator session to close.");
++            UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
++            UsbManager usb = getSystemService(UsbManager.class);
++            if (device == null || usb == null || device.getVendorId() != Cv10KitReport.VENDOR_ID ||
++                    device.getProductId() != Cv10KitReport.PRODUCT_ID || !usb.hasPermission(device)) {
++                throw new IOException("Android USB permission is required for the locator.");
++            }
++            status = "Starting OpenXR locator tracking…";
++            worker = new Thread(() -> runTracking(usb, device), "CV10 locator tracking");
++            trackingWorker = worker;
++            worker.start();
++        } catch (IOException | RuntimeException failure) {
++            status = "OpenXR locator tracking failed: " + failure.getMessage();
++            stopSelf(startId);
++        }
++        return START_NOT_STICKY;
++    }
++
++    private void showNotification() {
++        NotificationManager notifications = getSystemService(NotificationManager.class);
++        notifications.createNotificationChannel(new NotificationChannel(CHANNEL, "CV10 6DoF locator",
++                NotificationManager.IMPORTANCE_LOW));
++        PendingIntent stop = PendingIntent.getService(this, 0,
++                new Intent(this, Cv10KitTrackingService.class).setAction(STOP), PendingIntent.FLAG_IMMUTABLE);
++        Notification notification = new Notification.Builder(this, CHANNEL)
++                .setSmallIcon(getApplicationInfo().icon)
++                .setContentTitle("CV10 6DoF locator")
++                .setContentText("OpenXR head tracking is using the external camera.")
++                .setOngoing(true)
++                .addAction(new Notification.Action.Builder(null, "Stop", stop).build())
++                .build();
++        if (Build.VERSION.SDK_INT >= 30) {
++            startForeground(NOTIFICATION, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA);
++        } else {
++            startForeground(NOTIFICATION, notification);
++        }
++    }
++
++    private void runTracking(UsbManager usb, UsbDevice device) {
++        Thread job = Thread.currentThread();
++        try (Cv10KitHid hid = Cv10KitHid.open(usb, device)) {
++            Cv10KitCalibration.Calibration locator = Cv10KitCalibration.read(hid, Cv10KitCalibration.Component.LOCATOR);
++            if (locator == null) throw new IOException("The locator did not supply SLAM calibration.");
++            byte[] parameters = Cv10KitSlamParameters.encode(Cv10KitCalibration.locatorCameras(locator.data),
++                    Cv10KitCalibration.locatorImu(locator.data));
++            try (Cv10KitSlam slam = new Cv10KitSlam(Cv10KitSlam.module(this), parameters)) {
++                main.post(() -> startCamera(job));
++                track(hid, slam);
++            }
++        } catch (InterruptedException stopped) {
++            job.interrupt();
++        } catch (IOException | RuntimeException failure) {
++            if (!job.isInterrupted()) status = "OpenXR locator tracking failed: " + failure.getMessage();
++        } finally {
++            latest = null;
++            main.post(() -> {
++                if (trackingWorker == job) trackingWorker = null;
++                if (worker == job) {
++                    worker = null;
++                    closeCamera();
++                    stopSelf();
++                }
++            });
++        }
++    }
++
++    private void track(Cv10KitHid hid, Cv10KitSlam slam) throws IOException {
++        long lastHidArrival = System.nanoTime(), lastStereoArrival = lastHidArrival;
++        long lastImu = 0, lastStereo = 0, offset = 0, lastPoseTime = 0;
++        byte[] poseBuffer = new byte[Cv10KitReport.HeadPose.BYTES];
++        Cv10KitReport.StereoFrame frame = null;
++        while (!Thread.currentThread().isInterrupted()) {
++            if (cameraFailure != null) throw new IOException(cameraFailure);
++            byte[] report = hid.read(50);
++            long arrival = System.nanoTime();
++            Cv10KitReport.Head head = report == null ? null : Cv10KitReport.head(report);
++            if (head != null && head.deviceNs > lastImu) {
++                long observed = arrival - head.deviceNs;
++                offset = lastImu == 0 ? observed : Math.min(observed, offset + (head.deviceNs - lastImu) / 1000);
++                slam.push(head);
++                lastImu = head.deviceNs;
++                lastHidArrival = arrival;
++            } else if (head != null && lastImu - head.deviceNs > STALE_NS) {
++                throw new IOException("Locator IMU clock restarted. Start locator tracking again.");
++            }
++            if (arrival - lastHidArrival > INPUT_TIMEOUT_NS || arrival - lastStereoArrival > INPUT_TIMEOUT_NS) {
++                throw new IOException("Timed out waiting for synchronized locator HID and external Y8 frames.");
++            }
++            if (frame == null) frame = stereo.getAndSet(null);
++            if (frame == null || frame.frame.deviceNs > lastImu) continue;
++            if (frame.frame.deviceNs > lastStereo) {
++                slam.push(frame);
++                lastStereo = frame.frame.deviceNs;
++                lastStereoArrival = arrival;
++                Cv10KitReport.HeadPose headPose = slam.readPose(poseBuffer);
++                if (headPose != null) {
++                    long mapped = (long) (headPose.deviceSeconds * 1e9) + offset;
++                    if (mapped > lastPoseTime && mapped <= arrival && arrival - mapped <= STALE_NS) {
++                        latest = new TimedPose(mapped, headPose.toHmd());
++                        lastPoseTime = mapped;
++                    }
++                }
++                status = latest != null && arrival - latest.timeNs <= STALE_NS
++                        ? "OpenXR locator tracking has a head pose." : "Receiving HID and Y8 · waiting for a head pose.";
++            }
++            frame = null;
++        }
++    }
++
++    private void startCamera(Thread job) {
++        if (worker != job || job.isInterrupted()) return;
++        camera = new Cv10KitCamera(main, this);
++        try {
++            camera.open(this);
++        } catch (CameraAccessException | RuntimeException failure) {
++            onFailure(failure.getMessage());
++        }
++    }
++
++    @Override
++    public void onImage(Image image) {
++        Image.Plane plane = image.getPlanes()[0];
++        Cv10KitReport.StereoFrame frame =
++                Cv10KitReport.stereo(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
++        if (frame != null) stereo.set(frame);
++    }
++
++    @Override
++    public void onFailure(String message) { cameraFailure = message == null ? "External Y8 camera failed." : message; }
++
++    private void closeCamera() {
++        if (camera != null) camera.close();
++        camera = null;
++        stereo.set(null);
++    }
++
++    @Override
++    public void onDestroy() {
++        latest = null;
++        if (worker != null) {
++            worker.interrupt();
++            status = "OpenXR locator tracking is stopped.";
++        }
++        closeCamera();
++        super.onDestroy();
++    }
 +}
