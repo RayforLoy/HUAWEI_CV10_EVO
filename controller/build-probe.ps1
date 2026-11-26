@@ -36,7 +36,8 @@ New-Item -ItemType Directory -Force -Path "$work/classes", "$work/dex", "$work/l
 Invoke-Tool $javac @('-encoding', 'UTF-8', '--release', '8', '-classpath', $android, '-d', "$work/classes",
     "$public/Cv10ControllerActivity.java", "$public/Cv10ControllerLink.java", "$public/Cv10ControllerReport.java",
     "$public/Cv10KitActivity.java", "$public/Cv10KitReport.java", "$public/Cv10KitCalibration.java", "$public/Cv10KitHid.java",
-    "$public/Cv10KitSlamParameters.java", "$public/Cv10KitSlam.java", "$public/Cv10KitCamera.java",
+    "$public/Cv10KitSlamParameters.java", "$public/Cv10KitHandParameters.java", "$public/Cv10KitSlam.java",
+    "$public/Cv10KitCamera.java", "$public/Cv10KitHands.java",
     "$public/Cv10KitTrackingService.java",
     "$PSScriptRoot/probe/ProbeActivity.java")
 Invoke-Tool $javac @('-encoding', 'UTF-8', '--release', '8', '-classpath', "$work/classes", '-d', $work,
