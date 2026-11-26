@@ -183,24 +183,24 @@
     "source": "Windows QueryDisplayConfig and enumeration of the headset HID. Every fifth iteration sampled AMD ADL and P40 ADB transport.",
     "requested_cutoff": "2026-11-26T09:30:00+08:00",
     "first": "2026-11-26T02:51:47+08:00",
-    "last": "2026-11-26T09:25:05+08:00",
-    "samples": 429,
-    "complete_source_records_sha256": "3135f62accb8f9e33410ed46b73ef8246b203a6c1b6e15fab310eb879c9a1005",
+    "last": "2026-11-26T09:29:41+08:00",
+    "samples": 434,
+    "complete_source_records_sha256": "6e1882d0f0b4b7dcc7f9df61f59af057fb3a300e159b0a87c19ff1cc1712b1f5",
     "unreadable_source_lines": 0,
     "maximum_sampling_gap_seconds": 56,
     "secondary_signal_samples": {
-      "640x480": 429
+      "640x480": 434
     },
     "primary_signal_samples": {
-      "2560x1440": 429
+      "2560x1440": 434
     },
-    "both_hid_samples": 429,
+    "both_hid_samples": 434,
     "amd_dce_samples": {
       "DCE ret=0 rateEnum=0 active=0 total=4": 1,
-      "DCE ret=0 rateEnum=1 active=1 total=4": 85
+      "DCE ret=0 rateEnum=1 active=1 total=4": 86
     },
     "p40_adb_samples": {
-      "device": 86
+      "device": 87
     },
     "display_runs": [
       {
@@ -217,8 +217,8 @@
       },
       {
         "first": "2026-11-26T03:08:20+08:00",
-        "last": "2026-11-26T09:25:05+08:00",
-        "observations": 411,
+        "last": "2026-11-26T09:29:41+08:00",
+        "observations": 416,
         "state": "DISPLAY103 / desktop 640x480 / signal 640x480 / 60000:1001 Hz"
       }
     ]
