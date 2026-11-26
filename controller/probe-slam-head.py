@@ -90,20 +90,35 @@ def feed_samples(table, session, lifetime):
         raise RuntimeError("Expected no pose from blank stereo and synthetic IMU")
 
 
-def probe(vendor):
+def probe(vendor, scratch, override):
     with os.add_dll_directory(str(vendor)):
         slam = c.WinDLL(str(vendor / "arvr_slam.dll"))
         wrapper = c.WinDLL(str(vendor / "VR6DOF.dll"))
 
+        # Override the stock settings object's installation path within this process.
         # These RVAs are used only for the verified stock PC wrapper.
+        settings = c.WINFUNCTYPE(c.c_void_p)(wrapper._handle + 0x56070)()
+        if not settings:
+            raise RuntimeError("No stock settings object")
+        path_string = c.create_string_buffer(32)
+        construct_string = c.WINFUNCTYPE(c.c_void_p, c.c_void_p, c.c_char_p)(wrapper._handle + 0x115A0)
+        assign_string = c.WINFUNCTYPE(c.c_void_p, c.c_void_p, c.c_void_p)(wrapper._handle + 0x19160)
+        destroy_string = c.WINFUNCTYPE(None, c.c_void_p)(wrapper._handle + 0x11570)
+        construct_string(path_string, str(scratch).encode("mbcs"))
+        try:
+            assign_string(settings, path_string)
+        finally:
+            destroy_string(path_string)
+
         get_config = c.WINFUNCTYPE(c.c_void_p)(wrapper._handle + 0x2F6A0)
-        init_config = c.WINFUNCTYPE(None, c.c_void_p)(wrapper._handle + 0x2FEF0)
+        init_config = c.WINFUNCTYPE(c.c_int, c.c_void_p)(wrapper._handle + 0x2FEF0)
         read_config = c.WINFUNCTYPE(c.c_int64, c.c_void_p, c.c_char_p, c.c_size_t, c.c_void_p)(
             wrapper._handle + 0x310D0)
         config = get_config()
         if not config:
             raise RuntimeError("No stock configuration object")
-        init_config(config)
+        if init_config(config) < 0:
+            raise RuntimeError("Stock XML failed to load")
         valid = c.c_uint8()
         if read_config(config, CONFIG_VALID, 1, c.byref(valid)) != 1 or valid.value != 1:
             raise RuntimeError("Stock XML did not validate")
@@ -136,6 +151,11 @@ def probe(vendor):
         @config_call
         def get_value(context, key, size, buffer):
             print(f"get {key.decode()} ({size} bytes)", flush=True)
+            if override is not None and key == CONFIG_PARAMS:
+                if size != len(override):
+                    return -1
+                c.memmove(buffer, override, size)
+                return size
             return read_config(context, key, size, buffer)
 
         @data_call
@@ -183,22 +203,29 @@ def probe(vendor):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("stock_directory", type=Path, help="Extracted OEM PC assistant win64 directory")
+    parser.add_argument("--parameters", type=Path, help="Use a 2112-byte slam-params.bin for GET_SLAM_PARAMS")
     args = parser.parse_args()
     if os.name != "nt" or c.sizeof(c.c_void_p) != 8:
         raise SystemExit("This probe requires 64-bit Windows Python.")
     if c.sizeof(AlgorithmData) != 0x120 or c.sizeof(ImuData) != 0x20:
         raise SystemExit("Unexpected packet alignment.")
     vendor = args.stock_directory.resolve(strict=True)
+    override = args.parameters.read_bytes() if args.parameters else None
+    if override is not None and len(override) != 0x840:
+        parser.error("--parameters must contain exactly 2112 bytes")
     for name, expected in DLL_HASHES.items():
         actual = hashlib.sha256((vendor / name).read_bytes()).hexdigest()
         if actual != expected:
             raise SystemExit(f"Unexpected {name} version: {actual}")
     original_directory = Path.cwd()
     with tempfile.TemporaryDirectory(prefix="cv10-head-slam-") as scratch:
-        shutil.copyfile(vendor / "vrglass-handler-default.xml", Path(scratch) / "vrglass-handler.xml")
+        scratch = Path(scratch)
+        config_directory = scratch / "steamVRDriver/huaweiVR/bin/win64"
+        config_directory.mkdir(parents=True)
+        shutil.copyfile(vendor / "vrglass-handler-default.xml", config_directory / "vrglass-handler.xml")
         os.chdir(scratch)
         try:
-            probe(vendor)
+            probe(vendor, scratch, override)
         finally:
             os.chdir(original_directory)
 

@@ -119,6 +119,7 @@ final class KitVectors {
         }
         checkLocatorCameras();
         checkCalibratedImusAndLeds();
+        checkSlamParameters();
         System.out.println("Huawei 6DoF kit report vectors passed");
     }
 
@@ -216,6 +217,76 @@ final class KitVectors {
             throw new AssertionError("non-finite intrinsics must fail");
         } catch (IOException expected) {
             check(expected.getMessage().contains("Invalid"), "stereo intrinsics validation");
+        }
+    }
+
+    private static void checkSlamParameters() throws IOException {
+        byte[] locator = new byte[0x3de];
+        ByteBuffer fields = ByteBuffer.wrap(locator).order(ByteOrder.LITTLE_ENDIAN);
+        for (int i = 0; i < 2; i++) {
+            int camera = 0x40 + i * 0x130;
+            fields.put(camera, (byte) i);
+            fields.putInt(camera + 0x01, 640);
+            fields.putInt(camera + 0x05, 480);
+            fields.putFloat(camera + 0x09, 15 + i);
+            fields.putDouble(camera + 0x0e, 0.001);
+            fields.putDouble(camera + 0x16, 0.01);
+            fields.putDouble(camera + 0x1e, -0.032);
+            fields.putDouble(camera + 0x26, 230 + i);
+            fields.putDouble(camera + 0x2e, 232 + i);
+            fields.put(camera + 0x46, (byte) 1);
+            fields.put(camera + 0x47, (byte) 1);
+            for (int k = 0; k < 8; k++) fields.putDouble(camera + 0x48 + k * 8, k + 0.5);
+            fields.putFloat(camera + 0x8c, 4.25f);
+            double sin45 = Math.sqrt(0.5);
+            fields.putDouble(camera + 0xac, sin45);
+            fields.putDouble(camera + 0xb4, sin45);
+            fields.putDouble(camera + 0xbc, i * 0.02);
+        }
+        int imuStart = 0x2a0;
+        putImu(fields, imuStart, 500);
+        fields.putDouble(imuStart + 0x22, 2);
+        fields.putDouble(imuStart + 0x2a, 3);
+        fields.putDouble(imuStart + 0x32, 4);
+        fields.putDouble(imuStart + 0x3a, 0.25);
+        fields.putDouble(imuStart + 0x6a, 5);
+        fields.putDouble(imuStart + 0x72, 6);
+        fields.putDouble(imuStart + 0x7a, 8);
+        fields.putDouble(imuStart + 0xaa, 1);
+        fields.putDouble(imuStart + 0xb2, 1);
+
+        Cv10KitCalibration.CameraCalibration[] cameras = Cv10KitCalibration.locatorCameras(locator);
+        Cv10KitCalibration.ImuCalibration imu = Cv10KitCalibration.locatorImu(locator);
+        byte[] bytes = Cv10KitSlamParameters.encode(cameras, imu);
+        check(bytes.length == 2112, "SLAM parameter ABI size");
+        ByteBuffer config = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        check(config.getInt(0) == 2 && config.getInt(0x138) == 1 && config.getInt(0x148) == 640,
+                "SLAM camera count, second ID and stride");
+        close(config.getFloat(0x14c), 16, "SLAM second camera rate");
+        close((float) config.getDouble(0x20), 4.25f, "SLAM autofocus compensation");
+        close((float) config.getDouble(0x48), 230, "SLAM camera intrinsics");
+        close((float) config.getDouble(0x88), 5.5f, "SLAM higher radial distortion");
+        close((float) config.getDouble(0xa0), 3.5f, "SLAM tangential distortion");
+        close((float) config.getDouble(0xb8), -1, "SLAM camera-to-IMU rotation");
+        close((float) config.getDouble(0x1f8), 0.02f, "SLAM second camera-to-IMU translation");
+        close((float) config.getDouble(0x258), 1, "SLAM homogeneous matrix bottom row");
+        close((float) config.getDouble(0x260), 0.001f, "SLAM camera readout");
+        close(config.getFloat(0x4d4), 1000, "SLAM Android acceleration rate");
+        close(config.getFloat(0x4d8), 1000, "SLAM Android gyroscope rate");
+        close((float) config.getDouble(0x4e0), -0.032f, "SLAM first camera delay");
+        close((float) config.getDouble(0x4e8), 0.01f, "SLAM first camera exposure shift");
+        close(config.getFloat(0x578), 3, "SLAM inverse cross-sensor rotation and acceleration scale");
+        close(config.getFloat(0x580), -2.5f, "SLAM inverse cross-sensor rotation and acceleration scale sign");
+        close(config.getFloat(0x598), -0.05f, "SLAM acceleration bias");
+        close(config.getFloat(0x5a8), 0.5f, "SLAM gyroscope misalignment");
+        close(config.getFloat(0x5c8), -0.375f, "SLAM gyroscope bias");
+        close((float) config.getDouble(0x5f0), 0.05f, "SLAM accelerometer bias noise");
+        fields.putDouble(imuStart + 0x22, 0);
+        try {
+            Cv10KitSlamParameters.encode(cameras, Cv10KitCalibration.locatorImu(locator));
+            throw new AssertionError("a singular IMU scale matrix must fail");
+        } catch (IOException expected) {
+            check(expected.getMessage().contains("Singular"), "SLAM singular calibration");
         }
     }
 

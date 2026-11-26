@@ -142,6 +142,23 @@ fmt:pose@org:slam;fmt:predictpose@org:slam;fmt:cameraintrin@org:slam;fmt:pointcl
 
 创建时读配置回调先收到 `HSDK_CONFIG_MANAGER_IMPL_GET_CHECK_VALID`（1 字节），再收到 `HSDK_CONFIG_MANAGER_IMPL_GET_SLAM_PARAMS`（2112 字节）。Windows `VR6DOF.dll` 的 `VrSlamConfiguration::InitPara`（`0x2fef0`）可从原厂 XML 载入默认模型，其 `GetValue`（`0x310d0`）可通过这两个键返回配置。Android `VrConfiguration::GetValue` 在 `0xba748` 和 `0xba7dc` 分别检查相同的缓冲长度，后者从对象 `+0x08` 复制 `0x840` 字节。Windows 读取配置时还请求 1024 字节的 `HSDK_CONFIG_MANAGER_IMPL_GET_SLAM_BIAS_INFO`。
 
+Android `VrConfiguration::DispatchModulePara`（`0xb7640`）提供下列字节布局。调整 Windows 样本 XML 的字段后分别读取原厂配置，用于复核字段对应关系。
+
+| 缓冲偏移 | 字段 |
+| --- | --- |
+| `0x000` | u32 相机数量 2 |
+| `0x008`、`0x138` | 两路相机，每路记录跨度 `0x130`。相对 `0x00`、`0x04`、`0x08`、`0x0c`、`0x10` 是 u32 ID、模式 1、宽、高、灰度行步幅，`0x14` 是 f32 帧率 |
+| 相机记录 `+0x18`、`+0x40` | 各 4 个 f64，分别为对焦补偿和 `fx, fy, cx, cy` |
+| 相机记录 `+0x60`、`+0x64`、`+0x68` | 两个 u32 为去畸变标志和模型，随后 8 个 f64 按 `k1, k2, k3, k4, k5, k6, p1, p2` 写入。设备原字段把 `p1, p2` 放在 `k3` 之后 |
+| 相机记录 `+0xa8`、`+0x128` | 行优先 f64 `Tbc` 齐次矩阵和 f64 读出时间。`Tbc` 将相机坐标变换到 IMU 坐标 |
+| `0x4d4`、`0x4d8`、`0x4e0`、`0x4e8` | f32 加速度计和陀螺仪标称频率，f64 第一相机的相机到 IMU 延时和曝光偏移。Android 在 `0xb7ccc–0xb7cec` 将两路频率设为 1000 Hz，Windows 从 XML 取值 |
+| `0x570`、`0x574`、`0x598`、`0x5a4`、`0x5c8` | u32 补偿标志，f32 加速度计矩阵及偏移，f32 陀螺仪矩阵及偏移。矩阵行优先，长 9 元素，偏移量长 3 元素 |
+| `0x5d8`、`0x5e0`、`0x5e8`、`0x5f0` | f64 陀螺仪噪声、陀螺仪偏置标准差、加速度计噪声、加速度计偏置标准差 |
+
+对于校准缩放 `s` 和失准 `m`，原厂用 `diag(s)` 左乘上三角矩阵，其对角线为 1，上三角按行依次为 `m[0..2]`。设结果为 `M`，写入的偏移为 `−M⁻¹b`。加速度计矩阵再左乘 `gyro2accel` 旋转矩阵的逆，偏移公式沿用本传感器的 `M`。对应 `XmlOpt::GetAccScaleMatrix`（`0xa8858`）、`GetGyroScaleMatrix`（`0xa9050`）和 `GetImuBias`（`0xa9160`）。
+
+诊断 APK 将 2112 字节参数加入 `locator.zip` 中的 `slam-params.bin`。用原厂 Windows 默认 XML 构造同一份定位器输入后，APK 编码器与原厂的配置逐字节核对，差异限于 Android 的 1000 Hz 和 PC 输出的 `HMA-TL00` 标识。Windows SLAM 离线探针使用 `--parameters` 载入生成的参数后，完成了与原厂 XML 同样的启动、合成输入和清理流程。
+
 ### 头显输入与预测时间
 
 Android `HxrAlgorithmData` 在 64 位程序中占 `0x120` 字节。前 `0x100` 字节为以零结尾的格式字符串，随后是 `0x100` 的 u64 载荷长度、`0x108` 的 u64 纳秒时间、`0x110` 的载荷指针和 `0x118` 的所有者指针。图像组合包由原厂保留引用回调管理。头显 IMU 以 `fmt:imu` 分开送入加速度和角速度，每个载荷为 `0x20` 字节。类型 u32 位于 `0x00`（0 为加速度、1 为角速度），设备时间 f64 秒位于 `0x08`，三个轴为从 `0x10` 开始的 f32（`PushHelmetInfo`，`0xc09e8–0xc0adc`）。
