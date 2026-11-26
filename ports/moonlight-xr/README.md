@@ -2,7 +2,7 @@
 
 在 Galaxy Z Fold7 上使用 Moonlight XR 接收 Sunshine 串流。Monado CV10 提供 Android OpenXR 运行时，并负责 CV10 的双眼合成及 USB IMU。手机打开 **Moonlight XR CV10** 后，在主机列表选择 Sunshine，完成 PIN 配对，再选择 **Desktop** 或游戏。测试时保持三星 DeX 外接显示为「已镜像」，在 Khronos Broker 中选择 Monado CV10。手机设置里的 VR Mode 控制 OpenXR，实时 3D 控制单目画面的深度估计和逐眼合成。
 
-正常退出和重进已在包含 Monado 卸载修复的预览运行时通过。稳定包 v0.1.2 能显示串流，退出时会崩溃。测试用运行时摘要及实机证据见 [Fold7 与 CV10 测试记录](evidence/fold7-cv10.md)。
+正常退出和重进已在包含 Monado 卸载修复的预览运行时通过，也用 16 KiB 对齐后的 `dfd193e` 预览包成功复测。稳定包 v0.1.2 能显示串流，退出时会崩溃。测试用运行时摘要及实机证据见 [Fold7 与 CV10 测试记录](evidence/fold7-cv10.md)。
 
 ## 源码与构建
 

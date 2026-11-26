@@ -1,0 +1,7 @@
+11-27 00:55:58.653 31803   969 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=29904 q_xyzw=(0.0001,-0.0001,0.0000,1.0000) gyro_rad_s=(-0.000,0.001,0.002) peak_rad_s=0.007
+11-27 00:55:58.749 31803   969 I MonadoCV10: CV10 valid IMU samples=30000 deviceNs=1042086279231
+11-27 00:56:00.654 31803   969 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=31905 q_xyzw=(0.0001,-0.0000,0.0000,1.0000) gyro_rad_s=(-0.001,-0.000,0.001) peak_rad_s=0.007
+11-27 00:56:02.656 31803   969 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=33906 q_xyzw=(0.0001,0.0000,-0.0000,1.0000) gyro_rad_s=(-0.000,-0.001,-0.002) peak_rad_s=0.006
+11-27 00:56:03.749 31803   969 I MonadoCV10: CV10 valid IMU samples=35000 deviceNs=1047086279581
+11-27 00:56:04.656 31803   969 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=35906 q_xyzw=(0.0001,0.0001,-0.0001,1.0000) gyro_rad_s=(0.001,0.001,0.001) peak_rad_s=0.006
+11-27 00:56:06.656 31803   969 I monado.cv10_worker:  INFO [cv10_worker] CV10 USB pose samples=37903 q_xyzw=(-0.0000,-0.0000,0.0000,1.0000) gyro_rad_s=(-0.000,-0.002,0.002) peak_rad_s=0.007
