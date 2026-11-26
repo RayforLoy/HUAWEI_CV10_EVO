@@ -53,6 +53,7 @@ final class KitVectors {
         Cv10KitReport.Hand right = Cv10KitReport.hand(report, true);
         check(left != null && right != null, "two hand records");
         check(left.clockTicks == 0x80000012L && left.clockMultiplier == 2 && right.clockTicks == 2345, "hand clocks");
+        check(left.deviceNs == 4_294_967_285_156L && right.deviceNs == 2_344_999L, "OEM hand nanosecond clock");
         check(left.buttons == Cv10KitReport.Hand.CONFIRM && right.buttons == Cv10KitReport.Hand.BACK,
                 "left and right button independence");
         check(left.batteryField == 88 && right.batteryField == 67, "hand battery fields");
@@ -106,8 +107,17 @@ final class KitVectors {
                 && decodedPose.x == 1 && decodedPose.y == 2 && decodedPose.z == -3
                 && decodedPose.qw == 0.5f && decodedPose.qx == -0.5f && decodedPose.qz == -0.5f,
                 "head pose clock, position, and quaternion order");
+        Cv10KitReport.HmdPose hmd = decodedPose.toHmd();
+        check(hmd != null, "valid calibrated HMD pose");
+        close(hmd.x, 0.9748725f, "HMD position X");
+        close(hmd.y, -3.0437151f, "HMD position Y");
+        close(hmd.z, -1.9541350f, "HMD position Z");
+        close(hmd.qx, 0.1825432f, "HMD orientation X");
+        close(hmd.qy, -0.8233996f, "HMD orientation Y");
+        close(hmd.qz, 0.1162928f, "HMD orientation Z");
+        close(hmd.qw, 0.5245636f, "HMD orientation W");
         pose.putInt(12, 0);
-        check(!Cv10KitReport.headPose(pose.array()).valid(), "head pose missing second state");
+        check(Cv10KitReport.headPose(pose.array()).toHmd() == null, "head pose missing second state");
         pose.putInt(12, 2).putFloat(0x20, Float.NaN);
         check(!Cv10KitReport.headPose(pose.array()).valid(), "head pose nonfinite quaternion");
 

@@ -3,7 +3,7 @@
 | 硬件 | Monado CV10 | 独立诊断 APK | 验证 |
 | --- | --- | --- | --- |
 | CF20 蓝牙 3DoF 手柄 | 应用内搜索、选用、Android 系统配对、会话自动连接和右手 OpenXR 输入 | GATT 状态、报告频率、原始包、四元数、按键、触控、惯性和电量 | 通过构建和协议测试向量。Fold7 待验收 |
-| 原厂 6DoF 套件 | 可从手柄菜单进入诊断并调用原厂头显 SLAM | USB 枚举、头显及左右手原始记录、双目和三路 IMU 校准、头显 SLAM 参数导出、每只手柄的 LED 模型和外参、外接 Y8 双目图像导出、头显 SLAM 离线和实时采样 | 已通过构建、协议向量、Windows 共用头显适配层回放和左右手 IMU 回放。Fold7 的外接 Y8 和有效位姿待验证，6DoF 位姿待接入 OpenXR |
+| 原厂 6DoF 套件 | 可从手柄菜单进入诊断并调用原厂头显 SLAM | USB 枚举、头显及左右手原始记录、双目和三路 IMU 校准、头显 SLAM 参数导出、每只手柄的 LED 模型和外参、外接 Y8 双目图像导出、头显 SLAM 及转换后的头显坐标 | 已通过构建、协议向量、Windows 共用头显适配层回放及左右手惯性和双目输入回放。Fold7 的外接 Y8 和有效位姿待验证，6DoF 位姿待接入 OpenXR |
 
 两条协议独立记录在 [CF20 蓝牙协议](cf20-protocol.md) 和 [6DoF 套件协议](kit-6dof-protocol.md)。诊断 APK 与运行时共用发现、配对及报告解码源码。
 
@@ -11,8 +11,8 @@
 
 | APK | 包名 | SHA-256 |
 | --- | --- | --- |
-| [Cv10ControllerProbe.apk](dist/Cv10ControllerProbe.apk) | `org.cv10.controllerprobe` | `4d62f598183152fe0ff39f56b5adde53cd2428ab3587b5a61d498d1dda4c88d9` |
-| [Monado-CV10-Controller-arm64-v8a.apk](dist/Monado-CV10-Controller-arm64-v8a.apk) | `org.cv10.monado.out_of_process` | `7fa9758c5f60b1e90d72ef4b2851ed9040e0f77e448c85f8f8cd9bbd9021b860` |
+| [Cv10ControllerProbe.apk](dist/Cv10ControllerProbe.apk) | `org.cv10.controllerprobe` | `d2c90b4c268eb3b2c350da28863d0fbdd5687e47eb4ef57a1674de67e2cb979e` |
+| [Monado-CV10-Controller-arm64-v8a.apk](dist/Monado-CV10-Controller-arm64-v8a.apk) | `org.cv10.monado.out_of_process` | `c9325d51cdd0c2ea0680e315db8645f263aa090b41580582e5a5a9e555b0e40c` |
 
 两个 APK 均为本地调试构建，最低 Android API 26。本机校验证书 SHA-256 为 `68365fa0904432aaa86a8904c691f9e6487414dc959786d72831a083b9f23fca`。运行时覆盖安装需要与已安装的 APK 签名一致。独立诊断 APK 可与运行时并存。两包已通过 `apksigner verify` 和 `zipalign -c -P 16 4`，运行时包含 `arm64-v8a`。当前工作树未进行真机安装、配对、USB／相机采样或 OpenXR 验收。
 
@@ -26,12 +26,13 @@
 
 ## Windows 位姿接口离线验证
 
-用 64 位 Windows Python 运行 [离线探针](probe-slam-head.py)，参数为解包后的原厂 PC 助手 `steamVRDriver/huaweiVR/bin/win64` 目录。脚本校验使用的 DLL SHA-256，并在当前进程内指定临时 XML 路径。默认回放头部 IMU 和空白双目帧。`--parameters` 用于回放诊断 APK 导出的头显校准。`--controllers` 验证原厂默认校准、左右手 IMU 和双手位姿状态。两种回放都预期返回无有效视觉位姿。厂商文件由本机准备。
+用 64 位 Windows Python 运行 [离线探针](probe-slam-head.py)，参数为解包后的原厂 PC 助手 `steamVRDriver/huaweiVR/bin/win64` 目录。脚本校验使用的 DLL SHA-256，并在当前进程内指定临时 XML 路径。默认回放头部 IMU 和空白双目帧。`--parameters` 用于回放诊断 APK 导出的头显校准。`--controllers` 先送入左右手 IMU，再送入带合成头显位姿的空白双目帧。`--config-xml` 可指定原厂 Android `assets/vrglass.xml`。两种回放都预期返回无有效视觉位姿。厂商文件由本机准备。
 
 ```powershell
 python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录>
 python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --parameters <slam-params.bin>
 python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --controllers
+python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --controllers --config-xml <原厂_Android_vrglass.xml>
 ```
 
 要核验两份 APK 共用的 C++ 适配层，可在 x64 Native Tools Command Prompt 中运行下列命令。原厂 Windows DLL 的 SHA-256 应为 `6d89d332acfe86f9a9a3309a913de6d6cb8f0da2f49b46f60b96a07599283a7d`。

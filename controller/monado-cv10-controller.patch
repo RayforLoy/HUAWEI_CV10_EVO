@@ -1731,7 +1731,7 @@ index 0000000..cb8add5
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
 new file mode 100644
-index 0000000..8e4a5de
+index 0000000..841f719
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
 @@ -0,0 +1,763 @@
@@ -2206,9 +2206,9 @@ index 0000000..8e4a5de
 +    private static void appendHand(StringBuilder text, String label, Cv10KitReport.Hand hand) {
 +        if (hand == null) return;
 +        text.append(String.format(Locale.ROOT,
-+                "\n%s %d ticks ×%d · buttons %02X · touch %02X/%d · battery %d" +
++                "\n%s %d ns (%d ticks, multiplier %d) · buttons %02X · touch %02X/%d · battery %d" +
 +                "\nStick %.3f %.3f · trigger %.0f · grip %.0f\nAccel %.3f %.3f %.3f · gyro %.3f %.3f %.3f",
-+                label, hand.clockTicks, hand.clockMultiplier, hand.buttons, hand.touches, hand.gripTouch,
++                label, hand.deviceNs, hand.clockTicks, hand.clockMultiplier, hand.buttons, hand.touches, hand.gripTouch,
 +                hand.batteryField, hand.stickX, hand.stickY, hand.trigger, hand.grip,
 +                hand.ax, hand.ay, hand.az, hand.gx, hand.gy, hand.gz));
 +    }
@@ -2913,10 +2913,10 @@ index 0000000..24650d6
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java
 new file mode 100644
-index 0000000..ed23d2b
+index 0000000..be63227
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java
-@@ -0,0 +1,170 @@
+@@ -0,0 +1,207 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -2960,6 +2960,7 @@ index 0000000..ed23d2b
 +        static final int HOME = 0x02;
 +        static final int STICK_CLICK = 0x08;
 +        final long clockTicks;
++        final long deviceNs;
 +        final int clockMultiplier, buttons, touches, gripTouch, batteryField;
 +        final float ax, ay, az, gx, gy, gz, stickX, stickY, trigger, grip;
 +        final int mx, my, mz;
@@ -2968,6 +2969,9 @@ index 0000000..ed23d2b
 +            buttons = u8(data, start);
 +            clockTicks = Integer.toUnsignedLong(Integer.reverseBytes(data.getInt(start + 1)));
 +            clockMultiplier = u8(data, start + 0x17);
++            float clockSeconds = clockTicks / 1_000_000f;
++            if (clockMultiplier != 0) clockSeconds *= clockMultiplier;
++            deviceNs = (long) ((double) clockSeconds * 1_000_000_000d);
 +            ax = data.getShort(start + 5) * HAND_ACCEL;
 +            ay = data.getShort(start + 7) * HAND_ACCEL;
 +            az = data.getShort(start + 9) * HAND_ACCEL;
@@ -3047,6 +3051,39 @@ index 0000000..ed23d2b
 +            float normSquared = qw * qw + qx * qx + qy * qy + qz * qz;
 +            return normSquared > 0.9f && normSquared < 1.1f;
 +        }
++
++        HmdPose toHmd() {
++            if (!valid()) return null;
++            // Factory alignment from TransSlamCoord2Hmd. Apply the rotated lever arm in SLAM space first.
++            float[] aligned = multiply(qx, qy, qz, qw, 0.211309f, 0.211309f, 0.0468461f, 0.953154f);
++            float ax = aligned[0], ay = aligned[1], az = aligned[2], aw = aligned[3];
++            float[] lever = multiply(ax, ay, az, aw, -0.059f, -0.029f, 0.018f, 0);
++            float[] rotated = multiply(lever[0], lever[1], lever[2], lever[3], -ax, -ay, -az, aw);
++            // coordToHMD maps (x, y, z) to (x, z, -y), then applies a local +90° rotation about X.
++            float s = (float) Math.sqrt(0.5);
++            float[] orientation = multiply(ax, az, -ay, aw, s, 0, 0, s);
++            return new HmdPose(x - rotated[0], z - rotated[2], -y + rotated[1], orientation);
++        }
++
++        private static float[] multiply(float x, float y, float z, float w, float u, float v, float s, float t) {
++            return new float[] {w * u + x * t + y * s - z * v, w * v - x * s + y * t + z * u,
++                    w * s + x * v - y * u + z * t, w * t - x * u - y * v - z * s};
++        }
++    }
++
++    static final class HmdPose {
++        final float x, y, z, qx, qy, qz, qw;
++
++        private HmdPose(float x, float y, float z, float[] q) {
++            this.x = x;
++            this.y = y;
++            this.z = z;
++            float inverseNorm = (float) (1 / Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]));
++            qx = q[0] * inverseNorm;
++            qy = q[1] * inverseNorm;
++            qz = q[2] * inverseNorm;
++            qw = q[3] * inverseNorm;
++        }
 +    }
 +
 +    static HeadPose headPose(byte[] data) {
@@ -3089,10 +3126,10 @@ index 0000000..ed23d2b
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java
 new file mode 100644
-index 0000000..b24e4dd
+index 0000000..284cd90
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java
-@@ -0,0 +1,171 @@
+@@ -0,0 +1,174 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -3233,11 +3270,14 @@ index 0000000..b24e4dd
 +            return "No valid visual pose (query returned -1).";
 +        }
 +        Cv10KitReport.HeadPose head = Cv10KitReport.headPose(pose);
-+        if (status != 0 || !head.valid()) return "Pose query returned " + status + " · " + hex(pose);
++        Cv10KitReport.HmdPose hmd = status == 0 ? head.toHmd() : null;
++        if (hmd == null) return "Pose query returned " + status + " · " + hex(pose);
 +        return String.format(Locale.ROOT,
-+                "SLAM pose at %.6f s · state %d/%d\nPosition (%.4f, %.4f, %.4f) · wxyz (%.4f, %.4f, %.4f, %.4f)",
++                "SLAM pose at %.6f s · state %d/%d\n"
++                + "Position (%.4f, %.4f, %.4f) · wxyz (%.4f, %.4f, %.4f, %.4f)\n"
++                + "HMD position (%.4f, %.4f, %.4f) · xyzw (%.4f, %.4f, %.4f, %.4f)",
 +                head.deviceSeconds, head.state0, head.state1, head.x, head.y, head.z, head.qw, head.qx, head.qy,
-+                head.qz);
++                head.qz, hmd.x, hmd.y, hmd.z, hmd.qx, hmd.qy, hmd.qz, hmd.qw);
 +    }
 +
 +    private static String hex(byte[] bytes) {
