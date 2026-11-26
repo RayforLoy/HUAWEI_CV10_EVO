@@ -2913,10 +2913,10 @@ index 0000000..24650d6
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java
 new file mode 100644
-index 0000000..caaafd2
+index 0000000..ed23d2b
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java
-@@ -0,0 +1,139 @@
+@@ -0,0 +1,170 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -3022,6 +3022,37 @@ index 0000000..caaafd2
 +        }
 +    }
 +
++    static final class HeadPose {
++        static final int BYTES = 0x38;
++        final double deviceSeconds;
++        final int state0, state1;
++        final float x, y, z, qw, qx, qy, qz;
++
++        private HeadPose(ByteBuffer data) {
++            deviceSeconds = data.getDouble(0);
++            state0 = data.getInt(8);
++            state1 = data.getInt(12);
++            x = data.getFloat(0x10);
++            y = data.getFloat(0x14);
++            z = data.getFloat(0x18);
++            qw = data.getFloat(0x1c);
++            qx = data.getFloat(0x20);
++            qy = data.getFloat(0x24);
++            qz = data.getFloat(0x28);
++        }
++
++        boolean valid() {
++            if (state0 == 0 || state1 == 0 || deviceSeconds <= 0 || !Double.isFinite(deviceSeconds)
++                    || !Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(z)) return false;
++            float normSquared = qw * qw + qx * qx + qy * qy + qz * qz;
++            return normSquared > 0.9f && normSquared < 1.1f;
++        }
++    }
++
++    static HeadPose headPose(byte[] data) {
++        return data.length == HeadPose.BYTES ? new HeadPose(ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)) : null;
++    }
++
 +    static Head head(byte[] report) {
 +        if (report.length < 34 || report[20] != 0 || report[27] != 1) return null;
 +        Head head = new Head(ByteBuffer.wrap(report).order(ByteOrder.BIG_ENDIAN));
@@ -3058,10 +3089,10 @@ index 0000000..caaafd2
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java
 new file mode 100644
-index 0000000..7dd6a0f
+index 0000000..b24e4dd
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java
-@@ -0,0 +1,166 @@
+@@ -0,0 +1,171 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -3196,12 +3227,17 @@ index 0000000..7dd6a0f
 +    }
 +
 +    String poseStatus() {
-+        byte[] pose = new byte[0x38];
++        byte[] pose = new byte[Cv10KitReport.HeadPose.BYTES];
 +        int status = nativePose(session, pose);
 +        if (status == -1 && Arrays.equals(pose, new byte[pose.length])) {
 +            return "No valid visual pose (query returned -1).";
 +        }
-+        return "Pose query returned " + status + " · " + hex(pose);
++        Cv10KitReport.HeadPose head = Cv10KitReport.headPose(pose);
++        if (status != 0 || !head.valid()) return "Pose query returned " + status + " · " + hex(pose);
++        return String.format(Locale.ROOT,
++                "SLAM pose at %.6f s · state %d/%d\nPosition (%.4f, %.4f, %.4f) · wxyz (%.4f, %.4f, %.4f, %.4f)",
++                head.deviceSeconds, head.state0, head.state1, head.x, head.y, head.z, head.qw, head.qx, head.qy,
++                head.qz);
 +    }
 +
 +    private static String hex(byte[] bytes) {
