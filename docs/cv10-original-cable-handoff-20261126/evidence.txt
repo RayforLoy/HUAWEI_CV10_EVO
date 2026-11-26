@@ -1,0 +1,105 @@
+CV10 原厂线黑屏实机摘录 | 2026-11-26，香港时间（UTC+8）
+主机 Galaxy Z Fold7，原厂线固件 C9.49.6，转接盒外接 5 V。同一副 CV10 直连时可见左右眼图案。
+
+【09:42 原厂线插入】 Fold7 bugreport，以下 L 为同一成员中的 1 起始行号。
+archive: attach.zip   bytes: 52027851
+SHA-256: c0ce622e80844d96dc93591b2dddac6aac1d5f79272e19fedcf3e70991031588
+member: dumpstate-2026-11-26-09-42-23.txt
+内核括号内为开机后秒数。三星端口历史的日期栏使用 UTC，二者之间比较耗时统一使用开机后秒数。
+
+手机充电芯片，先于根端口断开约 3.76 秒
+L426305 <6>[2145343.633300][T29110] max77775_get_vbus_state: VBUS is valid. CHGIN < CHGIN_OVLO
+L426306 <7>[2145343.634105][T29110] max77775_fg_read_iin: iin_current=273mA
+L426307 <6>[2145343.634334][T29110] max77775_fg_read_vbyp: VBYP(4650), data(0x2aa1)
+L426308 <6>[2145343.634335][T29110] max77775_get_charging_health: vbus_state: 0x3, chg_dtls: 0x1, iin: 273mA, vbyp: 4650mV, health: 1, abnormal: false
+
+DisplayPort 链路训练及启动视频流
+L445776 [2145343.707597] link training #1 successful
+L445777 [2145343.737109] link training #2 successful
+L445807 [2145345.251195] core:on link:on strm0:on strm1:off
+
+USB 2 根端口状态及内核注销顺序
+L427888 <3>[2145347.394696][T10553] hub 1-0:1.0: state 7 ports 1 chg 0000 evt 0002
+L427889 <3>[2145347.394728][T10553] usb usb1-port1: status 0100, change 0001, 12 Mb/s
+L427890 <6>[2145347.394735][T10553] usb 1-1: USB disconnect, device number 2
+L427891 <6>[2145347.394736][T10553] usb 1-1.1: USB disconnect, device number 3
+L427892 <3>[2145347.394738][T10553] usb 1-1.1: unregistering device
+L427893 <6>[2145347.394769][T10553] usb_audio_disconnect : disconnect!
+
+三星 USB 端口历史，断开的四项与重新出现的两项
+L444089 [11-26 01:42:29] [2145347.416328] port disconnect - VID:0x12d1 PID:0x1092
+L444090 [11-26 01:42:29] [2145347.448254] port disconnect - VID:0x12d1 PID:0x107e
+L444091 [11-26 01:42:29] [2145347.479906] port disconnect - VID:0x2109 PID:0x8888
+L444092 [11-26 01:42:29] [2145347.511904] port disconnect - VID:0x2109 PID:0x2211
+L444093 [11-26 01:42:31] [2145349.298204] port connect - VID:0x2109 PID:0x2211 cnt:66
+L444095 [11-26 01:42:31] [2145349.298204] device class 9, interface class 9
+L444096 [11-26 01:42:31] [2145349.977442] port connect - VID:0x2109 PID:0x8888 cnt:60
+L444098 [11-26 01:42:31] [2145349.977442] device class 0, interface class 3
+
+Android 日志 events.txt，以下为手机本地时间。Added device 长记录仅保留标识字段。
+L4261 11-26 09:42:27.993  2961  5030 D UsbAlsaManager: USB_AUDIO_AUTOMATIC_ROUTING_DISABLED
+L4287 11-26 09:42:28.001  2961  5030 D UsbHostManager: Added device [摘录字段] mVendorId=4817 mProductId=4222 mProductName=HUAWEI GLASS HID
+L4303 11-26 09:42:28.007 10668 10668 W Cv10Exception: PATTERN_SHOW id=68 mode=3200x1600@90.0
+L4342 11-26 09:42:28.030 10668 10668 W Cv10Exception: PATTERN_COMMIT id=68
+L4343 11-26 09:42:28.131 10668 10668 W Cv10Exception: USB_PERMISSION_REQUESTED
+L4378 11-26 09:42:29.184  2961  5030 D UsbHostManager: Removed device at /dev/bus/usb/001/004: HUAWEI GLASS HID
+
+同次 sysfs 采样 ports.txt，含音频路由设置恢复记录。
+09:41:15.587 ARMED original=null current=1
+09:42:27.193 TREE 1-0:1.0,1-1,1-1.1,1-1.1:1.0,1-1.1:1.1,1-1.1:1.2,1-1.1:1.3,1-1.2,1-1.2:1.0,1-1.2:1.1,1-1.2:1.2,1-1.2:1.3,1-1.2:1.4,1-1.5,1-1.5:1.0,1-1:1.0,2-0:1.0,usb1,usb2,
+09:42:29.408 TREE 1-0:1.0,2-0:1.0,usb1,usb2,
+09:42:30.944 TREE 1-0:1.0,1-1,1-1:1.0,2-0:1.0,usb1,usb2,
+09:42:31.824 TREE 1-0:1.0,1-1,1-1.5,1-1.5:1.0,1-1:1.0,2-0:1.0,usb1,usb2,
+09:43:34.089 RESTORED prior=null current=null
+
+【前一日 Gen 2 C-C 直连对照】
+archive: gen2.zip   SHA-256: b817b35062ac779df351499b4d7be54393f8e1e48789bb238bc2975544cb7497
+member: dumpstate-2026-11-25-22-27-26.txt
+同一副 CV10。摘出 UsbUI 的事件时间、ACTION、PRODUCT 和 DEVPATH 最后一段。
+L251060 11-25 22:16:07.666 ACTION=add PRODUCT=2109/2211/193 1-1:1.0
+L251211 11-25 22:16:08.626 ACTION=add PRODUCT=12d1/1092/200 1-1.1:1.0
+L254096 11-25 22:16:09.106 ACTION=add PRODUCT=12d1/107e/200 1-1.2:1.0
+L257178 11-25 22:16:09.392 ACTION=add PRODUCT=2109/8888/1 1-1.5:1.0
+
+【09:39 同一根线接电脑，临时设置头显来源并恢复】 source-on-pc-trial.txt
+AT^GETSOURCE? '^SOURCE TYPE(0:phone, 1:PC):1\n\r\n\r\nOK'
+2026-11-26T09:39:31.745+08:00 requesting phone source
+AT^SETSOURCE=0 'OK'
+AT^GETSOURCE? '^SOURCE TYPE(0:phone, 1:PC):0\n\r\n\r\nOK'
+AT^TYPECSTATE? '^TYPECSTATE:1\n\r\n\r\nOK'
+2026-11-26T09:39:56.789+08:00 samples with the PCUI interface online 100
+AT^GETSOURCE? '^SOURCE TYPE(0:phone, 1:PC):0\n\r\n\r\nOK'
+2026-11-26T09:39:56.790+08:00 source at end of test 0
+AT^TYPECSTATE? '^TYPECSTATE:1\n\r\n\r\nOK'
+AT^GETSOURCE? '^SOURCE TYPE(0:phone, 1:PC):0\n\r\n\r\nOK'
+AT^SETSOURCE=1 'OK'
+AT^GETSOURCE? '^SOURCE TYPE(0:phone, 1:PC):1\n\r\n\r\nOK'
+2026-11-26T09:39:56.796+08:00 PC source restored and verified
+
+【09:43–09:44 外接 5 V 不动，请求供电主机】 timeline.txt / events.txt
+2026-11-26T09:43:58.611+08:00 before {'connected': 'true', 'power': 'sink', 'data': 'host', 'usb_enabled': 'enabled', 'audio': False, 'control': False, 'hub': True, 'keyboard': True, 'display': True}
+2026-11-26T09:43:58.658+08:00 request source/host Setting USB port mode and role: portId=port0, currentMode=dfp, currentPowerRole=sink, currentDataRole=host, newMode=dfp, newPowerRole=source, newDataRole=host
+11-26 09:44:03.395  2961  8222 E UsbPortManager: port0 role switch failed. err:1opID:4
+2026-11-26T09:44:22.331+08:00 after restore {'connected': 'true', 'power': 'sink', 'data': 'host', 'usb_enabled': 'enabled', 'audio': False, 'control': False, 'hub': True, 'keyboard': True, 'display': True}
+
+【09:44–09:45 只开关 Fold7 的 USB 数据】 timeline.txt。keyboard 对应 1-1.5 的 HID。
+2026-11-26T09:44:50.101+08:00 before {'connected': 'true', 'power': 'sink', 'data': 'host', 'usb_enabled': 'enabled', 'audio': False, 'control': False, 'hub': True, 'keyboard': True, 'display': True}
+2026-11-26T09:44:53.343+08:00 after data disable {'connected': 'true', 'power': 'sink', 'data': 'host', 'usb_enabled': 'disabled-force', 'audio': False, 'control': False, 'hub': False, 'keyboard': False, 'display': True}
+2026-11-26T09:44:54.338+08:00 observed {'connected': 'true', 'power': 'sink', 'data': 'host', 'usb_enabled': 'enabled', 'audio': False, 'control': False, 'hub': True, 'keyboard': False, 'display': True}
+2026-11-26T09:44:55.130+08:00 observed {'connected': 'true', 'power': 'sink', 'data': 'host', 'usb_enabled': 'enabled', 'audio': False, 'control': False, 'hub': True, 'keyboard': True, 'display': True}
+2026-11-26T09:45:16.041+08:00 final observation {'connected': 'true', 'power': 'sink', 'data': 'host', 'usb_enabled': 'enabled', 'audio': False, 'control': False, 'hub': True, 'keyboard': True, 'display': True}
+2026-11-26T09:45:17.243+08:00 after restore {'connected': 'true', 'power': 'sink', 'data': 'host', 'usb_enabled': 'enabled', 'audio': False, 'control': False, 'hub': True, 'keyboard': True, 'display': True}
+
+【09:46 在掉线之后关闭眼镜外显，开关 USB 数据，再释放外显电源覆盖】 postdrop-external-power-20261126.txt
+2026-11-26T09:46:21.149+08:00 before 68 ('ON', True, False, False, True)
+2026-11-26T09:46:21.211+08:00 request external OFF
+2026-11-26T09:46:21.306+08:00 powerMode, hub, audio, control, HID5 ('OFF', True, False, False, True)
+2026-11-26T09:46:27.835+08:00 disable data while display is OFF
+2026-11-26T09:46:27.932+08:00 powerMode, hub, audio, control, HID5 ('OFF', False, False, False, False)
+2026-11-26T09:46:31.037+08:00 enable data while display is OFF
+2026-11-26T09:46:31.133+08:00 powerMode, hub, audio, control, HID5 ('OFF', False, False, False, False)
+2026-11-26T09:46:31.475+08:00 powerMode, hub, audio, control, HID5 ('OFF', True, False, False, False)
+2026-11-26T09:46:32.299+08:00 powerMode, hub, audio, control, HID5 ('OFF', True, False, False, True)
+2026-11-26T09:46:42.556+08:00 reset external power override
+2026-11-26T09:46:42.653+08:00 powerMode, hub, audio, control, HID5 ('ON', True, False, False, True)
+2026-11-26T09:46:51.754+08:00 restored target 68 ('ON', True, False, False, True)
