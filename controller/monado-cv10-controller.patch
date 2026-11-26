@@ -81,6 +81,41 @@ index f9b40e2..3b168b4 100644
 +
 +jclass
 +cv10_load_java_class(JNIEnv *env, jobject context, const char *class_name);
+diff --git a/src/xrt/targets/CMakeLists.txt b/src/xrt/targets/CMakeLists.txt
+index a35aef4..54ae731 100644
+--- a/src/xrt/targets/CMakeLists.txt
++++ b/src/xrt/targets/CMakeLists.txt
+@@ -20,7 +20,7 @@ if(XRT_FEATURE_OPENXR)
+ 	add_subdirectory(binding_inspector)
+ endif()
+ 
+-if(ANDROID AND XRT_FEATURE_OPENXR AND XRT_BUILD_CV10_SPATIAL_LAUNCHER)
++if(ANDROID AND XRT_FEATURE_OPENXR)
+ 	add_subdirectory(openxr_android/src/main/cpp)
+ endif()
+ 
+diff --git a/src/xrt/targets/openxr_android/build.gradle b/src/xrt/targets/openxr_android/build.gradle
+index 48e4241..902cae7 100644
+--- a/src/xrt/targets/openxr_android/build.gradle
++++ b/src/xrt/targets/openxr_android/build.gradle
+@@ -246,7 +246,7 @@ android {
+         flavor.dimension 'deployment'
+         flavor.applicationIdSuffix '.in_process'
+         flavor.externalNativeBuild.cmake.arguments += "-DXRT_FEATURE_SERVICE=OFF"
+-        flavor.externalNativeBuild.cmake.targets "openxr_monado"
++        flavor.externalNativeBuild.cmake.targets "openxr_monado", "cv10-kit-slam"
+         flavor.buildConfigField "boolean", "inProcess", "true"
+         flavor.resValue "string", "app_name", appName
+     }
+@@ -255,7 +255,7 @@ android {
+         flavor.dimension 'deployment'
+         flavor.applicationIdSuffix '.out_of_process'
+         flavor.externalNativeBuild.cmake.arguments += ["-DXRT_FEATURE_SERVICE=ON", "-DXRT_BUILD_CV10_SPATIAL_LAUNCHER=ON"]
+-        flavor.externalNativeBuild.cmake.targets "openxr_monado", "monado-service", "cv10-spatial-launcher"
++        flavor.externalNativeBuild.cmake.targets "openxr_monado", "monado-service", "cv10-spatial-launcher", "cv10-kit-slam"
+         flavor.buildConfigField "boolean", "inProcess", "false"
+         flavor.resValue "string", "app_name", appName
+     }
 diff --git a/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml b/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml
 index 89d548a..5f8c6fe 100644
 --- a/src/xrt/targets/openxr_android/src/main/AndroidManifest.xml
@@ -114,6 +149,28 @@ index 89d548a..5f8c6fe 100644
  
          <activity
              android:name=".Cv10SpatialLauncherActivity"
+diff --git a/src/xrt/targets/openxr_android/src/main/cpp/CMakeLists.txt b/src/xrt/targets/openxr_android/src/main/cpp/CMakeLists.txt
+index d395722..eada049 100644
+--- a/src/xrt/targets/openxr_android/src/main/cpp/CMakeLists.txt
++++ b/src/xrt/targets/openxr_android/src/main/cpp/CMakeLists.txt
+@@ -1,7 +1,13 @@
+ # SPDX-License-Identifier: BSL-1.0
+ 
+-find_package(OpenXR CONFIG REQUIRED)
++if(XRT_BUILD_CV10_SPATIAL_LAUNCHER)
++	find_package(OpenXR CONFIG REQUIRED)
++	add_library(cv10-spatial-launcher SHARED cv10_spatial_launcher.cpp)
++	target_compile_features(cv10-spatial-launcher PRIVATE cxx_std_17)
++	target_link_libraries(cv10-spatial-launcher PRIVATE OpenXR::openxr_loader EGL GLESv3 jnigraphics log)
++endif()
+ 
+-add_library(cv10-spatial-launcher SHARED cv10_spatial_launcher.cpp)
+-target_compile_features(cv10-spatial-launcher PRIVATE cxx_std_17)
+-target_link_libraries(cv10-spatial-launcher PRIVATE OpenXR::openxr_loader EGL GLESv3 jnigraphics log)
++add_library(cv10-kit-slam SHARED cv10_kit_slam.cpp)
++target_compile_features(cv10-kit-slam PRIVATE cxx_std_17)
++target_link_libraries(cv10-kit-slam PRIVATE dl)
++target_link_options(cv10-kit-slam PRIVATE -Wl,-z,max-page-size=16384)
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/AboutMenuWithCardboard.kt b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/AboutMenuWithCardboard.kt
 index 2c02df5..8259568 100644
 --- a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/AboutMenuWithCardboard.kt
@@ -485,6 +542,422 @@ index 0000000..3492455
 +
 +struct xrt_device *
 +cv10_controller_create(void);
+diff --git a/src/xrt/targets/openxr_android/src/main/cpp/cv10_kit_slam.cpp b/src/xrt/targets/openxr_android/src/main/cpp/cv10_kit_slam.cpp
+new file mode 100644
+index 0000000..535917e
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/cpp/cv10_kit_slam.cpp
+@@ -0,0 +1,410 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++#if defined(__ANDROID__) && defined(__aarch64__)
++#include <jni.h>
++#include <dlfcn.h>
++#endif
++
++#if defined(__aarch64__) || defined(CV10_SLAM_HOST_TEST)
++
++#include <array>
++#include <atomic>
++#include <cstddef>
++#include <cstdint>
++#include <cstdio>
++#include <cstring>
++#include <memory>
++#include <new>
++
++namespace {
++
++constexpr size_t parameter_size = 0x840;
++constexpr int image_width = 640;
++constexpr int image_height = 480;
++constexpr int image_bytes = image_width * image_height;
++
++constexpr char image_format[] = "fmt:yuv@res:480p@rot:0";
++constexpr char stereo_format[] = "fmt:yuv@res:480p@rot:0@fmt:preyuv@res:480p@rot:0@fmt:feature@fmt:depth@rot:0";
++constexpr char input_formats[] = "fmt:yuv@res:480p@rot:0;fmt:preyuv@res:480p@rot:0;fmt:feature;fmt:depth@rot:0;fmt:imu";
++constexpr char output_formats[] = "fmt:pose@org:slam;fmt:predictpose@org:slam;fmt:cameraintrin@org:slam;"
++                                  "fmt:pointcloud@org:slam;fmt:anchor@org:slam@type:update";
++
++// These structures are the wire format of the OEM module's exported C interface.
++struct Packet {
++	char format[0x100] = {};
++	uint64_t size;
++	uint64_t timestamp_ns;
++	void *payload;
++	void *owner;
++
++	template <size_t Length>
++	Packet(const char (&type)[Length], uint64_t length, uint64_t time, void *contents, void *reference = nullptr)
++	    : size(length), timestamp_ns(time), payload(contents), owner(reference)
++	{
++		static_assert(Length <= sizeof(format));
++		std::memcpy(format, type, Length);
++	}
++};
++
++static_assert(sizeof(Packet) == 0x120 && offsetof(Packet, owner) == 0x118);
++
++struct Callbacks {
++	void *context;
++	int64_t (*set)(void *, const char *, size_t, const void *);
++	int64_t (*get)(void *, const char *, size_t, void *);
++	int (*retain)(void *, Packet *);
++	int (*release)(void *, Packet *);
++	int (*input)(void *, Packet *);
++	int (*output)(void *, Packet *);
++};
++
++struct Module {
++	uint64_t tag;
++	const char *name;
++	void *unused_10[2];
++	void *(*create)(const char *, const char *);
++	void (*destroy)(void *);
++	int (*init)(void *);
++	int (*start)(void *);
++	void *unused_40[2];
++	int (*stop)(void *);
++	int (*deinit)(void *);
++	void *unused_60[2];
++	int (*push)(void *, Packet *);
++	int (*get)(void *, Packet *);
++	void *unused_80[4];
++	void (*register_callbacks)(const Callbacks *);
++	void (*unregister_callbacks)();
++};
++
++static_assert(offsetof(Module, create) == 0x20 && offsetof(Module, push) == 0x70 &&
++              offsetof(Module, register_callbacks) == 0xa0);
++
++struct PacketOwner {
++	std::atomic<unsigned> references{1};
++#if defined(CV10_SLAM_HOST_TEST)
++	inline static std::atomic<int> live{0};
++	PacketOwner() { live.fetch_add(1, std::memory_order_relaxed); }
++	virtual ~PacketOwner() { live.fetch_sub(1, std::memory_order_relaxed); }
++#else
++	virtual ~PacketOwner() = default;
++#endif
++};
++
++int
++retain(void *, Packet *packet)
++{
++	if (!packet || !packet->owner) return -1;
++	static_cast<PacketOwner *>(packet->owner)->references.fetch_add(1, std::memory_order_relaxed);
++	return 0;
++}
++
++int
++release(void *, Packet *packet)
++{
++	if (!packet || !packet->owner) return -1;
++	auto *owner = static_cast<PacketOwner *>(packet->owner);
++	if (owner->references.fetch_sub(1, std::memory_order_acq_rel) == 1) delete owner;
++	return 0;
++}
++
++int
++ignore_packet(void *, Packet *)
++{
++	return 0;
++}
++
++struct ImuPayload {
++	uint32_t kind;
++	uint32_t reserved_04 = 0;
++	double seconds;
++	float axes[3];
++	uint32_t reserved_1c = 0;
++};
++
++static_assert(sizeof(ImuPayload) == 0x20 && offsetof(ImuPayload, axes) == 0x10);
++
++struct Imu : PacketOwner {
++	ImuPayload payload;
++	Packet packet;
++
++	Imu(uint32_t kind, uint64_t ns, float x, float y, float z)
++	    : payload{kind, 0, ns / 1e9, {x, y, z}},
++	      packet{"fmt:imu", sizeof(payload), ns, &payload, this}
++	{}
++};
++
++struct ImagePayload {
++	uint32_t total_size = 0x60 + image_bytes;
++	uint32_t width = image_width;
++	uint32_t height = image_height;
++	uint32_t stride = image_width;
++	uint32_t frame;
++	uint32_t reserved_14 = 0;
++	uint32_t format = 1;
++	uint32_t reserved_1c = 0;
++	uint64_t reserved_20 = 0;
++	double seconds;
++	uint64_t reserved_30 = 0;
++	double exposure_seconds;
++	uint64_t reserved_40 = 0;
++	uint8_t *pixels;
++	uint8_t reserved_50[0x10] = {};
++
++	ImagePayload(uint32_t number, uint64_t ns, int exposure_us, uint8_t *samples)
++	    : frame(number), seconds(ns / 1e9), exposure_seconds(exposure_us / 1e6), pixels(samples)
++	{}
++};
++
++static_assert(sizeof(ImagePayload) == 0x60 && offsetof(ImagePayload, pixels) == 0x48);
++
++struct StereoPayload {
++	uint32_t flags = 3;
++	uint32_t count = 2;
++	uint32_t types = 0x101;
++	uint32_t reserved_0c = 0;
++	Packet *images[2];
++	uint8_t reserved_20[0x58] = {};
++};
++
++static_assert(sizeof(StereoPayload) == 0x78 && offsetof(StereoPayload, images) == 0x10);
++
++struct Stereo : PacketOwner {
++	uint8_t pixels[2][image_bytes];
++	ImagePayload images[2];
++	Packet leaves[2];
++	StereoPayload payload;
++	Packet packet;
++
++	Stereo(uint64_t ns, uint32_t frame, int exposure_us)
++	    : images{{frame, ns, exposure_us, pixels[0]}, {frame, ns, exposure_us, pixels[1]}},
++	      leaves{{image_format, sizeof(ImagePayload), ns, &images[0], this},
++	             {image_format, sizeof(ImagePayload), ns, &images[1], this}},
++	      payload{3, 2, 0x101, 0, {&leaves[0], &leaves[1]}},
++	      packet{stereo_format, sizeof(payload), ns, &payload, this}
++	{}
++};
++
++int64_t
++set_config(void *, const char *, size_t, const void *)
++{
++	return 0;
++}
++
++struct Session {
++	const Module *module = nullptr;
++	void *instance = nullptr;
++	bool registered = false;
++	bool initialized = false;
++	bool started = false;
++	std::array<uint8_t, parameter_size> parameters;
++	Callbacks callbacks{this, set_config, get_config, retain, release, ignore_packet, ignore_packet};
++
++	static int64_t
++	get_config(void *context, const char *key, size_t size, void *value)
++	{
++		if (!key || !value) return -1;
++		if (size == 1 && std::strcmp(key, "HSDK_CONFIG_MANAGER_IMPL_GET_CHECK_VALID") == 0) {
++			*static_cast<uint8_t *>(value) = 1;
++			return 1;
++		}
++		const auto &parameters = static_cast<Session *>(context)->parameters;
++		if (size == parameters.size() && std::strcmp(key, "HSDK_CONFIG_MANAGER_IMPL_GET_SLAM_PARAMS") == 0) {
++			std::memcpy(value, parameters.data(), size);
++			return size;
++		}
++		// The OEM configuration permits a new session without saved runtime bias.
++		return -1;
++	}
++
++	const char *
++	open(const Module *interface, int &status)
++	{
++		module = interface;
++		if (!module || module->tag != 0x00000001abcd2012ULL || !module->name ||
++		    std::strcmp(module->name, "SLAM") != 0 || !module->create || !module->destroy ||
++		    !module->init || !module->start || !module->stop || !module->deinit || !module->push ||
++		    !module->get || !module->register_callbacks || !module->unregister_callbacks) {
++			return "Unsupported SLAM module interface";
++		}
++
++		module->register_callbacks(&callbacks);
++		registered = true;
++		instance = module->create(input_formats, output_formats);
++		if (!instance) return "SLAM module could not create a session";
++		status = module->init(instance);
++		if (status != 0) return "SLAM init";
++		initialized = true;
++		status = module->start(instance);
++		if (status != 0) return "SLAM start";
++		started = true;
++		return nullptr;
++	}
++
++	int
++	close()
++	{
++		int stop_status = started ? module->stop(instance) : 0;
++		int deinit_status = initialized ? module->deinit(instance) : 0;
++		if (instance) module->destroy(instance);
++		if (registered) module->unregister_callbacks();
++		instance = nullptr;
++		started = initialized = registered = false;
++		return stop_status != 0 ? stop_status : deinit_status;
++	}
++
++	~Session() { close(); }
++
++	int
++	push_imu(uint32_t kind, uint64_t ns, float x, float y, float z)
++	{
++		auto *sample = new (std::nothrow) Imu(kind, ns, x, y, z);
++		if (!sample) return -12;
++		int result = module->push(instance, &sample->packet);
++		release(nullptr, &sample->packet);
++		return result;
++	}
++
++	int
++	push_stereo(Stereo *stereo)
++	{
++		int result = module->push(instance, &stereo->packet);
++		release(nullptr, &stereo->packet);
++		return result;
++	}
++
++	int
++	pose(uint8_t (&pose)[0x38])
++	{
++		Packet packet("fmt:pose@org:slam", sizeof(pose), 0, pose);
++		return module->get(instance, &packet);
++	}
++};
++
++} // namespace
++#endif
++
++#if defined(__ANDROID__) && defined(__aarch64__)
++#include <mutex>
++
++namespace {
++
++struct AndroidSession : Session {
++	void *library = nullptr;
++
++	~AndroidSession()
++	{
++		close();
++		if (library) dlclose(library);
++	}
++};
++
++// The OEM callback table is process-global. A second Activity must not replace it.
++std::mutex session_lock;
++std::unique_ptr<AndroidSession> active_session;
++
++void
++throw_failure(JNIEnv *env, const char *message, int status = 0)
++{
++	char detail[512];
++	if (status) {
++		std::snprintf(detail, sizeof(detail), "%s returned %d", message, status);
++		message = detail;
++	}
++	jclass error = env->FindClass("java/io/IOException");
++	if (error) env->ThrowNew(error, message);
++}
++
++} // namespace
++
++#define CV10_JNI(name) Java_org_freedesktop_monado_openxr_1runtime_Cv10KitSlam_##name
++
++extern "C" JNIEXPORT jlong JNICALL
++CV10_JNI(nativeOpen)(JNIEnv *env, jclass, jstring library, jbyteArray parameters)
++{
++	std::lock_guard<std::mutex> lock(session_lock);
++	if (active_session || !library || !parameters || env->GetArrayLength(parameters) != parameter_size) {
++		throw_failure(env, active_session ? "SLAM session is already open" : "Invalid SLAM configuration");
++		return 0;
++	}
++	std::unique_ptr<AndroidSession> session(new (std::nothrow) AndroidSession);
++	if (!session) {
++		throw_failure(env, "Could not allocate SLAM session");
++		return 0;
++	}
++	env->GetByteArrayRegion(parameters, 0, parameter_size, reinterpret_cast<jbyte *>(session->parameters.data()));
++	if (env->ExceptionCheck()) return 0;
++	const char *path = env->GetStringUTFChars(library, nullptr);
++	if (!path) return 0;
++	session->library = dlopen(path, RTLD_NOW | RTLD_LOCAL);
++	if (!session->library) {
++		throw_failure(env, dlerror());
++		env->ReleaseStringUTFChars(library, path);
++		return 0;
++	}
++	auto get_interface = reinterpret_cast<const Module *(*)()>(dlsym(session->library, "GetSlamInterface"));
++	int status = 0;
++	const char *error = session->open(get_interface ? get_interface() : nullptr, status);
++	env->ReleaseStringUTFChars(library, path);
++	if (error) {
++		throw_failure(env, error, status);
++		return 0;
++	}
++	active_session = std::move(session);
++	return reinterpret_cast<jlong>(active_session.get());
++}
++
++extern "C" JNIEXPORT jint JNICALL
++CV10_JNI(nativeImu)(JNIEnv *, jclass, jlong handle, jlong ns, jfloat ax, jfloat ay, jfloat az, jfloat gx, jfloat gy,
++                  jfloat gz)
++{
++	std::lock_guard<std::mutex> lock(session_lock);
++	auto *session = reinterpret_cast<Session *>(handle);
++	if (!session || session != active_session.get() || ns <= 0) return -22;
++	int accel = session->push_imu(0, ns, ax, ay, az);
++	int gyro = session->push_imu(1, ns, gx, gy, gz);
++	return accel != 0 ? accel : gyro;
++}
++
++extern "C" JNIEXPORT jint JNICALL
++CV10_JNI(nativeStereo)(JNIEnv *env, jclass, jlong handle, jlong ns, jint frame, jint exposure, jbyteArray left,
++                     jbyteArray right)
++{
++	std::lock_guard<std::mutex> lock(session_lock);
++	auto *session = reinterpret_cast<Session *>(handle);
++	if (!session || session != active_session.get() || ns <= 0 || !left || !right ||
++	    env->GetArrayLength(left) != image_bytes || env->GetArrayLength(right) != image_bytes) return -22;
++	auto *stereo = new (std::nothrow) Stereo(ns, frame, exposure);
++	if (!stereo) return -12;
++	env->GetByteArrayRegion(left, 0, image_bytes, reinterpret_cast<jbyte *>(stereo->pixels[0]));
++	if (!env->ExceptionCheck()) {
++		env->GetByteArrayRegion(right, 0, image_bytes, reinterpret_cast<jbyte *>(stereo->pixels[1]));
++	}
++	if (!env->ExceptionCheck()) return session->push_stereo(stereo);
++	release(nullptr, &stereo->packet);
++	return -22;
++}
++
++extern "C" JNIEXPORT jint JNICALL
++CV10_JNI(nativePose)(JNIEnv *env, jclass, jlong handle, jbyteArray destination)
++{
++	std::lock_guard<std::mutex> lock(session_lock);
++	auto *session = reinterpret_cast<Session *>(handle);
++	alignas(8) uint8_t pose[0x38] = {};
++	if (!session || session != active_session.get() || !destination || env->GetArrayLength(destination) != sizeof(pose)) {
++		return -22;
++	}
++	int status = session->pose(pose);
++	env->SetByteArrayRegion(destination, 0, sizeof(pose), reinterpret_cast<const jbyte *>(pose));
++	return status;
++}
++
++extern "C" JNIEXPORT jint JNICALL
++CV10_JNI(nativeClose)(JNIEnv *, jclass, jlong handle)
++{
++	std::lock_guard<std::mutex> lock(session_lock);
++	if (!active_session || active_session.get() != reinterpret_cast<Session *>(handle)) return -22;
++	int status = active_session->close();
++	active_session.reset();
++	return status;
++}
++#endif
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerActivity.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10ControllerActivity.java
 new file mode 100644
 index 0000000..7422f0a
@@ -1258,10 +1731,10 @@ index 0000000..cb8add5
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
 new file mode 100644
-index 0000000..9dc826e
+index 0000000..8e4a5de
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
-@@ -0,0 +1,609 @@
+@@ -0,0 +1,763 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -1288,6 +1761,7 @@ index 0000000..9dc826e
 +import android.hardware.usb.UsbManager;
 +import android.media.Image;
 +import android.media.ImageReader;
++import android.net.Uri;
 +import android.os.Build;
 +import android.os.Bundle;
 +import android.os.Handler;
@@ -1303,10 +1777,12 @@ index 0000000..9dc826e
 +import java.io.File;
 +import java.io.FileOutputStream;
 +import java.io.IOException;
++import java.io.InputStream;
 +import java.nio.charset.StandardCharsets;
 +import java.util.Arrays;
 +import java.util.Collections;
 +import java.util.Locale;
++import java.util.concurrent.atomic.AtomicReference;
 +import java.util.zip.ZipEntry;
 +import java.util.zip.ZipOutputStream;
 +
@@ -1314,14 +1790,18 @@ index 0000000..9dc826e
 +public final class Cv10KitActivity extends Activity {
 +    private static final int USB_CAMERA_PERMISSION = 1;
 +    private static final int CAMERA_PREVIEW_PERMISSION = 2;
++    private static final int IMPORT_SLAM_MODULE = 3;
++    private static final int REPLAY_SLAM_PARAMETERS = 4;
 +    private static final long SAMPLE_MS = 5000;
++    private static final long HEAD_SLAM_SAMPLE_MS = 8000;
 +    private static final Size CAMERA_SIZE = new Size(Cv10KitReport.FRAME_WIDTH, Cv10KitReport.FRAME_HEIGHT);
 +    private final Handler main = new Handler(Looper.getMainLooper());
 +    private UsbManager usb;
-+    private TextView inventory, hidStatus, cameraStatus;
++    private TextView inventory, hidStatus, cameraStatus, slamStatus;
 +    private String permissionAction;
 +    private UsbDevice waitingForUsb;
-+    private boolean requestedCalibration;
++    private enum HidAction { SAMPLE, CALIBRATION, HEAD_SLAM }
++    private HidAction requestedHid;
 +    private Thread hidWorker;
 +    private CameraDevice camera;
 +    private CameraCaptureSession capture;
@@ -1330,7 +1810,14 @@ index 0000000..9dc826e
 +    private Cv10KitReport.StereoFrame firstStereo;
 +    private long firstImageTimestampNs, firstCallbackNs;
 +    private Thread cameraSave;
++    private Thread slamWorker;
++    private HeadSample headSample;
 +    private final Runnable endCamera = this::finishCameraSample;
++
++    private static final class HeadSample {
++        final AtomicReference<Cv10KitReport.StereoFrame> frame = new AtomicReference<>();
++        volatile String cameraFailure;
++    }
 +
 +    private final BroadcastReceiver permission = new BroadcastReceiver() {
 +        @Override
@@ -1339,7 +1826,7 @@ index 0000000..9dc826e
 +            if (!permissionAction.equals(intent.getAction()) || selected == null) return;
 +            waitingForUsb = null;
 +            if (usb.hasPermission(selected)) {
-+                beginHid(selected, requestedCalibration);
++                beginHid(selected, requestedHid);
 +            } else {
 +                hidStatus.setText("Android USB permission was not granted.");
 +            }
@@ -1365,11 +1852,18 @@ index 0000000..9dc826e
 +        setContentView(scroll);
 +        addButton(content, "Refresh USB and camera devices · 刷新 USB 与相机", this::refresh);
 +        inventory = addOutput(content);
-+        addButton(content, "Sample locator HID · 采样定位器 HID", () -> requestHid(false));
-+        addButton(content, "Read kit calibration · 读取套件校准", () -> requestHid(true));
++        addButton(content, "Sample locator HID · 采样定位器 HID", () -> requestHid(HidAction.SAMPLE));
++        addButton(content, "Read kit calibration · 读取套件校准", () -> requestHid(HidAction.CALIBRATION));
++        addButton(content, "Sample live head SLAM · 实时采样头显 SLAM", () -> requestHid(HidAction.HEAD_SLAM));
 +        hidStatus = addOutput(content);
 +        addButton(content, "Sample OV580 camera · 采样 OV580 相机", this::requestCamera);
 +        cameraStatus = addOutput(content);
++        addButton(content, "Import Huawei SLAM module · 导入原厂头显 SLAM 模块",
++                () -> selectSlamFile(IMPORT_SLAM_MODULE));
++        addButton(content, "Replay head SLAM · 离线回放头显 SLAM",
++                () -> selectSlamFile(REPLAY_SLAM_PARAMETERS));
++        slamStatus = addOutput(content);
++        if (Cv10KitSlam.module(this).isFile()) slamStatus.setText("Huawei SLAM module imported.");
 +        refresh();
 +    }
 +
@@ -1427,25 +1921,32 @@ index 0000000..9dc826e
 +        inventory.setText(details);
 +    }
 +
-+    private void requestHid(boolean calibration) {
++    private void requestHid(HidAction operation) {
 +        if (hidWorker != null || waitingForUsb != null) return;
++        if (operation == HidAction.HEAD_SLAM) {
++            if (images != null || cameraSave != null || slamWorker != null) return;
++            if (!Cv10KitSlam.module(this).isFile()) {
++                hidStatus.setText("Import the original ARM64 libarvr_slam.so first.");
++                return;
++            }
++        }
 +        UsbDevice kit = findKit();
 +        if (kit == null) {
 +            refresh();
 +            return;
 +        }
-+        requestedCalibration = calibration;
-+        if (usb.hasPermission(kit)) {
-+            beginHid(kit, calibration);
-+            return;
-+        }
++        requestedHid = operation;
 +        boolean hasVideo = kit.getDeviceClass() == UsbConstants.USB_CLASS_VIDEO;
 +        for (int i = 0; i < kit.getInterfaceCount(); ++i) {
 +            hasVideo |= kit.getInterface(i).getInterfaceClass() == UsbConstants.USB_CLASS_VIDEO;
 +        }
-+        if (hasVideo && Build.VERSION.SDK_INT >= 28 &&
++        if ((operation == HidAction.HEAD_SLAM || hasVideo && Build.VERSION.SDK_INT >= 28) &&
 +                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
 +            requestPermissions(new String[] {Manifest.permission.CAMERA}, USB_CAMERA_PERMISSION);
++            return;
++        }
++        if (usb.hasPermission(kit)) {
++            beginHid(kit, operation);
 +            return;
 +        }
 +        waitingForUsb = kit;
@@ -1460,15 +1961,18 @@ index 0000000..9dc826e
 +        }
 +    }
 +
-+    private void beginHid(UsbDevice device, boolean calibration) {
++    private void beginHid(UsbDevice device, HidAction operation) {
 +        if (hidWorker != null) return;
-+        hidStatus.setText(calibration ? "Reading locator and controller calibration…"
-+                : "Sampling interface 2 interrupt IN for 5 seconds…");
++        switch (operation) {
++            case CALIBRATION: hidStatus.setText("Reading locator and controller calibration…"); break;
++            case HEAD_SLAM: hidStatus.setText("Reading locator calibration for head SLAM…"); break;
++            case SAMPLE: hidStatus.setText("Sampling interface 2 interrupt IN for 5 seconds…"); break;
++        }
 +        hidWorker = new Thread(() -> {
 +            Thread job = Thread.currentThread();
 +            String result;
 +            try {
-+                result = runHid(device, calibration);
++                result = runHid(device, operation);
 +            } catch (InterruptedException stopped) {
 +                job.interrupt();
 +                result = "HID sampling stopped.";
@@ -1485,7 +1989,7 @@ index 0000000..9dc826e
 +        hidWorker.start();
 +    }
 +
-+    private String runHid(UsbDevice device, boolean calibration) throws IOException, InterruptedException {
++    private String runHid(UsbDevice device, HidAction operation) throws IOException, InterruptedException {
 +        for (int i = 0; i < device.getInterfaceCount(); ++i) {
 +            UsbInterface iface = device.getInterface(i);
 +            if (iface.getId() != Cv10KitReport.HID_INTERFACE || iface.getAlternateSetting() != 0 ||
@@ -1500,13 +2004,13 @@ index 0000000..9dc826e
 +                    output = endpoint;
 +                }
 +            }
-+            if (input != null) return runHid(device, iface, input, output, calibration);
++            if (input != null) return runHid(device, iface, input, output, operation);
 +        }
 +        return "Interface 2 has no HID interrupt IN endpoint.";
 +    }
 +
 +    private String runHid(UsbDevice device, UsbInterface iface, UsbEndpoint input, UsbEndpoint output,
-+            boolean calibration) throws IOException, InterruptedException {
++            HidAction operation) throws IOException, InterruptedException {
 +        UsbDeviceConnection port = usb.openDevice(device);
 +        if (port == null) return "Android could not open the locator.";
 +        boolean claimed = false;
@@ -1514,7 +2018,9 @@ index 0000000..9dc826e
 +            claimed = port.claimInterface(iface, false) || port.claimInterface(iface, true);
 +            if (!claimed) return "Android could not claim locator HID interface 2.";
 +            try (Cv10KitHid hid = new Cv10KitHid(port, iface.getId(), input, output)) {
-+                return calibration ? readCalibration(hid) : collectReports(hid, input.getAddress());
++                if (operation == HidAction.CALIBRATION) return readCalibration(hid);
++                if (operation == HidAction.HEAD_SLAM) return sampleHeadSlam(hid);
++                return collectReports(hid, input.getAddress());
 +            }
 +        } finally {
 +            try {
@@ -1643,6 +2149,60 @@ index 0000000..9dc826e
 +        return result.toString();
 +    }
 +
++    private String sampleHeadSlam(Cv10KitHid hid) throws IOException, InterruptedException {
++        Cv10KitCalibration.Calibration locator = Cv10KitCalibration.read(hid, Cv10KitCalibration.Component.LOCATOR);
++        if (locator == null) return "The locator did not supply SLAM calibration.";
++        byte[] parameters = Cv10KitSlamParameters.encode(
++                Cv10KitCalibration.locatorCameras(locator.data), Cv10KitCalibration.locatorImu(locator.data));
++        HeadSample sample = new HeadSample();
++        Thread job = Thread.currentThread();
++        try (Cv10KitSlam slam = new Cv10KitSlam(Cv10KitSlam.module(this), parameters)) {
++            main.post(() -> {
++                if (job.isInterrupted() || isFinishing() || isDestroyed()) return;
++                if (images != null || cameraSave != null) {
++                    sample.cameraFailure = "The camera is being sampled.";
++                    return;
++                }
++                hidStatus.setText("Sampling head IMU and the external stereo stream…");
++                headSample = sample;
++                openCamera();
++            });
++            long end = SystemClock.elapsedRealtime() + HEAD_SLAM_SAMPLE_MS;
++            long lastImu = 0, lastStereo = 0;
++            int imus = 0, frames = 0;
++            Cv10KitReport.StereoFrame stereo = null;
++            while (SystemClock.elapsedRealtime() < end && !job.isInterrupted() && sample.cameraFailure == null) {
++                byte[] report = hid.read(50);
++                Cv10KitReport.Head head = report == null ? null : Cv10KitReport.head(report);
++                if (head != null && head.deviceNs > lastImu) {
++                    slam.push(head);
++                    lastImu = head.deviceNs;
++                    imus++;
++                }
++                if (stereo == null) stereo = sample.frame.getAndSet(null);
++                // Feed through the camera timestamp only after that instant's IMU reports have arrived.
++                if (stereo == null || stereo.frame.deviceNs > lastImu) continue;
++                if (stereo.frame.deviceNs > lastStereo) {
++                    slam.push(stereo);
++                    lastStereo = stereo.frame.deviceNs;
++                    frames++;
++                }
++                stereo = null;
++            }
++            if (job.isInterrupted()) throw new InterruptedException();
++            String message = "Head IMU reports " + imus + " · stereo pairs " + frames;
++            if (sample.cameraFailure != null) return message + "\n" + sample.cameraFailure;
++            return message + "\n" + slam.poseStatus();
++        } finally {
++            main.post(() -> {
++                if (headSample == sample) {
++                    closeCamera();
++                    cameraStatus.setText("Live head SLAM camera sample ended.");
++                }
++            });
++        }
++    }
++
 +    private static void appendHand(StringBuilder text, String label, Cv10KitReport.Hand hand) {
 +        if (hand == null) return;
 +        text.append(String.format(Locale.ROOT,
@@ -1680,10 +2240,14 @@ index 0000000..9dc826e
 +            requestPermissions(new String[] {Manifest.permission.CAMERA}, CAMERA_PREVIEW_PERMISSION);
 +            return;
 +        }
++        openCamera();
++    }
++
++    private void openCamera() {
 +        try {
 +            String id = findCamera();
 +            if (id == null) {
-+                cameraStatus.setText("Android does not expose a unique external 1280×481 Y8 camera.");
++                failCamera("Android does not expose a unique external 1280×481 Y8 camera.");
 +                return;
 +            }
 +            CameraManager manager = getSystemService(CameraManager.class);
@@ -1713,8 +2277,9 @@ index 0000000..9dc826e
 +                    if (images == reader) failCamera("Camera disconnected or failed (" + code + ").");
 +                }
 +            }, main);
-+            main.postDelayed(endCamera, SAMPLE_MS);
-+            cameraStatus.setText("Sampling the external Y8 camera for 5 seconds…");
++            if (headSample == null) main.postDelayed(endCamera, SAMPLE_MS);
++            cameraStatus.setText(headSample == null ? "Sampling the external Y8 camera for 5 seconds…"
++                    : "Streaming external Y8 frames into head SLAM…");
 +        } catch (CameraAccessException | RuntimeException failure) {
 +            failCamera("Camera open failed: " + failure.getMessage());
 +        }
@@ -1758,7 +2323,13 @@ index 0000000..9dc826e
 +            cameraFrames++;
 +            Image.Plane plane = frame.getPlanes()[0];
 +            Cv10KitReport.Frame decoded;
-+            if (firstStereo == null) {
++            if (headSample != null) {
++                Cv10KitReport.StereoFrame stereo =
++                        Cv10KitReport.stereo(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
++                if (stereo == null) return;
++                headSample.frame.set(stereo);
++                decoded = stereo.frame;
++            } else if (firstStereo == null) {
 +                long callbackNs = SystemClock.elapsedRealtimeNanos();
 +                firstStereo = Cv10KitReport.stereo(plane.getBuffer(), plane.getRowStride(), plane.getPixelStride());
 +                if (firstStereo == null) return;
@@ -1828,6 +2399,7 @@ index 0000000..9dc826e
 +    }
 +
 +    private void failCamera(String message) {
++        if (headSample != null) headSample.cameraFailure = message;
 +        closeCamera();
 +        cameraStatus.setText(message);
 +    }
@@ -1841,6 +2413,60 @@ index 0000000..9dc826e
 +        camera = null;
 +        images = null;
 +        firstStereo = null;
++        headSample = null;
++    }
++
++    private void selectSlamFile(int operation) {
++        if (slamWorker != null || hidWorker != null && requestedHid == HidAction.HEAD_SLAM) return;
++        if (operation == REPLAY_SLAM_PARAMETERS && !Cv10KitSlam.module(this).isFile()) {
++            slamStatus.setText("Import the original ARM64 libarvr_slam.so first.");
++            return;
++        }
++        Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE);
++        picker.setType("*/*");
++        if (operation == REPLAY_SLAM_PARAMETERS) {
++            picker.putExtra(Intent.EXTRA_TITLE, "slam-params.bin");
++        }
++        try {
++            startActivityForResult(picker, operation);
++        } catch (android.content.ActivityNotFoundException unavailable) {
++            slamStatus.setText("Android document picker is unavailable.");
++        }
++    }
++
++    @Override
++    protected void onActivityResult(int requestCode, int resultCode, Intent result) {
++        super.onActivityResult(requestCode, resultCode, result);
++        if ((requestCode != IMPORT_SLAM_MODULE && requestCode != REPLAY_SLAM_PARAMETERS)
++                || resultCode != RESULT_OK || result == null || slamWorker != null) return;
++        Uri source = result.getData();
++        if (source == null) return;
++        boolean importing = requestCode == IMPORT_SLAM_MODULE;
++        slamStatus.setText(importing ? "Verifying the Huawei ARM64 module…" : "Replaying head SLAM…");
++        slamWorker = new Thread(() -> {
++            String message;
++            try {
++                if (importing) {
++                    Cv10KitSlam.importModule(this, source);
++                    message = "Huawei SLAM module imported. Select slam-params.bin to replay.";
++                } else {
++                    try (InputStream input = getContentResolver().openInputStream(source)) {
++                        message = Cv10KitSlam.replayBlankFrames(this, Cv10KitSlam.readParameters(input));
++                    }
++                }
++            } catch (InterruptedException stopped) {
++                Thread.currentThread().interrupt();
++                message = "Head SLAM replay stopped.";
++            } catch (IOException | RuntimeException failure) {
++                message = "Head SLAM: " + failure.getMessage();
++            }
++            String status = message;
++            main.post(() -> {
++                slamWorker = null;
++                if (!isDestroyed()) slamStatus.setText(status);
++            });
++        }, "CV10 head SLAM");
++        slamWorker.start();
 +    }
 +
 +    @Override
@@ -1849,7 +2475,7 @@ index 0000000..9dc826e
 +        if (results.length == 0 || results[0] != PackageManager.PERMISSION_GRANTED) {
 +            (requestCode == USB_CAMERA_PERMISSION ? hidStatus : cameraStatus).setText("Camera permission denied.");
 +        } else if (requestCode == USB_CAMERA_PERMISSION) {
-+            requestHid(requestedCalibration);
++            requestHid(requestedHid == null ? HidAction.SAMPLE : requestedHid);
 +        } else if (requestCode == CAMERA_PREVIEW_PERMISSION) {
 +            requestCamera();
 +        }
@@ -1867,6 +2493,7 @@ index 0000000..9dc826e
 +
 +    @Override
 +    protected void onDestroy() {
++        if (slamWorker != null) slamWorker.interrupt();
 +        unregisterReceiver(permission);
 +        super.onDestroy();
 +    }
@@ -2428,6 +3055,178 @@ index 0000000..caaafd2
 +    }
 +
 +    private Cv10KitReport() {}
++}
+diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java
+new file mode 100644
+index 0000000..7dd6a0f
+--- /dev/null
++++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlam.java
+@@ -0,0 +1,166 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++package org.freedesktop.monado.openxr_runtime;
++
++import android.content.Context;
++import android.net.Uri;
++import android.os.Build;
++import android.os.Process;
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.io.InputStream;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++import java.util.Arrays;
++import java.util.Locale;
++
++/** Headset SLAM ABI for the original ARM64 SDK module. */
++final class Cv10KitSlam implements AutoCloseable {
++    private static final int PARAMETER_BYTES = 0x840;
++    private static final long SDK_MODULE_LIMIT = 16L * 1024 * 1024;
++    private static final String SDK_MODULE = "libarvr_slam.so";
++    private static final String SDK_SHA256 =
++            "2268ff5e2b26e67da395af6c57980f15f23e6199c4cb942d5fb959b3eb9b46a9";
++
++    private long session;
++
++    static File module(Context context) {
++        return new File(context.getFilesDir(), SDK_MODULE);
++    }
++
++    static void importModule(Context context, Uri source) throws IOException {
++        File destination = module(context);
++        File staging = File.createTempFile("cv10-slam-", ".tmp", context.getFilesDir());
++        try {
++            MessageDigest sha = sha256();
++            try (InputStream input = context.getContentResolver().openInputStream(source);
++                    FileOutputStream output = new FileOutputStream(staging)) {
++                if (input == null) throw new IOException("Cannot read the selected file.");
++                if (!staging.setReadOnly()) throw new IOException("Could not mark the temporary module read-only.");
++                updateDigest(input, output, sha);
++                output.getFD().sync();
++            }
++            if (!SDK_SHA256.equals(hex(sha.digest()))) {
++                throw new IOException("The selected file does not match the supported Huawei ARM64 module.");
++            }
++            // Staging and destination share a directory. renameTo replaces the old file atomically on Android.
++            if (!staging.renameTo(destination)) throw new IOException("Could not store the verified Huawei module.");
++        } finally {
++            staging.delete();
++        }
++    }
++
++    private static MessageDigest sha256() {
++        try {
++            return MessageDigest.getInstance("SHA-256");
++        } catch (NoSuchAlgorithmException impossible) {
++            throw new AssertionError(impossible);
++        }
++    }
++
++    private static void updateDigest(InputStream input, FileOutputStream output, MessageDigest sha)
++            throws IOException {
++        byte[] buffer = new byte[65536];
++        long size = 0;
++        int length;
++        while ((length = input.read(buffer)) != -1) {
++            size += length;
++            if (size > SDK_MODULE_LIMIT) throw new IOException("The Huawei module exceeds 16 MiB.");
++            if (output != null) output.write(buffer, 0, length);
++            sha.update(buffer, 0, length);
++        }
++    }
++
++    static byte[] readParameters(InputStream input) throws IOException {
++        if (input == null) throw new IOException("Cannot open the SLAM parameters.");
++        byte[] data = new byte[PARAMETER_BYTES];
++        int used = 0;
++        while (used < data.length) {
++            int read = input.read(data, used, data.length - used);
++            if (read <= 0) break;
++            used += read;
++        }
++        if (used != data.length || input.read() != -1) {
++            throw new IOException("slam-params.bin must be 2112 bytes.");
++        }
++        return data;
++    }
++
++    Cv10KitSlam(File module, byte[] parameters) throws IOException {
++        if (!Process.is64Bit() || !Arrays.asList(Build.SUPPORTED_64_BIT_ABIS).contains("arm64-v8a")) {
++            throw new IOException("An arm64-v8a process is required for the Huawei SLAM module.");
++        }
++        if (!module.isFile()) throw new IOException("Import the original ARM64 SLAM module first.");
++        MessageDigest sha = sha256();
++        try (InputStream input = new FileInputStream(module)) {
++            updateDigest(input, null, sha);
++        }
++        if (!SDK_SHA256.equals(hex(sha.digest()))) throw new IOException("The stored Huawei module failed verification.");
++        try {
++            System.loadLibrary("cv10-kit-slam");
++            session = nativeOpen(module.getAbsolutePath(), parameters);
++        } catch (UnsatisfiedLinkError unavailable) {
++            throw new IOException(unavailable.getMessage(), unavailable);
++        }
++    }
++
++    static String replayBlankFrames(Context context, byte[] parameters) throws IOException, InterruptedException {
++        try (Cv10KitSlam slam = new Cv10KitSlam(module(context), parameters)) {
++            long first = 1_000_000_000L;
++            for (int sample = 0; sample < 3; sample++) {
++                check("Head IMU", nativeImu(slam.session, first + sample * 5_000_000L, 0, 0, 9.8f, 0, 0, 0));
++            }
++            byte[] blank = new byte[Cv10KitReport.CAMERA_WIDTH * Cv10KitReport.CAMERA_HEIGHT];
++            for (int frame = 0; frame < 2; frame++) {
++                check("Y8 stereo", nativeStereo(slam.session, first + 10_000_000L + frame * 66_666_666L,
++                        frame + 1, 4000, blank, blank));
++            }
++            Thread.sleep(100);
++            return "SLAM accepted 6 IMU records and 2 blank stereo frames.\n" + slam.poseStatus();
++        }
++    }
++
++    void push(Cv10KitReport.Head head) throws IOException {
++        check("Head IMU", nativeImu(session, head.deviceNs, head.ax, head.ay, head.az, head.gx, head.gy, head.gz));
++    }
++
++    void push(Cv10KitReport.StereoFrame stereo) throws IOException {
++        Cv10KitReport.Frame frame = stereo.frame;
++        check("Y8 stereo", nativeStereo(session, frame.deviceNs, (int) frame.frameNumber, frame.exposureUs,
++                stereo.camera0, stereo.camera1));
++    }
++
++    String poseStatus() {
++        byte[] pose = new byte[0x38];
++        int status = nativePose(session, pose);
++        if (status == -1 && Arrays.equals(pose, new byte[pose.length])) {
++            return "No valid visual pose (query returned -1).";
++        }
++        return "Pose query returned " + status + " · " + hex(pose);
++    }
++
++    private static String hex(byte[] bytes) {
++        StringBuilder text = new StringBuilder(bytes.length * 2);
++        for (byte value : bytes) text.append(String.format(Locale.ROOT, "%02x", value & 0xff));
++        return text.toString();
++    }
++
++    private static void check(String operation, int result) throws IOException {
++        if (result != 0) throw new IOException(operation + " returned " + result);
++    }
++
++    @Override
++    public void close() throws IOException {
++        long active = session;
++        session = 0;
++        if (active != 0) check("SLAM stop/deinit", nativeClose(active));
++    }
++
++    private static native long nativeOpen(String library, byte[] parameters) throws IOException;
++    private static native int nativeImu(long session, long ns, float ax, float ay, float az, float gx, float gy,
++            float gz);
++    private static native int nativeStereo(long session, long ns, int frame, int exposureUs, byte[] left, byte[] right);
++    private static native int nativePose(long session, byte[] destination);
++    private static native int nativeClose(long session);
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlamParameters.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitSlamParameters.java
 new file mode 100644

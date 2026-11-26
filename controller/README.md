@@ -3,7 +3,7 @@
 | 硬件 | Monado CV10 | 独立诊断 APK | 验证 |
 | --- | --- | --- | --- |
 | CF20 蓝牙 3DoF 手柄 | 应用内搜索、选用、Android 系统配对、会话自动连接和右手 OpenXR 输入 | GATT 状态、报告频率、原始包、四元数、按键、触控、惯性和电量 | 通过构建和协议测试向量。Fold7 待验收 |
-| 原厂 6DoF 套件 | 可从手柄菜单进入诊断 | USB 枚举、头显及左右手原始记录、双目和三路 IMU 校准、头显 SLAM 参数导出、每只手柄的 LED 模型和外参、外接 Y8 双目图像导出 | 已通过构建、协议向量、Windows 头显 SLAM 校准和左右手 IMU 回放。Fold7 USB／相机可用性及位姿接入待完成 |
+| 原厂 6DoF 套件 | 可从手柄菜单进入诊断并调用原厂头显 SLAM | USB 枚举、头显及左右手原始记录、双目和三路 IMU 校准、头显 SLAM 参数导出、每只手柄的 LED 模型和外参、外接 Y8 双目图像导出、头显 SLAM 离线和实时采样 | 已通过构建、协议向量、Windows 共用头显适配层回放和左右手 IMU 回放。Fold7 的外接 Y8 和有效位姿待验证，6DoF 位姿待接入 OpenXR |
 
 两条协议独立记录在 [CF20 蓝牙协议](cf20-protocol.md) 和 [6DoF 套件协议](kit-6dof-protocol.md)。诊断 APK 与运行时共用发现、配对及报告解码源码。
 
@@ -11,8 +11,8 @@
 
 | APK | 包名 | SHA-256 |
 | --- | --- | --- |
-| [Cv10ControllerProbe.apk](dist/Cv10ControllerProbe.apk) | `org.cv10.controllerprobe` | `9c386191ef786f4470d4f6f48c1f3a918b84cf6e10d1f33d591f6213bae02aa2` |
-| [Monado-CV10-Controller-arm64-v8a.apk](dist/Monado-CV10-Controller-arm64-v8a.apk) | `org.cv10.monado.out_of_process` | `f34acf03038d5cf54c89d9081e8ab06a64ec4f36050c4375ba623d9fc1ed917a` |
+| [Cv10ControllerProbe.apk](dist/Cv10ControllerProbe.apk) | `org.cv10.controllerprobe` | `4e5d848ee8465a3e73235ba9224055f405346c0fefe6c23e4b2ec5f008a637ce` |
+| [Monado-CV10-Controller-arm64-v8a.apk](dist/Monado-CV10-Controller-arm64-v8a.apk) | `org.cv10.monado.out_of_process` | `1049e3bcbdb37adcc7c961f3a09d4df6edc9830c6783bf7da2b2d0facf45a084` |
 
 两个 APK 均为本地调试构建，最低 Android API 26。本机校验证书 SHA-256 为 `68365fa0904432aaa86a8904c691f9e6487414dc959786d72831a083b9f23fca`。运行时覆盖安装需要与已安装的 APK 签名一致。独立诊断 APK 可与运行时并存。两包已通过 `apksigner verify` 和 `zipalign -c -P 16 4`，运行时包含 `arm64-v8a`。当前工作树未进行真机安装、配对、USB／相机采样或 OpenXR 验收。
 
@@ -21,7 +21,8 @@
 1. 在 Monado CV10 菜单选择 **CV10 蓝牙手柄**，唤醒 CF20，点击 **Scan for CF20**，允许 Android 所需权限并点选结果。也可填写蓝牙地址。
 2. 点 **配对并选用**。Monado 收到报告后保存地址，新建 OpenXR 会话时自动连接。**Android 系统配对**可另外尝试建立系统蓝牙绑定。独立诊断 APK 用 **配对并连接** 保持连接并实时显示输入。
 3. 套件在同页的 **定位交互套件** 中。**采样定位器 HID** 显示头部、左手、右手原始记录。**采样 OV580 相机** 显示帧计数，并将首个带有效元数据的双目帧保存为 ZIP。
-4. 点击 **读取套件校准**，查看双目、各组件 IMU 采样率及手柄 LED 模型的摘要。定位器、左手、右手的完整回复各保存为独立 ZIP（`locator.zip`、`left.zip`、`right.zip`），每包包含 `calibration.bin` 和 `device.hash`。定位器校准可解码时，额外保存 2112 字节的 `slam-params.bin`。保存路径显示在诊断页中。套件的 6DoF 位姿尚未提供给 OpenXR。
+4. 点击 **读取套件校准**，查看双目、各组件 IMU 采样率及手柄 LED 模型的摘要。定位器、左手、右手的完整回复各保存为独立 ZIP（`locator.zip`、`left.zip`、`right.zip`），每包包含 `calibration.bin` 和 `device.hash`。定位器校准可解码时，额外保存 2112 字节的 `slam-params.bin`。保存路径显示在诊断页中。
+5. 使用 **导入原厂头显 SLAM 模块** 选择原厂 APK 内的 `assets/arm64-v8a/libarvr_slam.so`。**离线回放头显 SLAM** 读取从 `locator.zip` 解出的 `slam-params.bin`，向原厂库送入合成 IMU 和空白图像。**实时采样头显 SLAM** 从定位器重新读取校准，同时采样头部 IMU 和外接 Y8 双目，并显示实际送入的记录数与原始位姿查询结果。套件的 6DoF 位姿尚未提供给 OpenXR。
 
 ## Windows 位姿接口离线验证
 
@@ -33,6 +34,14 @@ python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --paramet
 python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --controllers
 ```
 
+要核验两份 APK 共用的 C++ 适配层，可在 x64 Native Tools Command Prompt 中运行下列命令。原厂 Windows DLL 的 SHA-256 应为 `6d89d332acfe86f9a9a3309a913de6d6cb8f0da2f49b46f60b96a07599283a7d`。
+
+```powershell
+New-Item -ItemType Directory -Force .\controller\build | Out-Null
+cl /nologo /EHsc /std:c++17 .\controller\probe\HeadSlamAbi.cpp /Fo:controller\build\HeadSlamAbi.obj /Fe:controller\build\HeadSlamAbi.exe
+.\controller\build\HeadSlamAbi.exe <原厂_arvr_slam.dll> <slam-params.bin>
+```
+
 ## 从源码重建
 
 Monado 源码位于 `ports/Monado_CV10` 子模块。可在其干净的 `9314beab63dea36cfec984d59f4b351dfab26ef3` 基线上应用 [Monado 补丁](monado-cv10-controller.patch)。当前交付工作树已包含改动。
@@ -42,7 +51,7 @@ git -C ports/Monado_CV10 apply --check ../../controller/monado-cv10-controller.p
 git -C ports/Monado_CV10 apply ../../controller/monado-cv10-controller.patch
 ```
 
-诊断 APK 使用 JDK 17、Android Platform 35 和 Build Tools 36.0.0。从仓库根目录运行下列命令。脚本先执行两组协议测试向量，再编译、签名和校验 APK。
+诊断 APK 使用 JDK 17、Android Platform 35、Build Tools 36.0.0 和 NDK 26.3.11579264。从仓库根目录运行下列命令。脚本先执行两组协议测试向量，再编译、签名和校验 ARM64 APK。可用 `-Ndk` 指定独立安装路径。
 
 ```powershell
 .\controller\build-probe.ps1 -Sdk $env:ANDROID_HOME -Jdk $env:JAVA_HOME
