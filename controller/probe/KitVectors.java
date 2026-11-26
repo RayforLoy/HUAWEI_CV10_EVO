@@ -13,18 +13,23 @@ final class KitVectors {
         ByteBuffer fields = ByteBuffer.wrap(report).order(ByteOrder.LITTLE_ENDIAN);
         check(Cv10KitReport.head(report) == null, "unmarked head report");
         check(Cv10KitReport.hand(report, false) == null, "unmarked controller report");
-        fields.putLong(12, Long.reverseBytes(987654321L));
-        fields.putShort(21, (short) 100);
-        fields.putShort(23, (short) 200);
-        fields.putShort(25, (short) -100);
-        fields.put(27, (byte) 1);
-        fields.putShort(28, (short) -200);
-        fields.putShort(30, (short) 300);
+        ByteBuffer headFields = fields.duplicate().order(ByteOrder.BIG_ENDIAN);
+        headFields.putLong(12, 987654321L);
+        headFields.putShort(21, (short) 100);
+        headFields.putShort(23, (short) 200);
+        headFields.putShort(25, (short) -100);
+        headFields.put(27, (byte) 1);
+        headFields.putShort(28, (short) -200);
+        headFields.putShort(30, (short) 300);
+        headFields.putShort(32, (short) -0x1234);
         Cv10KitReport.Head head = Cv10KitReport.head(report);
         check(head != null && head.deviceNs == 987654321L, "head clock");
         close(head.ax, -0.47824f, "head X accelerometer");
         close(head.ay, 0.23912f, "head Y accelerometer");
+        close(head.az, -0.23912f, "head Z accelerometer");
         close(head.gx, (float) Math.toRadians(-21), "head X gyroscope");
+        close(head.gy, (float) Math.toRadians(-14), "head Y gyroscope");
+        close(head.gz, (float) Math.toRadians(-0x1234 * 0.07), "head Z gyroscope");
         check(Cv10KitReport.head(new byte[33]) == null, "short head report");
 
         fields.put(0x30, (byte) 0x20);
@@ -113,7 +118,64 @@ final class KitVectors {
             check(expected.getMessage().contains("chunk 2"), "missing chunk");
         }
         checkLocatorCameras();
+        checkCalibratedImusAndLeds();
         System.out.println("Huawei 6DoF kit report vectors passed");
+    }
+
+    private static void checkCalibratedImusAndLeds() throws IOException {
+        byte[] locator = new byte[0x3de];
+        putImu(ByteBuffer.wrap(locator).order(ByteOrder.LITTLE_ENDIAN), 0x2a0, 500);
+        Cv10KitCalibration.ImuCalibration head = Cv10KitCalibration.locatorImu(locator);
+        check(head.needsCompensation, "calibrated IMU compensation flag");
+        close(head.gyroHz, 500, "calibrated IMU gyro rate");
+        close(head.accelHz, 501, "calibrated IMU accelerometer rate");
+        close((float) head.gyroBias[0], 0.75f, "calibrated gyro bias");
+        close((float) head.accelBias[0], 0.25f, "calibrated accelerometer bias");
+        close((float) head.gyroToAccel[3], 1, "calibrated cross-sensor rotation");
+        close((float) head.accelBiasSigma, 0.05f, "calibrated accelerometer bias sigma");
+
+        byte[] hand = new byte[0x32c];
+        ByteBuffer fields = ByteBuffer.wrap(hand).order(ByteOrder.LITTLE_ENDIAN);
+        putImu(fields, 0x240, 250);
+        double sin45 = Math.sqrt(0.5);
+        fields.putDouble(0x50, sin45);
+        fields.putDouble(0x58, sin45);
+        fields.putDouble(0x60, 0.1);
+        fields.putDouble(0x98, -0.035);
+        fields.putDouble(0x98 + 15 * 24 + 16, 0.047);
+        fields.putDouble(0x218, -0.032);
+        Cv10KitCalibration.HandCalibration decoded = Cv10KitCalibration.hand(hand);
+        close(decoded.imu.gyroHz, 250, "hand IMU starts at 0x240");
+        check(decoded.ledPositions.length == 16, "sixteen LEDs");
+        close((float) decoded.ledPositions[0][0], -0.035f, "first LED X");
+        close((float) decoded.ledPositions[15][2], 0.047f, "last LED Z");
+        close((float) decoded.cameraToImuDelaySeconds, -0.032f, "hand camera to IMU delay");
+        close((float) decoded.imuToHandle[2], (float) -sin45, "hand extrinsic uses conjugate Z");
+        close((float) decoded.imuToHandle[4], 0, "hand extrinsic x");
+        close((float) decoded.imuToHandle[5], 0.1f, "hand extrinsic y rotates negative translation");
+        try {
+            Cv10KitCalibration.hand(Arrays.copyOf(hand, 0x319));
+            throw new AssertionError("a truncated hand IMU calibration must fail");
+        } catch (IOException expected) {
+            check(expected.getMessage().contains("Truncated"), "hand IMU bounds");
+        }
+        fields.putFloat(0x241, Float.POSITIVE_INFINITY);
+        try {
+            Cv10KitCalibration.hand(hand);
+            throw new AssertionError("a non-finite hand IMU rate must fail");
+        } catch (IOException expected) {
+            check(expected.getMessage().contains("Invalid"), "hand IMU record validation");
+        }
+    }
+
+    private static void putImu(ByteBuffer fields, int start, float rate) {
+        fields.putFloat(start + 1, rate);
+        fields.putFloat(start + 5, rate + 1);
+        fields.put(start + 9, (byte) 1);
+        fields.putDouble(start + 0x0a, 0.75);
+        fields.putDouble(start + 0x52, 0.25);
+        fields.putDouble(start + 0xb2, 1);
+        fields.putDouble(start + 0xd2, 0.05);
     }
 
     private static void checkLocatorCameras() throws IOException {

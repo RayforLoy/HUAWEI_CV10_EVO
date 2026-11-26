@@ -1258,10 +1258,10 @@ index 0000000..cb8add5
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
 new file mode 100644
-index 0000000..0b40a4b
+index 0000000..6ca97e9
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitActivity.java
-@@ -0,0 +1,591 @@
+@@ -0,0 +1,601 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -1552,6 +1552,12 @@ index 0000000..0b40a4b
 +                                i, cam.framesPerSecond, cam.intrinsics[0], cam.intrinsics[1],
 +                                cam.intrinsics[2], cam.intrinsics[3], cam.cameraToImuDelaySeconds * 1000));
 +                    }
++                    appendCalibratedImu(result, Cv10KitCalibration.locatorImu(data.data));
++                } else {
++                    Cv10KitCalibration.HandCalibration hand = Cv10KitCalibration.hand(data.data);
++                    result.append(String.format(Locale.ROOT, "%d LEDs · camera to IMU delay %.2f ms\n",
++                            hand.ledPositions.length, hand.cameraToImuDelaySeconds * 1000));
++                    appendCalibratedImu(result, hand.imu);
 +                }
 +            } catch (IOException failure) {
 +                result.append(failure.getMessage()).append('\n');
@@ -1559,6 +1565,10 @@ index 0000000..0b40a4b
 +        }
 +        if (destination.isDirectory()) result.append(destination.getAbsolutePath());
 +        return result.toString();
++    }
++
++    private static void appendCalibratedImu(StringBuilder result, Cv10KitCalibration.ImuCalibration imu) {
++        result.append(String.format(Locale.ROOT, "IMU gyro %.0f Hz · accelerometer %.0f Hz\n", imu.gyroHz, imu.accelHz));
 +    }
 +
 +    private static void saveCalibration(File destination, Cv10KitCalibration.Component component,
@@ -1855,10 +1865,10 @@ index 0000000..0b40a4b
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCalibration.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCalibration.java
 new file mode 100644
-index 0000000..d6b9cbc
+index 0000000..3e9dd73
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitCalibration.java
-@@ -0,0 +1,206 @@
+@@ -0,0 +1,291 @@
 +// SPDX-License-Identifier: GPL-3.0-or-later
 +package org.freedesktop.monado.openxr_runtime;
 +
@@ -1877,6 +1887,9 @@ index 0000000..d6b9cbc
 +    private static final int REPLY_TIMEOUT_MS = 600;
 +    private static final int MAX_CHUNKS = 64;
 +    private static final int MAX_CALIBRATION_BYTES = 2048;
++    private static final int LOCATOR_IMU = 0x2a0;
++    private static final int HAND_IMU = 0x240;
++    private static final int IMU_FIELDS_BYTES = 0xda;
 +
 +    enum Component {
 +        LOCATOR("locator", 0x81, 22, 0x3de),
@@ -1923,7 +1936,7 @@ index 0000000..d6b9cbc
 +        final boolean needsUndistortion;
 +        final double[] intrinsics, distortion, autofocusCompensation, tbc, tcm;
 +
-+        CameraCalibration(ByteBuffer fields) {
++        CameraCalibration(ByteBuffer fields) throws IOException {
 +            id = unsigned(fields.get());
 +            width = fields.getInt();
 +            height = fields.getInt();
@@ -1951,9 +1964,65 @@ index 0000000..d6b9cbc
 +                    Float.isFinite(framesPerSecond) && framesPerSecond > 0 &&
 +                    Double.isFinite(readoutSeconds) && Double.isFinite(exposureShiftSeconds) &&
 +                    Double.isFinite(cameraToImuDelaySeconds) &&
-+                    intrinsics[0] > 0 && intrinsics[1] > 0 && Arrays.stream(intrinsics).allMatch(Double::isFinite) &&
-+                    Arrays.stream(distortion).allMatch(Double::isFinite) &&
-+                    Arrays.stream(tbc).allMatch(Double::isFinite) && Arrays.stream(tcm).allMatch(Double::isFinite);
++                    intrinsics[0] > 0 && intrinsics[1] > 0;
++        }
++    }
++
++    static final class ImuCalibration {
++        final float gyroHz, accelHz;
++        final boolean needsCompensation;
++        final double[] gyroBias, gyroScale, gyroMisalignment, accelBias, accelScale, accelMisalignment;
++        final double[] gyroToAccel;
++        final double gyroNoiseSigma, accelNoiseSigma, gyroBiasSigma, accelBiasSigma;
++
++        private ImuCalibration(ByteBuffer fields) throws IOException {
++            fields.get(); // The stock parser skips this byte before the rates.
++            gyroHz = fields.getFloat();
++            accelHz = fields.getFloat();
++            needsCompensation = fields.get() != 0;
++            gyroBias = readDoubles(fields, 3);
++            gyroScale = readDoubles(fields, 3);
++            gyroMisalignment = readDoubles(fields, 3);
++            accelBias = readDoubles(fields, 3);
++            accelScale = readDoubles(fields, 3);
++            accelMisalignment = readDoubles(fields, 3);
++            gyroToAccel = readDoubles(fields, 4);
++            gyroNoiseSigma = fields.getDouble();
++            accelNoiseSigma = fields.getDouble();
++            gyroBiasSigma = fields.getDouble();
++            accelBiasSigma = fields.getDouble();
++        }
++    }
++
++    static final class HandCalibration {
++        final double[][] ledPositions;
++        final double[] imuToHandle;
++        final double cameraToImuDelaySeconds;
++        final ImuCalibration imu;
++
++        private HandCalibration(ByteBuffer fields, ImuCalibration imu) throws IOException {
++            this.imu = imu;
++            fields.position(0x40);
++            double[] handleToImu = readDoubles(fields, 7);
++            if (handleToImu[0] == 0 && handleToImu[1] == 0 && handleToImu[2] == 0 && handleToImu[3] == 0) {
++                throw new IOException("Invalid hand extrinsic rotation");
++            }
++            double x = -handleToImu[0], y = -handleToImu[1], z = -handleToImu[2], w = handleToImu[3];
++            double px = -handleToImu[4], py = -handleToImu[5], pz = -handleToImu[6];
++            // SaveHand conjugates the unit quaternion and multiplies the negated translation by its rotation.
++            double cx = 2 * (y * pz - z * py);
++            double cy = 2 * (z * px - x * pz);
++            double cz = 2 * (x * py - y * px);
++            imuToHandle = new double[] {x, y, z, w, px + w * cx + y * cz - z * cy,
++                    py + w * cy + z * cx - x * cz, pz + w * cz + x * cy - y * cx};
++
++            fields.position(0x98);
++            ledPositions = new double[16][];
++            for (int i = 0; i < ledPositions.length; i++) {
++                ledPositions[i] = readDoubles(fields, 3);
++            }
++            cameraToImuDelaySeconds = fields.getDouble();
++            if (!Double.isFinite(cameraToImuDelaySeconds)) throw new IOException("Invalid hand camera to IMU delay");
 +        }
 +    }
 +
@@ -1971,9 +2040,35 @@ index 0000000..d6b9cbc
 +        return new CameraCalibration[] {first, second};
 +    }
 +
-+    private static double[] readDoubles(ByteBuffer fields, int count) {
++    static ImuCalibration locatorImu(byte[] data) throws IOException {
++        return imu(data, LOCATOR_IMU);
++    }
++
++    static HandCalibration hand(byte[] data) throws IOException {
++        ImuCalibration imu = imu(data, HAND_IMU);
++        if (imu.gyroHz < 11 || imu.accelHz < 11) throw new IOException("Invalid hand IMU rate");
++        return new HandCalibration(ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN), imu);
++    }
++
++    private static ImuCalibration imu(byte[] data, int offset) throws IOException {
++        if (data.length < offset + IMU_FIELDS_BYTES) throw new IOException("Truncated IMU calibration");
++        ByteBuffer fields = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
++        fields.position(offset);
++        ImuCalibration imu = new ImuCalibration(fields);
++        if (!(Float.isFinite(imu.gyroHz) && imu.gyroHz > 0 && Float.isFinite(imu.accelHz) &&
++                imu.accelHz > 0 && Double.isFinite(imu.gyroNoiseSigma) && Double.isFinite(imu.accelNoiseSigma) &&
++                Double.isFinite(imu.gyroBiasSigma) && Double.isFinite(imu.accelBiasSigma))) {
++            throw new IOException("Invalid IMU calibration fields");
++        }
++        return imu;
++    }
++
++    private static double[] readDoubles(ByteBuffer fields, int count) throws IOException {
 +        double[] values = new double[count];
-+        for (int i = 0; i < count; i++) values[i] = fields.getDouble();
++        for (int i = 0; i < count; i++) {
++            values[i] = fields.getDouble();
++            if (!Double.isFinite(values[i])) throw new IOException("Invalid non-finite calibration coefficient");
++        }
 +        return values;
 +    }
 +
@@ -2183,7 +2278,7 @@ index 0000000..24650d6
 +}
 diff --git a/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java
 new file mode 100644
-index 0000000..d4948a6
+index 0000000..caaafd2
 --- /dev/null
 +++ b/src/xrt/targets/openxr_android/src/main/java/org/freedesktop/monado/openxr_runtime/Cv10KitReport.java
 @@ -0,0 +1,139 @@
@@ -2214,7 +2309,7 @@ index 0000000..d4948a6
 +        final float ax, ay, az, gx, gy, gz;
 +
 +        private Head(ByteBuffer data) {
-+            deviceNs = Long.reverseBytes(data.getLong(12));
++            deviceNs = data.getLong(12);
 +            ax = data.getShort(23) * 0.000244f * -9.8f;
 +            ay = data.getShort(21) * 0.000244f * 9.8f;
 +            az = data.getShort(25) * 0.000244f * 9.8f;
@@ -2294,7 +2389,7 @@ index 0000000..d4948a6
 +
 +    static Head head(byte[] report) {
 +        if (report.length < 34 || report[20] != 0 || report[27] != 1) return null;
-+        Head head = new Head(ByteBuffer.wrap(report).order(ByteOrder.LITTLE_ENDIAN));
++        Head head = new Head(ByteBuffer.wrap(report).order(ByteOrder.BIG_ENDIAN));
 +        return head.deviceNs > 0 ? head : null;
 +    }
 +

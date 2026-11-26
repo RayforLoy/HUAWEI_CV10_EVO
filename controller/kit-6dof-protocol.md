@@ -12,6 +12,7 @@
 | Android `assets/arm64-v8a/libVR6Dof.so` | `92020423ca33b2bf7aa147db64dfc0449aaac926d8273c6f7d595440fea49aee` |
 | Windows 原厂 PC 助手 11.0.0.105 安装包 | `93070f41afe2a60dc17ed32e0785f212076895d9d2457a6d338e5172e97d10be` |
 | PC 助手中的 `app/steamVRDriver/huaweiVR/bin/win64/VR6DOF.dll` | `0e5a3ce7be318b45165e4a7837192a18b31fbdac8e658974f6210904d9ce930a` |
+| PC 助手中的 `app/steamVRDriver/huaweiVR/bin/win64/arvr_slam.dll` | `6d89d332acfe86f9a9a3309a913de6d6cb8f0da2f49b46f60b96a07599283a7d` |
 
 用 JADX 复核 SDK DEX，再以 LLVM 工具反汇编提取的原厂 ELF。下文的 Android 地址为上表运行时 ELF 的虚拟地址，Windows 地址为 DLL 的 RVA。PC 助手样本可用 innoextract 离线提取。
 
@@ -23,7 +24,7 @@
 
 ### 头显记录
 
-`RuntimeTool::GetTimeStampByImuBuffer`（`0xbbd84`）读取 `0x0c–0x13` 大端纳秒计时。 `RuntimeTool::CreateHelmetInfo`（`0xbc334`）要求 `[0x14] = 0`、`[0x1b] = 1`，按下表读取小端 s16。
+`RuntimeTool::GetTimeStampByImuBuffer`（`0xbbd84`）读取 `0x0c–0x13` 大端纳秒计时。`RuntimeTool::CreateHelmetInfo`（`0xbc334`）要求 `[0x14] = 0`、`[0x1b] = 1`，按下表读取大端 s16。六轴读取均在 `ldrh` 后执行 32 位 `rev` 和算术右移 16 位。
 
 | 输出 | X 偏移 | Y 偏移 | Z 偏移 | 各轴比例 |
 | --- | --- | --- | --- | --- |
@@ -92,11 +93,37 @@ Android `SaveHelmet`（`0xb2db8`）从分包拼接缓冲解析。前 2 字节为
 
 诊断页校验左右记录的尺寸和内参，显示每路帧率、焦距、主点和 IMU 延时。套件原厂 XML 可对照字段命名，实际畸变模型和外参轴向仍需结合实机数据验证。
 
+### 左右手柄校准数据
+
+Android `SaveHand`（`0xb3274`）对两只手使用相同布局。下表为各自校准数据的绝对偏移，值均为小端。
+
+| 偏移 | 类型 | 字段 |
+| --- | --- | --- |
+| `0x40` | f64 × 7 | 原始外参按四元数 `xyzw`、平移 `xyz` 排列。原厂在 `0xb3534–0xb3700` 将其逆变换为 `extrinsicThi`，旋转用共轭 `q*`，平移用 `-R(q*)t` |
+| `0x98 + i × 0x18` | f64 × 3 | 第 `i` 个 LED 的 `xyz`，共 16 个，循环位于 `0xb3724–0xb374c` |
+| `0x218` | f64 | 手柄相机与 IMU 延时，读取位置 `0xb3754`，对应 PC XML 的 `handlerDelayCam2IMU` |
+| `0x240` | IMU 记录 | 与定位器采用同一 IMU 记录布局 |
+
+PC 助手的 `vrglass-handler-default.xml` 在 `Handler-Default` 下为每只手柄保存 16 条 `handlerLedParam`、8 个 `ledBBoxPosition` 顶点、IMU 校准及外参。Android 的分包解析直接读取 16 个 LED 的位置。LED 法线、可见性和帧内点关联仍需验证。
+
+### 共用 IMU 校准记录
+
+Android `GetImuPara`（`0xb1e5c`）解析定位器 `0x2a0`、任一手柄 `0x240` 起的记录。字段语义与 `WriteImuParaXml`（`0xae5a8–0xae87c`）输出核对。
+
+| 记录相对偏移 | 小端类型 | 字段 |
+| --- | --- | --- |
+| `0x00` | u8 | 原厂跳过 |
+| `0x01/05/09` | f32、f32、u8 | 陀螺仪和加速度计采样率（Hz）、补偿开关 |
+| `0x0a/22/3a` | 每项 f64 × 3 | 陀螺仪偏置、比例、轴误差 |
+| `0x52/6a/82` | 每项 f64 × 3 | 加速度计偏置、比例、轴误差 |
+| `0x9a` | f64 × 4 | 陀螺仪到加速度计的旋转四元数 |
+| `0xba/c2/ca/d2` | 每项 f64 | 陀螺仪噪声、加速度计噪声、陀螺仪偏置、加速度计偏置的标准差 |
+
 ## 位姿计算与接入进度
 
 原厂头部路径把双目图像和头部 IMU 分别交给 `SlamThread::PushImageData`（`0xbf6d8`）和 `PushHelmetInfo`（`0xc09b0`），由 `libarvr_slam.so` 估计位姿，运行时通过 `SlamThread::GetPosture`（`0xc0580`）读取。手柄路径把视觉帧和左右手 IMU 送到 `VCtrlThread::PushVCtrlData`（`0xc4b04`）和 `PushCtrlIMU`（`0xc56f8`），`libVR6Dof.so` 内部有 `BlobDetection`、`HCTracker` 等处理。
 
-Android `SlamState::Init` 在 `0xc15b4` 调用 `libarvr_slam.so` 导出的 C 符号 `GetSlamInterface`。该库的 `0x1d3a50` 返回位于 `0xb8d050` 的函数表。以下偏移按此函数表计算，实参和结果仍需逐项验证。
+Android `SlamState::Init` 在 `0xc15b4` 调用 `libarvr_slam.so` 导出的 C 符号 `GetSlamInterface`。该库的 `0x1d3a50` 返回位于 `0xb8d050` 的函数表，首 8 字节是标记 `0x00000001abcd2012`，`+0x08` 是字符串 `SLAM` 的地址。Windows 的 `arvr_slam.dll` 同名导出（`0xfac30`）返回 `0x717620` 的相同标记及槽位布局。以下偏移按此函数表计算。
 
 | 用途 | 表内字节偏移 | Android 运行时的调用位置 |
 | --- | --- | --- |
@@ -106,8 +133,25 @@ Android `SlamState::Init` 在 `0xc15b4` 调用 `libarvr_slam.so` 导出的 C 符
 | 取得头部位姿 | `0x78` | `0xc23ac` |
 | 停止、清理、释放实例 | `0x50`、`0x58`、`0x28` | `0xc1ee0`、`0xc1c88`、`0xc1ce0` |
 
+Android 先用 `+0xa0` 注册回调，再用 `+0x20` 创建。注册结构依次为上下文、写配置、读配置、保留输入引用、释放输入引用、输入回调、输出回调，各占 8 字节。销毁后用 `+0xa8` 清理注册。创建入参是两条格式字符串：
+
+```text
+fmt:yuv@res:480p@rot:0;fmt:preyuv@res:480p@rot:0;fmt:feature;fmt:depth@rot:0;fmt:imu
+fmt:pose@org:slam;fmt:predictpose@org:slam;fmt:cameraintrin@org:slam;fmt:pointcloud@org:slam;fmt:anchor@org:slam@type:update
+```
+
+创建时读配置回调先收到 `HSDK_CONFIG_MANAGER_IMPL_GET_CHECK_VALID`（1 字节），再收到 `HSDK_CONFIG_MANAGER_IMPL_GET_SLAM_PARAMS`（2112 字节）。Windows `VR6DOF.dll` 的 `VrSlamConfiguration::InitPara`（`0x2fef0`）可从原厂 XML 载入默认模型，其 `GetValue`（`0x310d0`）可通过这两个键返回配置。Android `VrConfiguration::GetValue` 在 `0xba748` 和 `0xba7dc` 分别检查相同的缓冲长度，后者从对象 `+0x08` 复制 `0x840` 字节。Windows 读取配置时还请求 1024 字节的 `HSDK_CONFIG_MANAGER_IMPL_GET_SLAM_BIAS_INFO`。
+
+### 头显输入与预测时间
+
+Android `HxrAlgorithmData` 在 64 位程序中占 `0x120` 字节。前 `0x100` 字节为以零结尾的格式字符串，随后是 `0x100` 的 u64 载荷长度、`0x108` 的 u64 纳秒时间、`0x110` 的载荷指针和 `0x118` 的所有者指针。图像组合包由原厂保留引用回调管理。头显 IMU 以 `fmt:imu` 分开送入加速度和角速度，每个载荷为 `0x20` 字节。类型 u32 位于 `0x00`（0 为加速度、1 为角速度），设备时间 f64 秒位于 `0x08`，三个轴为从 `0x10` 开始的 f32（`PushHelmetInfo`，`0xc09e8–0xc0adc`）。
+
+双目组合包使用 `fmt:yuv@res:480p@rot:0@fmt:preyuv@res:480p@rot:0@fmt:feature@fmt:depth@rot:0`。其 `0x78` 字节载荷在 `+0x10`、`+0x18` 分别指向两路图像的 `HxrAlgorithmData`，在 `+0x30`、`+0x38` 指向原厂特征数据（`0xbfee4–0xbfef4`）。每路图像用 `fmt:yuv@res:480p@rot:0`，包含 `0x60` 字节的元数据，分别在 `+0x04/+0x08/+0x0c` 保存宽、高、行步幅，`+0x28`、`+0x38` 记录设备时间和曝光秒数，`+0x48` 指向灰度缓冲。
+
+实时查询使用 `fmt:pose@org:slam`，预测查询使用 `fmt:predictpose@org:slam`，两者为 `0x38` 字节输出缓冲。原厂预测时间在 `0xc05d0–0xc05ec` 计算为最后送入的 IMU 时间加上「请求时间（由微秒乘 1000）减当前 `CLOCK_MONOTONIC` 纳秒」的差。图像和 IMU 同时送入时均采用报文设备时间。两路设备时间实际偏差和 Fold7 的数据延迟仍需采样。
+
+用 [Windows 离线探针](probe-slam-head.py) 在独立进程载入默认 XML，验证库可创建、初始化、启动、停止、清理及销毁。六条合成 IMU 数据和两组无特征的空白双目图都由 `+0x70` 返回 0。随后 `+0x78` 返回 `-1`，输出缓冲保持为零。此测试覆盖调用与数据入口。生成有效的视觉位姿仍需同步的真实输入。
+
 `libarvr_slam.so` 的 ELF `DT_NEEDED` 只列出 Android 平台库。手柄库 `libVR6Dof.so` 另外链接 `libhiai.so`、`libhiai_ir.so`、`libhcl.so` 和 `libhiai_hcl_model_runtime.so`。手柄库的 `BlobDetection::DetectBlobs`（`0x13a7a8`）和 `P3PSolver::CalcPose`（`0x1a3d2c`）分别提供斑点检测和位姿求解的追踪入口。当前两份 APK 均未打包或调用这两个厂商库。
 
-PC 助手的 `vrglass-handler-default.xml` 在 `FOXCONN-ST` 下按相机分别保存 `intrinsic`、`distorbParms`、`extrinsicTbc` 和 `delayCam2IMU`。在 `Handler-Default` 下，每个手柄有 16 条 `handlerLedParam`、8 个 `ledBBoxPosition` 顶点以及各自的 IMU 校准、`extrinsicThi` 和 `handlerDelayCam2IMU`。这提供了后续核对左右手光学模型及坐标系的依据，实际设备参数仍需从套件读取。
-
-当前诊断可请求并导出三个组件的校准数据，读取定位器双目校准、原始头部与左右手报告，拆分并保存一组外部相机图像。头显和左右手的校准仍待用于追踪。Monado Android 构建的上游 VIT SLAM 选项依赖 Linux 和 OpenCV。图像与 IMU 的时钟映射、头显视觉惯性融合、左右手光学定位及 OpenXR 6DoF 位姿输出仍待完成。
+当前诊断可请求并导出三个组件的校准数据，解析定位器双目、三路 IMU 和左右手 LED 模型，读取原始头部与左右手报告，拆分并保存一组外部相机图像。图像与 IMU 的时钟映射、头显视觉惯性融合、左右手光学定位及 OpenXR 6DoF 位姿输出仍待完成。
