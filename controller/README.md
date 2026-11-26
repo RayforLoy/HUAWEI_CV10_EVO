@@ -3,7 +3,7 @@
 | 硬件 | Monado CV10 | 独立诊断 APK | 验证 |
 | --- | --- | --- | --- |
 | CF20 蓝牙 3DoF 手柄 | 应用内搜索、选用、Android 系统配对、会话自动连接和右手 OpenXR 输入 | GATT 状态、报告频率、原始包、四元数、按键、触控、惯性和电量 | 通过构建和协议测试向量。Fold7 待验收 |
-| 原厂 6DoF 套件 | 可从手柄菜单进入诊断 | USB 枚举、头显及左右手原始记录、双目和三路 IMU 校准、头显 SLAM 参数导出、每只手柄的 LED 模型和外参、外接 Y8 双目图像导出 | 通过构建、协议测试向量和 Windows 头显 SLAM 配置验收。Fold7 USB／相机可用性及位姿接入待完成 |
+| 原厂 6DoF 套件 | 可从手柄菜单进入诊断 | USB 枚举、头显及左右手原始记录、双目和三路 IMU 校准、头显 SLAM 参数导出、每只手柄的 LED 模型和外参、外接 Y8 双目图像导出 | 已通过构建、协议向量、Windows 头显 SLAM 校准和左右手 IMU 回放。Fold7 USB／相机可用性及位姿接入待完成 |
 
 两条协议独立记录在 [CF20 蓝牙协议](cf20-protocol.md) 和 [6DoF 套件协议](kit-6dof-protocol.md)。诊断 APK 与运行时共用发现、配对及报告解码源码。
 
@@ -23,13 +23,14 @@
 3. 套件在同页的 **定位交互套件** 中。**采样定位器 HID** 显示头部、左手、右手原始记录。**采样 OV580 相机** 显示帧计数，并将首个带有效元数据的双目帧保存为 ZIP。
 4. 点击 **读取套件校准**，查看双目、各组件 IMU 采样率及手柄 LED 模型的摘要。定位器、左手、右手的完整回复各保存为独立 ZIP（`locator.zip`、`left.zip`、`right.zip`），每包包含 `calibration.bin` 和 `device.hash`。定位器校准可解码时，额外保存 2112 字节的 `slam-params.bin`。保存路径显示在诊断页中。套件的 6DoF 位姿尚未提供给 OpenXR。
 
-## Windows 头显 SLAM 离线验证
+## Windows 位姿接口离线验证
 
-用 64 位 Windows Python 运行 [离线探针](probe-slam-head.py)，参数为解包后的原厂 PC 助手 `steamVRDriver/huaweiVR/bin/win64` 目录。脚本校验两个 DLL 的 SHA-256，在当前进程内指定临时 XML 路径，并验证启动、停止、IMU 和空白双目帧送入。可用 `--parameters` 回放诊断 APK 导出的参数。空白帧的预期结果是无位姿。厂商文件由本机准备。
+用 64 位 Windows Python 运行 [离线探针](probe-slam-head.py)，参数为解包后的原厂 PC 助手 `steamVRDriver/huaweiVR/bin/win64` 目录。脚本校验使用的 DLL SHA-256，并在当前进程内指定临时 XML 路径。默认回放头部 IMU 和空白双目帧。`--parameters` 用于回放诊断 APK 导出的头显校准。`--controllers` 验证原厂默认校准、左右手 IMU 和双手位姿状态。两种回放都预期返回无有效视觉位姿。厂商文件由本机准备。
 
 ```powershell
 python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录>
 python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --parameters <slam-params.bin>
+python .\controller\probe-slam-head.py <原厂_PC_助手_win64_目录> --controllers
 ```
 
 ## 从源码重建

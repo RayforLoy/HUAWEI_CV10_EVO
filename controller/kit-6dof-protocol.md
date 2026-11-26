@@ -169,6 +169,14 @@ Android `HxrAlgorithmData` 在 64 位程序中占 `0x120` 字节。前 `0x100` �
 
 用 [Windows 离线探针](probe-slam-head.py) 在独立进程载入默认 XML，验证库可创建、初始化、启动、停止、清理及销毁。六条合成 IMU 数据和两组无特征的空白双目图都由 `+0x70` 返回 0。随后 `+0x78` 返回 `-1`，输出缓冲保持为零。此测试覆盖调用与数据入口。生成有效的视觉位姿仍需同步的真实输入。
 
-`libarvr_slam.so` 的 ELF `DT_NEEDED` 只列出 Android 平台库。手柄库 `libVR6Dof.so` 另外链接 `libhiai.so`、`libhiai_ir.so`、`libhcl.so` 和 `libhiai_hcl_model_runtime.so`。手柄库的 `BlobDetection::DetectBlobs`（`0x13a7a8`）和 `P3PSolver::CalcPose`（`0x1a3d2c`）分别提供斑点检测和位姿求解的追踪入口。当前两份 APK 均未打包或调用这两个厂商库。
+### 左右手柄位姿接口
+
+Android `VCtrlState::Init`（`0xc631c`）调用 `libVR6Dof.so` 的 `GetVR6DofInterface`（`0x14ba4c`），返回表 `0x636050`。Windows `HandlerDLL.dll` 的同名导出（RVA `0x3f5f0`）返回表 `0x16f940`。两表使用标记 `0x00000001abcd2012` 和名称 `VR6Dof`。创建、初始化、启停、回收、输入、查询和回调注册槽位与头显表的对应槽位相同。输入格式列表为 `fmt:yuv@res:480p@rot:0;fmt:imu@org:helmet;fmt:imu@org:controller;fmt:pose@org:slam`，输出为 `fmt:pose@org:vr6dof`。配置键 `HSDK_CONFIG_MANAGER_IMPL_GET_VR_6_DOF_HANDLER_CONFIG` 返回 `0x1c38` 字节，见 Android `VrConfiguration::GetValue` 中的 `0xba8a8–0xba8bc`。
+
+Android `VCtrlThread::PushCtrlIMU`（`0xc56f8`）把 `fmt:imu@org:controller` 送入 `HxrAlgorithmData`。其 `0x38` 字节载荷的 `0x00` 为 u8 有效标志，`0x01` 为左手 ASCII `0` 或右手 ASCII `1`，`0x08` 为 u64 纳秒时间，`0x10` 开始为六个 f32 惯性轴，`0x28` 开始为四个 f32，原厂填入 `(1, 0, 0, 0)`。`VCtrlThread::GetPosture`（`0xc5948`）将 `0x18` 字节的 64 位 `std::vector<HandlerPose>` 作为输出载荷交给 `+0x78`。查询返回值及每条姿态的状态需要共同检查。
+
+Windows 离线探针用原厂默认手柄校准完成初始化。左手和右手各送入三条合成 IMU 数据，均返回 0。无图像时查询返回 `-1`，两条 `0x54` 字节的手柄记录分别带 ASCII `0`、`1`，且 `+0x04` 的状态均为 `255`。Android `ArvrRuntimeModuleManager::UpdateCtrlPos` 在 `0x922bc–0x922c8` 拒绝状态 `255`，随后从 `+0x08` 读取 f32 位置 `xyz`，从 `+0x14` 读取 f32 四元数 `wxyz`。离线探针对查询返回码、双手标识和状态作回归检查。
+
+`libarvr_slam.so` 的 ELF `DT_NEEDED` 只列出 Android 平台库。手柄库 `libVR6Dof.so` 另外链接 `libhiai.so`、`libhiai_ir.so`、`libhcl.so` 和 `libhiai_hcl_model_runtime.so`。Android 还在初始化前通过 `+0x60` 以 `fmt:ai_path@org:vr6dof` 设置 `SDmmm1_fp16_480_640.om` 的路径（`0xc6508`、`0xc6620–0xc6634`）。手柄库的 `BlobDetection::DetectBlobs`（`0x13a7a8`）和 `P3PSolver::CalcPose`（`0x1a3d2c`）分别是斑点检测和位姿求解入口。当前两份 APK 均未打包或调用这两个厂商库。
 
 当前诊断可请求并导出三个组件的校准数据，解析定位器双目、三路 IMU 和左右手 LED 模型，读取原始头部与左右手报告，拆分并保存一组外部相机图像。图像与 IMU 的时钟映射、头显视觉惯性融合、左右手光学定位及 OpenXR 6DoF 位姿输出仍待完成。

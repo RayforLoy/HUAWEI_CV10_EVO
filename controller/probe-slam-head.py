@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Exercise the pinned stock PC head SLAM ABI with synthetic input and no hardware."""
+"""Exercise the stock PC head SLAM and hand tracking ABIs without hardware."""
 
 import argparse
 import ctypes as c
@@ -14,16 +14,21 @@ import time
 
 DLL_HASHES = {
     "arvr_slam.dll": "6d89d332acfe86f9a9a3309a913de6d6cb8f0da2f49b46f60b96a07599283a7d",
+    "HandlerDLL.dll": "0269d56389e7c107cb46f668ca48e789befc07fc236c04ed00867eab0ef98451",
     "VR6DOF.dll": "0e5a3ce7be318b45165e4a7837192a18b31fbdac8e658974f6210904d9ce930a",
 }
 CONFIG_VALID = b"HSDK_CONFIG_MANAGER_IMPL_GET_CHECK_VALID"
 CONFIG_PARAMS = b"HSDK_CONFIG_MANAGER_IMPL_GET_SLAM_PARAMS"
+HAND_CONFIG = b"HSDK_CONFIG_MANAGER_IMPL_GET_VR_6_DOF_HANDLER_CONFIG"
 IMAGE_FORMAT = b"fmt:yuv@res:480p@rot:0"
 FRAME_FORMAT = IMAGE_FORMAT + b"@fmt:preyuv@res:480p@rot:0@fmt:feature@fmt:depth@rot:0"
 INPUT_FORMATS = IMAGE_FORMAT + b";fmt:preyuv@res:480p@rot:0;fmt:feature;fmt:depth@rot:0;fmt:imu"
 OUTPUT_FORMATS = (b"fmt:pose@org:slam;fmt:predictpose@org:slam;fmt:cameraintrin@org:slam;"
                   b"fmt:pointcloud@org:slam;fmt:anchor@org:slam@type:update")
 POSE_FORMAT = b"fmt:pose@org:slam"
+HAND_INPUT_FORMATS = IMAGE_FORMAT + b";fmt:imu@org:helmet;fmt:imu@org:controller;" + POSE_FORMAT
+HAND_IMU_FORMAT = b"fmt:imu@org:controller"
+HAND_POSE_FORMAT = b"fmt:pose@org:vr6dof"
 
 
 class AlgorithmData(c.Structure):
@@ -50,10 +55,7 @@ def check_zero(operation, result):
     print(f"{operation}={result}", flush=True)
 
 
-def feed_samples(table, session, lifetime):
-    packet_call = c.WINFUNCTYPE(c.c_int, c.c_void_p, c.POINTER(AlgorithmData))
-    push = packet_call(c.c_void_p.from_address(table + 0x70).value)
-    get = packet_call(c.c_void_p.from_address(table + 0x78).value)
+def feed_head_samples(push, get, session, lifetime):
     for ns in (1_000_000_000, 1_005_000_000, 1_010_000_000):
         for kind in (0, 1):
             axes = (c.c_float * 3)(0, 0, 9.8 if kind == 0 else 0)
@@ -90,9 +92,45 @@ def feed_samples(table, session, lifetime):
         raise RuntimeError("Expected no pose from blank stereo and synthetic IMU")
 
 
-def probe(vendor, scratch, override):
+def feed_hand_samples(push, get, session, lifetime):
+    for ns in (1_000_000_000, 1_004_000_000, 1_008_000_000):
+        for side, label in ((ord("0"), "left"), (ord("1"), "right")):
+            payload = c.create_string_buffer(0x38)
+            struct.pack_into("<BB6xQ10f", payload, 0, 1, side, ns, 0, 0, 9.8, 0, 0, 0, 1, 0, 0, 0)
+            packet = AlgorithmData(HAND_IMU_FORMAT, len(payload), ns, c.addressof(payload), None)
+            lifetime.extend((payload, packet))
+            check_zero(f"push {label} IMU {ns}", push(session, c.byref(packet)))
+
+    # The pinned Windows ABI writes two trivially copyable records into this vector.
+    # Reserve both elements so the buffer stays owned by ctypes.
+    pose_size = 0x54
+    poses = c.create_string_buffer(2 * pose_size)
+    first = c.addressof(poses)
+    end = first + len(poses)
+    vector = (c.c_void_p * 3)(first, end, end)
+    packet = AlgorithmData(HAND_POSE_FORMAT, c.sizeof(vector), ns, c.addressof(vector), None)
+    code = get(session, c.byref(packet))
+    if list(vector) != [first, end, end]:
+        raise RuntimeError("Unexpected pose vector layout")
+    sides = (poses.raw[0], poses.raw[pose_size])
+    states = tuple(struct.unpack_from("<I", poses.raw, start + 4)[0] for start in (0, pose_size))
+    print(f"hand poses without images: {code} ({states[0]}, {states[1]})", flush=True)
+    if code != -1 or sides != tuple(b"01") or states != (255, 255):
+        raise RuntimeError("Expected an unsuccessful optical pose query with both hand records")
+
+
+def probe(vendor, scratch, override, controllers):
+    if controllers:
+        dll, export, name = "HandlerDLL.dll", "GetVR6DofInterface", b"VR6Dof"
+        config_key, config_size = HAND_CONFIG, 0x1C38
+        input_formats, output_formats, feed = HAND_INPUT_FORMATS, HAND_POSE_FORMAT, feed_hand_samples
+    else:
+        dll, export, name = "arvr_slam.dll", "GetSlamInterface", b"SLAM"
+        config_key, config_size = CONFIG_PARAMS, 0x840
+        input_formats, output_formats, feed = INPUT_FORMATS, OUTPUT_FORMATS, feed_head_samples
+
     with os.add_dll_directory(str(vendor)):
-        slam = c.WinDLL(str(vendor / "arvr_slam.dll"))
+        tracking = c.WinDLL(str(vendor / dll))
         wrapper = c.WinDLL(str(vendor / "VR6DOF.dll"))
 
         # Override the stock settings object's installation path within this process.
@@ -122,17 +160,18 @@ def probe(vendor, scratch, override):
         valid = c.c_uint8()
         if read_config(config, CONFIG_VALID, 1, c.byref(valid)) != 1 or valid.value != 1:
             raise RuntimeError("Stock XML did not validate")
-        parameters = c.create_string_buffer(0x840)
-        if read_config(config, CONFIG_PARAMS, len(parameters), parameters) != len(parameters):
-            raise RuntimeError("Stock SLAM calibration has an unexpected size")
+        parameters = c.create_string_buffer(config_size)
+        if read_config(config, config_key, len(parameters), parameters) != len(parameters):
+            raise RuntimeError("Stock tracking calibration has an unexpected size")
 
-        slam.GetSlamInterface.argtypes = []
-        slam.GetSlamInterface.restype = c.c_void_p
-        table = slam.GetSlamInterface()
+        get_interface = getattr(tracking, export)
+        get_interface.argtypes = []
+        get_interface.restype = c.c_void_p
+        table = get_interface()
         if (not table or c.c_uint64.from_address(table).value != 0x00000001ABCD2012 or
-                c.string_at(c.c_void_p.from_address(table + 8).value) != b"SLAM"):
-            raise RuntimeError("Unexpected SLAM function table")
-        print(f"SLAM table RVA={table - slam._handle:#x}, tag=00000001abcd2012", flush=True)
+                c.string_at(c.c_void_p.from_address(table + 8).value) != name):
+            raise RuntimeError("Unexpected function table")
+        print(f"{name.decode()} table RVA={table - tracking._handle:#x}, tag=00000001abcd2012", flush=True)
 
         def slot(offset, result, *arguments):
             address = c.c_void_p.from_address(table + offset).value
@@ -160,7 +199,7 @@ def probe(vendor, scratch, override):
 
         @data_call
         def keep_data(_context, _packet):
-            # feed_samples keeps all allocated packets alive through stop and deinit.
+            # The lifetime list keeps all input packets alive through stop and deinit.
             return 0
 
         class Callbacks(c.Structure):
@@ -176,19 +215,21 @@ def probe(vendor, scratch, override):
         start = slot(0x38, c.c_int, c.c_void_p)
         stop = slot(0x50, c.c_int, c.c_void_p)
         deinit = slot(0x58, c.c_int, c.c_void_p)
+        push = slot(0x70, c.c_int, c.c_void_p, c.POINTER(AlgorithmData))
+        get = slot(0x78, c.c_int, c.c_void_p, c.POINTER(AlgorithmData))
         lifetime = []
         register(c.byref(callbacks))
         try:
-            session = create(INPUT_FORMATS, OUTPUT_FORMATS)
+            session = create(input_formats, output_formats)
             if not session:
-                raise RuntimeError("SLAM creation failed")
+                raise RuntimeError("Tracking module creation failed")
             print("create succeeded", flush=True)
             try:
                 check_zero("init", init(session))
                 try:
                     check_zero("start", start(session))
                     try:
-                        feed_samples(table, session, lifetime)
+                        feed(push, get, session, lifetime)
                     finally:
                         check_zero("stop", stop(session))
                 finally:
@@ -203,7 +244,9 @@ def probe(vendor, scratch, override):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("stock_directory", type=Path, help="Extracted OEM PC assistant win64 directory")
-    parser.add_argument("--parameters", type=Path, help="Use a 2112-byte slam-params.bin for GET_SLAM_PARAMS")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--parameters", type=Path, help="Use a 2112-byte slam-params.bin for GET_SLAM_PARAMS")
+    mode.add_argument("--controllers", action="store_true", help="Exercise the left and right hand tracking module")
     args = parser.parse_args()
     if os.name != "nt" or c.sizeof(c.c_void_p) != 8:
         raise SystemExit("This probe requires 64-bit Windows Python.")
@@ -213,7 +256,9 @@ def main():
     override = args.parameters.read_bytes() if args.parameters else None
     if override is not None and len(override) != 0x840:
         parser.error("--parameters must contain exactly 2112 bytes")
-    for name, expected in DLL_HASHES.items():
+    module = "HandlerDLL.dll" if args.controllers else "arvr_slam.dll"
+    for name in (module, "VR6DOF.dll"):
+        expected = DLL_HASHES[name]
         actual = hashlib.sha256((vendor / name).read_bytes()).hexdigest()
         if actual != expected:
             raise SystemExit(f"Unexpected {name} version: {actual}")
@@ -225,7 +270,7 @@ def main():
         shutil.copyfile(vendor / "vrglass-handler-default.xml", config_directory / "vrglass-handler.xml")
         os.chdir(scratch)
         try:
-            probe(vendor, scratch, override)
+            probe(vendor, scratch, override, args.controllers)
         finally:
             os.chdir(original_directory)
 
