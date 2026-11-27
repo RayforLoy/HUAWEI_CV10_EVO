@@ -8,7 +8,7 @@
 
 | 项目 | 源码及构建 | 安装包 |
 | --- | --- | --- |
-| Monado CV10 运行时 | [整合预发布源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.4-rc.1/README.md)，本地位于 `ports/Monado_CV10` | [单一 ARM APK](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1)，在 Broker 选择 **Monado CV10 Preview** |
+| Monado CV10 运行时 | [当前源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/main/README.md)，本地位于 `ports/Monado_CV10` | [整合预发布 ARM APK](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1)，在 Broker 选择 **Monado CV10 Preview** |
 | PiliPlus Monado 播放器 | [源码与移植提交](https://github.com/RayforLoy/piliplus_monado)，本地位于 `ports/piliplus_monado` | 在子模块内运行 `python build.py`，产物为 `dist/PiliPlus-CV10.apk` |
 | Moonlight XR CV10 串流客户端 | [源码补丁、构建及实机记录](ports/moonlight-xr/README.md) | 构建 `nonRootRelease` 的 arm64-v8a APK。正常退出及重进已使用带卸载修复的 Monado 预览包验证 |
 
@@ -20,6 +20,7 @@ git clone --recurse-submodules --branch codex/cv10-phase1 https://github.com/Ray
 
 已有工作树更新主分支后运行 `git submodule update --init --recursive`。
 
+当前固定的 Monado 子模块已合入华为原厂 CV10 双眼投影、RGB 畸变和光心偏移，并包含 Pocket XR 宽视场选项。Fold7 已验证软件瞳距会改变 OpenXR 返回的左右眼位间距。使用这些更新时，从子模块当前提交构建预览包。[光学与瞳距实测](https://github.com/RayforLoy/Monado_CV10/blob/main/history/fold7-oem-optics.md)
 
 [整合版实测与原厂实现对照计划](docs/cv10-unified-runtime.md) · [2026-11-27 夜间维护交接](docs/cv10-maintenance-20261127.md)
 
