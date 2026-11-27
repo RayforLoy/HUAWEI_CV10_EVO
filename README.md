@@ -21,6 +21,8 @@ git clone --recurse-submodules --branch codex/cv10-phase1 https://github.com/Ray
 已有工作树更新主分支后运行 `git submodule update --init --recursive`。
 
 
+[2026-11-27 夜间维护交接](docs/cv10-maintenance-20261127.md)
+
 ## 各会话进度 · 2026-11-26
 
 | 会话 | 已验证 | 待验证或待取得的材料 |
