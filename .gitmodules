@@ -4,3 +4,7 @@
 [submodule "ports/piliplus_monado"]
 	path = ports/piliplus_monado
 	url = https://github.com/RayforLoy/piliplus_monado.git
+[submodule "port/pocket-xr-cv10"]
+	path = port/pocket-xr-cv10
+	url = https://github.com/RayforLoy/pocket-xr-cv10.git
+	branch = codex/cv10-optics

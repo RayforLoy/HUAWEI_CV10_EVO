@@ -22,4 +22,4 @@ P40 样本的 `VrDistortionRender` 默认关闭增强渲染。初始化读取属
 
 CV10 的物理双目输出保持 3200×1600。普通 OpenXR 应用可按运行时返回的推荐边长重新分配交换链。启用超分辨率时，软件预设用华为 High 中心分区的等效全视场密度，即每眼 3200×3200，也可自定义。Pocket XR 光学入口会用双倍边长创建左右并排的源显示屏，适配版 Pocket XR 按实际大小重绘每眼。两条软件路径均使用整眼渲染，原厂独立中心纹理的性能特性仍需支持分区提交的应用才可对照。
 
-`enableEnhancedRenderMode` 独立控制合成阶段的中心增强，默认关闭。提高源分辨率会增加渲染和合成开销，也可能放大 Fold7 已有的发热或掉帧问题。新档位、锐化和运动清晰度均待验收。[Fold7 已知问题](fold7-openxr-known-issues.md) · [Pocket XR CV10 构建](../ports/pocket-xr/README.md)
+`enableEnhancedRenderMode` 独立控制合成阶段的中心增强，默认关闭。提高源分辨率会增加渲染和合成开销，也可能放大 Fold7 已有的发热或掉帧问题。新档位、锐化和运动清晰度均待验收。[Fold7 已知问题](fold7-openxr-known-issues.md) · [Pocket XR CV10 build and display integration](https://github.com/RayforLoy/pocket-xr-cv10/blob/codex/cv10-optics/docs/CV10.md)

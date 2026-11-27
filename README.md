@@ -10,21 +10,22 @@
 | --- | --- | --- |
 | Monado CV10 运行时 | [当前源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/main/README.md)，本地位于 `ports/Monado_CV10` | [整合预发布 ARM APK](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1)，在 Broker 选择 **Monado CV10 Preview** |
 | PiliPlus Monado 播放器 | [源码与移植提交](https://github.com/RayforLoy/piliplus_monado)，本地位于 `ports/piliplus_monado` | 在子模块内运行 `python build.py`，产物为 `dist/PiliPlus-CV10.apk` |
+| Pocket XR CV10 | [Build and display integration](https://github.com/RayforLoy/pocket-xr-cv10/blob/codex/cv10-optics/docs/CV10.md)，本地位于 `port/pocket-xr-cv10` | 在子模块内构建 `org.cv10.pocketxr` |
 | Moonlight XR CV10 串流客户端 | [源码补丁、构建及实机记录](ports/moonlight-xr/README.md) | 构建 `nonRootRelease` 的 arm64-v8a APK。正常退出及重进已使用带卸载修复的 Monado 预览包验证 |
 
-新电脑运行以下命令，获取主项目及对应版本的两个子模块：
+新电脑运行以下命令，获取主项目及对应版本的子模块。
 
 ```shell
-git clone --recurse-submodules --branch codex/cv10-phase1 https://github.com/RayforLoy/HUAWEI_CV10_EVO.git
+git clone --branch codex/cv10-phase1 https://github.com/RayforLoy/HUAWEI_CV10_EVO.git
 ```
 
-已有工作树更新主分支后运行 `git submodule update --init --recursive`。
+进入仓库后运行 `git submodule update --init --recursive`。仅检出源码时，可在运行前为当前终端设置 `GIT_LFS_SKIP_SMUDGE=1`，跳过 Pocket XR 的历史 Play 发布附件。
 
 当前固定的 Monado 子模块已合入华为原厂 CV10 双眼投影、RGB 畸变和光心偏移，并包含 Pocket XR 宽视场选项。Fold7 已验证软件瞳距会改变 OpenXR 返回的左右眼位间距。使用这些更新时，从子模块当前提交构建预览包。[光学与瞳距实测](https://github.com/RayforLoy/Monado_CV10/blob/main/history/fold7-oem-optics.md)
 
 [整合版实测与原厂实现对照计划](docs/cv10-unified-runtime.md) · [2026-11-27 夜间维护交接](docs/cv10-maintenance-20261127.md)
 
-当前源码的原厂交互适配、中心超分辨率和增强渲染设置见 [Monado CV10 使用说明](https://github.com/RayforLoy/Monado_CV10/blob/main/README.md)。Pocket XR 光学模式的适配补丁可从 [Pocket XR CV10 构建](ports/pocket-xr/README.md) 获取。[原厂渲染对照](docs/cv10-oem-rendering.md) · [原厂手机与 CF20 切换](controller/oem-controller-switching.md) · [Fold7 已知问题](docs/fold7-openxr-known-issues.md)
+当前源码的原厂交互适配、中心超分辨率和增强渲染设置见以下文档。[Monado CV10 使用说明](https://github.com/RayforLoy/Monado_CV10/blob/main/README.md) · [原厂渲染对照](docs/cv10-oem-rendering.md) · [原厂手机与 CF20 切换](controller/oem-controller-switching.md) · [Fold7 已知问题](docs/fold7-openxr-known-issues.md)
 
 ## 各会话进度 · 2026-11-26
 

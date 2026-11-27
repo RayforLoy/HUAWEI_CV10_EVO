@@ -4,7 +4,7 @@
 
 ## 接手工作树
 
-当前协作分支为 `codex/cv10-phase1`。在仓库根目录运行以下命令，核对本机分支、未提交工作、与远端的差距，以及发布标签对应的源码。新检出可用 `git clone --recurse-submodules --branch codex/cv10-phase1 https://github.com/RayforLoy/HUAWEI_CV10_EVO.git`。
+当前协作分支为 `codex/cv10-phase1`。在仓库根目录运行以下命令，核对本机分支、未提交工作、与远端的差距，以及发布标签对应的源码。首次检出和初始化子模块参见 [README](README.md#android-源码与安装包)。
 
 ```powershell
 git fetch origin --tags
