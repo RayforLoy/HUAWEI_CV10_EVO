@@ -24,6 +24,8 @@ git clone --recurse-submodules --branch codex/cv10-phase1 https://github.com/Ray
 
 [整合版实测与原厂实现对照计划](docs/cv10-unified-runtime.md) · [2026-11-27 夜间维护交接](docs/cv10-maintenance-20261127.md)
 
+当前源码的原厂交互适配、中心超分辨率和增强渲染设置见 [Monado CV10 使用说明](https://github.com/RayforLoy/Monado_CV10/blob/main/README.md)。Pocket XR 光学模式的适配补丁可从 [Pocket XR CV10 构建](ports/pocket-xr/README.md) 获取。[原厂渲染对照](docs/cv10-oem-rendering.md) · [原厂手机与 CF20 切换](controller/oem-controller-switching.md) · [Fold7 已知问题](docs/fold7-openxr-known-issues.md)
+
 ## 各会话进度 · 2026-11-26
 
 | 会话 | 已验证 | 待验证或待取得的材料 |

@@ -1,0 +1,195 @@
+From c38ce518f701278f629aea2fdc88b98096036463 Mon Sep 17 00:00:00 2001
+From: Rayfor <liuruifangshiwo@gmail.com>
+Date: Fri, 27 Nov 2026 21:12:30 +0800
+Subject: [PATCH 1/2] Render a native 95 degree stereo frustum on the CV10
+ virtual display
+
+---
+ app/build.gradle.kts                          | 19 +++++++++++++----
+ app/src/main/AndroidManifest.xml              |  1 +
+ .../hayeco/flipspaces/spatial/Cv10Optics.kt   | 16 ++++++++++++++
+ .../flipspaces/spatial/SpaceActivity.kt       |  7 +++++--
+ .../flipspaces/spatial/SpaceRenderer.kt       | 21 ++++++++++++-------
+ 5 files changed, 50 insertions(+), 14 deletions(-)
+ create mode 100644 app/src/main/kotlin/com/hayeco/flipspaces/spatial/Cv10Optics.kt
+
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+index da63911..da33637 100644
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -11,12 +11,23 @@ android {
+     compileSdk = 37
+ 
+     val playBuild = (findProperty("pocketxr.play") as String?) == "true"
++    val cv10 = findProperty("pocketxr.cv10") == "true"
++    val dev = findProperty("pocketxr.dev") == "true"
+ 
+     defaultConfig {
+         // The private test copy (-Ppocketxr.dev=true), beside the real app, debug signed. See docs/OPENXR-PLAN.md.
+-        applicationId = if (findProperty("pocketxr.dev") == "true") "com.hayeco.flipspaces.dev" else "com.hayeco.flipspaces"
+-        // Its own name on the phone, so it is never mistaken for the real app.
+-        resValue("string", "app_label", if (findProperty("pocketxr.dev") == "true") "Pocket XR Test" else "Pocket XR")
++        applicationId = when {
++            cv10 -> "org.cv10.pocketxr"
++            dev -> "com.hayeco.flipspaces.dev"
++            else -> "com.hayeco.flipspaces"
++        }
++        resValue("string", "app_label", when {
++            cv10 -> "Pocket XR CV10"
++            dev -> "Pocket XR Test"
++            else -> "Pocket XR"
++        })
++        manifestPlaceholders["runtimeEnabled"] = (!cv10).toString()
++        buildConfigField("boolean", "CV10", cv10.toString())
+         minSdk = 30
+         targetSdk = 36
+         versionCode = 214
+@@ -36,7 +47,7 @@ android {
+         // the GitHub release included, shows it.
+         buildConfigField("boolean", "PLAY_BUILD", playBuild.toString())
+         // 1.1.15: the GitHub update check's background job (UpdateJobService) is disabled in the Play build.
+-        manifestPlaceholders["selfUpdates"] = (!playBuild).toString()
++        manifestPlaceholders["selfUpdates"] = (!playBuild && !cv10).toString()
+     }
+ 
+     // 0.5.98 (open source plan: the release signing key, kept by Mike only): official releases are signed with the
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 7636fe2..e98ca2d 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -387,6 +387,7 @@
+             tools:node="remove" />
+         <service
+             android:name=".openxr.OpenXrRuntimeService"
++            android:enabled="${runtimeEnabled}"
+             android:exported="true"
+             android:label="Pocket XR">
+             <meta-data
+diff --git a/app/src/main/kotlin/com/hayeco/flipspaces/spatial/Cv10Optics.kt b/app/src/main/kotlin/com/hayeco/flipspaces/spatial/Cv10Optics.kt
+new file mode 100644
+index 0000000..e3463ec
+--- /dev/null
++++ b/app/src/main/kotlin/com/hayeco/flipspaces/spatial/Cv10Optics.kt
+@@ -0,0 +1,16 @@
++package com.hayeco.flipspaces.spatial
++
++import com.hayeco.flipspaces.core.spatial.GlassesOptics
++import kotlin.math.atan
++import kotlin.math.sqrt
++import kotlin.math.tan
++
++/** The square per-eye projection consumed by Monado CV10's optical preview. */
++internal object Cv10Optics {
++    const val DISPLAY_NAME = "Monado CV10 Pocket XR Optics"
++    private const val EYE_SIZE = 1600
++    private const val HALF_FOV_DEG = 47.5
++
++    private val diagonalFov = Math.toDegrees(2 * atan(sqrt(2.0) * tan(Math.toRadians(HALF_FOV_DEG))))
++    val optics = GlassesOptics(EYE_SIZE, EYE_SIZE, diagonalFov.toFloat())
++}
+diff --git a/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceActivity.kt b/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceActivity.kt
+index 2e66239..f099d30 100644
+--- a/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceActivity.kt
++++ b/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceActivity.kt
+@@ -144,12 +144,15 @@ class SpaceActivity : Activity() {
+     /** 0.5.12: the phone is at severe or worse: no fast refresh is asked ([askForStereoMode]). */
+     private var thermalHot = false
+ 
++    private val cv10Optics: Boolean
++        get() = com.hayeco.flipspaces.BuildConfig.CV10 && display?.name == Cv10Optics.DISPLAY_NAME
++
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+         window.decorView.setBackgroundColor(Color.BLACK)
+         opaqueWindow(window)
+-        renderer = SpaceRenderer(this)
++        renderer = SpaceRenderer(this, cv10Optics)
+         view = newGlView(this)
+         setContentView(view)
+         hideBars()
+@@ -1180,7 +1183,7 @@ class SpaceActivity : Activity() {
+      */
+     private fun askForStereoMode() {
+         val d = display ?: return
+-        if (!openedOffPhone) return
++        if (!openedOffPhone || cv10Optics) return
+         val modes = d.supportedModes.toList()
+         if (loggedModes != d.displayId) {
+             loggedModes = d.displayId
+diff --git a/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt b/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt
+index 45fc85e..7a0dc0d 100644
+--- a/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt
++++ b/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt
+@@ -412,7 +412,10 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
+  * land inside the app's content and every scroll is logged (FlipSpaces/Input); the mode is
+  * logged only when it really changes; a trackpad touch gives focus back to the focused panel.
+  */
+-class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
++class SpaceRenderer(
++    private val context: Context,
++    private val cv10Optics: Boolean = false,
++) : GLSurfaceView.Renderer {
+     private val tag = "FlipSpaces/Space"
+ 
+     /** Text from the app's string resources, in the phone's language. */
+@@ -924,14 +927,15 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
+         // 0.5.9: the glasses' real field of view (GlassesOptics), one eye's share of the surface.
+         // 0.5.14: a side by side surface is always split; 2D there puts the same picture in both halves.
+         // Ultrawide: the 3840 x 1080 surface is one flat canvas, not two eyes, though Android cannot tell it from 3D.
+-        stereo = StereoLayout.mode(next.surfaceWidth, next.surfaceHeight, !ultrawide)
+-        eyes = if (ultrawide) StereoLayout.eyes(StereoMode.MONO, next.surfaceWidth, next.surfaceHeight, store.ipdMm)
++        stereo = if (cv10Optics) StereoMode.SIDE_BY_SIDE else StereoLayout.mode(next.surfaceWidth, next.surfaceHeight, !ultrawide)
++        eyes = if (cv10Optics || ultrawide) StereoLayout.eyes(stereo, next.surfaceWidth, next.surfaceHeight, store.ipdMm)
+         else com.hayeco.flipspaces.core.spatial.ViewModeChoice.eyes(viewPlan, next.surfaceWidth, next.surfaceHeight, store.ipdMm)
+         appliedPlan = viewPlan
+         // 0.5.26: the projection is the glasses' screen in this mode, so 2D uses their full field of view.
+         val sbs = stereo == StereoMode.SIDE_BY_SIDE
+         val screen = store.screen(sbs)
+-        frustum = if (ultrawide) store.optics(false).ultrawideFrustum(next.surfaceWidth, next.surfaceHeight) else next.frustum(store.optics(sbs), stereo)
++        val optics = if (cv10Optics) Cv10Optics.optics else store.optics(sbs)
++        frustum = if (ultrawide) optics.ultrawideFrustum(next.surfaceWidth, next.surfaceHeight) else next.frustum(optics, stereo)
+         pointer.frustum = frustum
+         xr.fitViewHeightDeg = if (ultrawide) frustum.verticalFovDeg else null
+         // 0.5.27: each side by side eye's picture adjust, and the pointer's pixels mapped through it.
+@@ -942,12 +946,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
+         fitLauncher()
+         // 0.5.91: in the glasses' own degrees (the One said the Aura's 54.5 by 32.3 in 0.5.91's first run).
+         Log.i(tag, screen.line(if (sbs) "their 3D mode" else "2D", store.model.tanPerPx1to1))
+-        screenHint(screen, sbs)
++        if (!cv10Optics) screenHint(screen, sbs)
+         Log.i(
+             tag,
+             "viewport ${next.surfaceWidth}x${next.surfaceHeight}, display ${next.inputWidth}x${next.inputHeight}: ${stereo.label}" +
+                 (if (stereo == StereoMode.SIDE_BY_SIDE) (if (eyes.all { it.offset == Vec3.ZERO }) " (2D: the same picture in both halves)" else " (eyes %.0f mm apart)".format(store.ipdMm)) else "") +
+-                ", each eye %dx%d at %.1f by %.1f degrees (%s)".format(frustum.widthPx, frustum.heightPx, frustum.horizontalFovDeg, frustum.verticalFovDeg, store.optics(sbs).line()) +
++                ", each eye %dx%d at %.1f by %.1f degrees (%s)".format(frustum.widthPx, frustum.heightPx, frustum.horizontalFovDeg, frustum.verticalFovDeg, optics.line()) +
+                 // 0.5.15: the per-row pose and the panel filter in use for this view.
+                 (if (stereo == StereoMode.SIDE_BY_SIDE) "; per-row pose %s for side by side, %s per panel pixel".format(if (store.rowPoseSbs) "on" else "off", if (store.footprintFilter) "the footprint filter (four taps)" else "one bilinear tap")
+                 else "; per-row pose %s in 2D".format(if (store.rowPose) "on" else "off")) +
+@@ -1158,7 +1162,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
+         logThermal()
+         offHead.update(HeadTracker.tracking && HeadTracker.lyingStill, nowMs)?.let { Log.i(tag, it) }
+         followGlassesScreen()
+-        syncPictureAdjust()
++        if (!cv10Optics) syncPictureAdjust()
+         // 0.5.26: why the Glasses warp turned itself off (or was refused), said on the glasses.
+         // 1.4.1: a line from the display control (Steady mode in 6DoF on the One series).
+         GlassesNotice.take()?.let { (text, ms) -> say(text, ms) }
+@@ -1242,7 +1246,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
+             HeadTracker.setDrawSmoothing(store.drawSmoothing)
+             // 1.2.8 (Discussion #24, a VITURE Beast in its 32:9 mode showed two copies): glasses other than XREAL's say
+             // nothing over a control link, so their wide mode is one canvas unless 3D is on ([com.hayeco.flipspaces.core.spatial.WideCanvas]).
+-            val wideNow = com.hayeco.flipspaces.core.spatial.WideCanvas.isCanvas(
++            val wideNow = !cv10Optics && com.hayeco.flipspaces.core.spatial.WideCanvas.isCanvas(
+                 viewport.surfaceWidth, viewport.surfaceHeight, GlassesDisplayControl.stereoState, GlassesDisplayControl.ultrawideRead,
+                 com.hayeco.flipspaces.core.spatial.WideCanvas.kind(store.model, store.glasses?.productId), store.view,
+             )
+@@ -1905,6 +1909,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
+      * position and size are untouched. Never on the test card, which returns before this.
+      */
+     private fun drawEdgeFade() {
++        if (cv10Optics) return
+         val mode = EdgeFadeSwitch.mode(store)
+         val w = viewport.surfaceWidth
+         val h = viewport.surfaceHeight

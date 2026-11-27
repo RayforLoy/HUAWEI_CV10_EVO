@@ -1,0 +1,36 @@
+From 3480cafb793e50ebedc86a7b3452dc3d92dd5121 Mon Sep 17 00:00:00 2001
+From: Rayfor <liuruifangshiwo@gmail.com>
+Date: Fri, 27 Nov 2026 21:21:58 +0800
+Subject: [PATCH 2/2] Keep CV10 virtual display timing and diagnostics in
+ stereo
+
+---
+ .../kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt b/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt
+index 7a0dc0d..120782f 100644
+--- a/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt
++++ b/app/src/main/kotlin/com/hayeco/flipspaces/spatial/SpaceRenderer.kt
+@@ -634,7 +634,7 @@ class SpaceRenderer(
+         if (rows > 0) displayRows = rows
+         // 0.5.14: a new mode (side by side at 60 Hz after 2D at 120) starts the late draw over
+         // on the GL thread, so nothing measured at the old rate plans the new one.
+-        val timing = com.hayeco.flipspaces.core.spatial.ModeTiming(periodNs, appVsyncOffsetNs, presentationDeadlineNs, rows, StereoLayout.isSbsMode(width, rows))
++        val timing = com.hayeco.flipspaces.core.spatial.ModeTiming(periodNs, appVsyncOffsetNs, presentationDeadlineNs, rows, cv10Optics || StereoLayout.isSbsMode(width, rows))
+         if (timing.changed(modeTiming)) {
+             modeTiming = timing
+             timingChanged = true
+@@ -945,8 +945,10 @@ class SpaceRenderer(
+         pointer.viewport = next.forEye(stereo, activeAdjust())
+         fitLauncher()
+         // 0.5.91: in the glasses' own degrees (the One said the Aura's 54.5 by 32.3 in 0.5.91's first run).
+-        Log.i(tag, screen.line(if (sbs) "their 3D mode" else "2D", store.model.tanPerPx1to1))
+-        if (!cv10Optics) screenHint(screen, sbs)
++        if (!cv10Optics) {
++            Log.i(tag, screen.line(if (sbs) "their 3D mode" else "2D", store.model.tanPerPx1to1))
++            screenHint(screen, sbs)
++        }
+         Log.i(
+             tag,
+             "viewport ${next.surfaceWidth}x${next.surfaceHeight}, display ${next.inputWidth}x${next.inputHeight}: ${stereo.label}" +

@@ -9,6 +9,8 @@
 
 两条协议独立记录在 [CF20 蓝牙协议](cf20-protocol.md) 和 [6DoF 套件协议](kit-6dof-protocol.md)。诊断 APK 与运行时共用发现、配对及报告解码源码。
 
+[原厂手机与 CF20 的控制切换](oem-controller-switching.md)记录来源优先级、断线重连及手机操控显示。[原厂手机操控](oem-phone-controller.md)记录触控分区、手势、姿态和回正。
+
 ## 本机产物
 
 | APK | 包名 | SHA-256 |
