@@ -1,0 +1,289 @@
+{
+  "date_hong_kong": "2026-11-28",
+  "images": {
+    "stock": {
+      "filename": "CV10-cable-C9.53.6-20261126-191643-373516(2).bin",
+      "size": 49152,
+      "sha256": "8e8d9d0df2809f2d3a673519834c83662acc5be6635060d75ef246133956843e",
+      "header_version": "0c095306",
+      "crc16_usb": "D0DB",
+      "discover_modes_vdo": "0x00000C05",
+      "dp_configure_vdo": "0x00000406",
+      "rt9471_final_ibus": "0x1E",
+      "dp_vdo_copy_replay": [
+        "entry=4240 pc=4252 ops=96 A=04 R7=03",
+        "XDATA 2B50: 05 0C 00 00",
+        "entry=0376 pc=0389 ops=151 A=04 R7=29",
+        "XDATA 1026: 06 04 00 00"
+      ]
+    },
+    "charging_bench": {
+      "filename": "CV10-C9.53.6-PD3A-phone2A-bench.bin",
+      "size": 49152,
+      "sha256": "ba4fa99083c69bcacbd44b0a7afcbfcde228b5535752bc47c59cea13fc3d1096",
+      "header_version": "0c095306",
+      "crc16_usb": "7EF0",
+      "discover_modes_vdo": "0x00000C05",
+      "dp_configure_vdo": "0x00000406",
+      "rt9471_final_ibus": "0x1E",
+      "dp_vdo_copy_replay": [
+        "entry=4240 pc=4252 ops=96 A=04 R7=03",
+        "XDATA 2B50: 05 0C 00 00",
+        "entry=0376 pc=0389 ops=151 A=04 R7=29",
+        "XDATA 1026: 06 04 00 00"
+      ]
+    },
+    "pin_c_sample": {
+      "filename": "C9.53.6-cur-4lane-pinC.bin",
+      "size": 49152,
+      "sha256": "c9d88fcc5205bfb6f9aa6cdd93839c0bfb056522f542132d9ef028efe1c129f6",
+      "header_version": "0c095306",
+      "crc16_usb": "A5CB",
+      "discover_modes_vdo": "0x00000405",
+      "dp_configure_vdo": "0x00000406",
+      "rt9471_final_ibus": "0x1E",
+      "dp_vdo_copy_replay": [
+        "entry=4240 pc=4252 ops=96 A=04 R7=03",
+        "XDATA 2B50: 05 04 00 00",
+        "entry=0376 pc=0389 ops=151 A=04 R7=29",
+        "XDATA 1026: 06 04 00 00"
+      ]
+    }
+  },
+  "comparison": {
+    "against_charging_bench": [
+      {
+        "offset": "0xB8C5",
+        "from": "0C",
+        "to": "04"
+      },
+      {
+        "offset": "0xBFFE",
+        "from": "F0",
+        "to": "CB"
+      },
+      {
+        "offset": "0xBFFF",
+        "from": "7E",
+        "to": "A5"
+      }
+    ],
+    "bytes_changed_against_stock": 112,
+    "changed_bytes_by_4k_sector": {
+      "0x6000": 9,
+      "0x9000": 100,
+      "0xB000": 3
+    }
+  },
+  "pd_capability_replay": {
+    "3 A, Accept and PS_RDY": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "260190C8"
+        }
+      ]
+    },
+    "2.4 A, Accept and PS_RDY": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ]
+    },
+    "1.5 A, Accept and PS_RDY": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ]
+    },
+    "5 A advertised, outside exact 3 A gate": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ]
+    },
+    "3 A advertised, no Accept": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ]
+    },
+    "3 A, accepted but waiting for PS_RDY": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019064"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019064"
+        }
+      ]
+    },
+    "No PD upstream": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019064"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019064"
+        }
+      ]
+    },
+    "3 A, previous contract lost": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        },
+        {
+          "header": "4110",
+          "pdo": "26019064"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "260190C8"
+        },
+        {
+          "header": "4110",
+          "pdo": "26019064"
+        }
+      ]
+    },
+    "3 A shadow, lower imported current": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ]
+    },
+    "3 A shadow, non-5 V input": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "2602D096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "2602D096"
+        }
+      ]
+    },
+    "3 A shadow, programmable source object": {
+      "stock": [
+        {
+          "header": "4100",
+          "pdo": "00000000"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4100",
+          "pdo": "00000000"
+        }
+      ]
+    },
+    "3 A offer, 2.5 A negotiated": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ]
+    },
+    "3 A shadow, different selected PDO": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "26019096"
+        }
+      ]
+    },
+    "OEM special branch": {
+      "stock": [
+        {
+          "header": "4110",
+          "pdo": "260190F0"
+        }
+      ],
+      "candidate": [
+        {
+          "header": "4110",
+          "pdo": "260190F0"
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "The stock and supplied binary were read offline. No device was flashed.",
+    "The 8051 replay executed the VDO copy loops and did not perform physical USB-PD negotiation or DP link training.",
+    "Reported power levels are constructed Source_Capabilities, not measured current or a real PD contract."
+  ]
+}
