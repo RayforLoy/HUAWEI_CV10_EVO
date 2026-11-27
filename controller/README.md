@@ -1,5 +1,7 @@
 # Huawei VR Glass 原厂手柄与 6DoF 套件
 
+日常走整合版 **Monado CV10 Preview → 更多选项 → CV10 蓝牙手柄**。下方单独的手柄 APK、协议测试和补丁记录对应早期诊断构建。[整合预发布](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1) · [整合验收](../docs/cv10-unified-runtime.md)
+
 | 硬件 | Monado CV10 | 独立诊断 APK | 验证 |
 | --- | --- | --- | --- |
 | CF20 蓝牙 3DoF 手柄 | 应用内搜索、选用、Android 系统配对、会话自动连接和右手 OpenXR 输入 | GATT 状态、报告频率、原始包、四元数、按键、触控、惯性和电量 | 通过构建和协议测试向量。Fold7 待验收 |

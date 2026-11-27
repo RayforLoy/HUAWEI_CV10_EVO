@@ -20,6 +20,7 @@ git -C ports/Monado_CV10 describe --tags --always
 ## 在新电脑上复现
 
 - **直接安装**　Fold7 使用 [Monado CV10 v0.1.3](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3) 的 arm64-v8a APK。Windows x64 连接线工具在[主项目 v0.1.1](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1)。用 `Get-FileHash <文件> -Algorithm SHA256` 与各自发布页核对。覆盖安装已有运行时需要相同签名。
+- **验证整合功能**　安装 [Monado CV10 v0.1.4-rc.1](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1)，在 Broker 选择 **Monado CV10 Preview**。同一个 APK 提供启动器、Pocket XR 外显、CF20、6DoF 套件和软件瞳距入口。[整合验收与原厂对照](docs/cv10-unified-runtime.md)
 - **构建 Monado**　更新干净工作树后运行 `git submodule update --init --recursive`，再按 [v0.1.3 构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.3/README.md)构建。历史补丁和验证记录位于 `ports/Monado_CV10/history/`。
 - **移植其他应用**：可复用仓库内的 [OpenXR 移植流程](.agents/skills/cv10-openxr-port/SKILL.md)。[Globalka](ports/globalka/README.md) 已实测手机和 Windows 桌面投屏；[PiliPlus](https://github.com/RayforLoy/piliplus_monado/blob/de31798f68501b75c96977e9f64dbaf61944119a/README.md) 已验证手机端播放，仍待其自身的镜片与头动验收。
 - **本地资料**：`.research/` 是本机构建、日志和厂商样本的工作目录，`resources/` 放本地输入和产物，本地研究目录及 .gitignore 列出的个别大文件被 Git 忽略。新电脑上需另外准备所需上游源码、SDK 或样本；目录名和 ADB 序列号以当前机器为准。

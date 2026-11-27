@@ -2,13 +2,13 @@
 
 项目目标是在 Galaxy Z Fold7 上运行标准 OpenXR 应用，由 HUAWEI VR Glass CV10 显示独立双目画面并提供头部 3DoF。Fold7 上未经修改的 Khronos `hello_xr` 已通过双眼镜片实拍、立体视差和眼镜姿态验证。当前使用定制运行时 **Monado CV10**。
 
-[下载 Monado CV10 v0.1.3](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3) · [Windows 连接线工具（主项目 v0.1.1）](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1) · [跨电脑接手指南](AGENTS.md)
+[Monado CV10 整合预发布 v0.1.4-rc.1](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1) · [稳定版 v0.1.3](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3) · [Windows 连接线工具（主项目 v0.1.1）](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1) · [跨电脑接手指南](AGENTS.md)
 
 ## Android 源码与安装包
 
 | 项目 | 源码及构建 | 安装包 |
 | --- | --- | --- |
-| Monado CV10 运行时 | [v0.1.3 源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.3/README.md)，本地位于 `ports/Monado_CV10` | [v0.1.3 发行版](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3)，Fold7 选择 arm64-v8a |
+| Monado CV10 运行时 | [整合预发布源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.4-rc.1/README.md)，本地位于 `ports/Monado_CV10` | [单一 ARM APK](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1)，在 Broker 选择 **Monado CV10 Preview** |
 | PiliPlus Monado 播放器 | [源码与移植提交](https://github.com/RayforLoy/piliplus_monado)，本地位于 `ports/piliplus_monado` | 在子模块内运行 `python build.py`，产物为 `dist/PiliPlus-CV10.apk` |
 | Moonlight XR CV10 串流客户端 | [源码补丁、构建及实机记录](ports/moonlight-xr/README.md) | 构建 `nonRootRelease` 的 arm64-v8a APK。正常退出及重进已使用带卸载修复的 Monado 预览包验证 |
 
@@ -21,7 +21,7 @@ git clone --recurse-submodules --branch codex/cv10-phase1 https://github.com/Ray
 已有工作树更新主分支后运行 `git submodule update --init --recursive`。
 
 
-[2026-11-27 夜间维护交接](docs/cv10-maintenance-20261127.md)
+[整合版实测与原厂实现对照计划](docs/cv10-unified-runtime.md) · [2026-11-27 夜间维护交接](docs/cv10-maintenance-20261127.md)
 
 ## 各会话进度 · 2026-11-26
 
