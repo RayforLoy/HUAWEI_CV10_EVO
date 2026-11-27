@@ -1,0 +1,127 @@
+{
+  "device": "CV10 original mobile cable, standalone Windows WinUSB Billboard 2109:0105",
+  "firmware_version": "C9.49.6",
+  "firmware_sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02",
+  "procedure": "Read the runtime cache before entering maintenance mode. Verify two identical image reads against the reference, return to runtime, then sample without changing the USB or adapter connections.",
+  "time_origin": "The maintenance dump returned with runtime mode confirmed. Times are measured from that return.",
+  "before": {
+    "version_raw": "0c094906",
+    "level_raw": 255,
+    "level_percent": null,
+    "temperature_raw": 65535,
+    "temperature_c": null,
+    "port_status_raw": 131,
+    "charger_info_raw": 105,
+    "charger_model": "RT9471"
+  },
+  "after": [
+    {
+      "at": "2026-11-26T12:35:11.419+08:00",
+      "seconds": 0.047,
+      "version_raw": "0c094906",
+      "level_raw": 1,
+      "level_percent": 1,
+      "temperature_raw": 2982,
+      "temperature_c": 25.1,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T12:35:11.666+08:00",
+      "seconds": 0.297,
+      "version_raw": "0c094906",
+      "level_raw": 1,
+      "level_percent": 1,
+      "temperature_raw": 2982,
+      "temperature_c": 25.1,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T12:35:11.976+08:00",
+      "seconds": 0.61,
+      "version_raw": "0c094906",
+      "level_raw": 1,
+      "level_percent": 1,
+      "temperature_raw": 2982,
+      "temperature_c": 25.1,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T12:35:12.376+08:00",
+      "seconds": 1.0,
+      "version_raw": "0c094906",
+      "level_raw": 1,
+      "level_percent": 1,
+      "temperature_raw": 2982,
+      "temperature_c": 25.1,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T12:35:13.367+08:00",
+      "seconds": 2.0,
+      "version_raw": "0c094906",
+      "level_raw": 1,
+      "level_percent": 1,
+      "temperature_raw": 2982,
+      "temperature_c": 25.1,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T12:35:15.374+08:00",
+      "seconds": 4.0,
+      "version_raw": "0c094906",
+      "level_raw": 1,
+      "level_percent": 1,
+      "temperature_raw": 2982,
+      "temperature_c": 25.1,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T12:35:19.365+08:00",
+      "seconds": 8.0,
+      "version_raw": "0c094906",
+      "level_raw": 50,
+      "level_percent": 50,
+      "temperature_raw": 2982,
+      "temperature_c": 25.1,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T12:35:23.372+08:00",
+      "seconds": 12.0,
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T12:35:29.363+08:00",
+      "seconds": 18.0,
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    }
+  ]
+}

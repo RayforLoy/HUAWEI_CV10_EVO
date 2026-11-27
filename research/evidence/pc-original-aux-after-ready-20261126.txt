@@ -1,0 +1,77 @@
+XHC1, original C9.49.6 phone cable, CV10 .357. Started on host power, with the headset end and XHC1 side held in place; user confirmed inserting the independent PD charger into the auxiliary port first, then covering proximity. The time of electrical VBUS connection was not independently recorded.
+Normal Windows driver features were submitted while controls were up; no charger register access. Host timestamps in HK time, 2026-11-26.
+2026-11-26T12:12:44.446 armed; waiting on CV10 verified Huawei COM18+COM19 on original port
+2026-11-26T12:12:44.471 ports open
+2026-11-26T12:12:44.474 AT^DEVMODEL? b'\r\n^DEVMODEL:CV10\r\n\r\nOK\r\n' await-ms 1.8
+2026-11-26T12:12:44.517 AT^CABLEINFO? b'\r\n^CABLEINFO=10C094906255+280\r\n\r\nOK\r\n' await-ms 42.0
+2026-11-26T12:12:44.520 AT^GETSOURCE? b'\r\n^SOURCE TYPE(0:phone, 1:PC):1\n\r\n\r\nOK\r\n' await-ms 1.8
+2026-11-26T12:12:44.523 HID input/feature lengths 60 128
+2026-11-26T12:12:44.528 enable IMU 04 02 05 02 hid-return 1 error 0
+2026-11-26T12:12:44.853 input 60 010030000f0000001f983db5000000009d5282bed0ba713f1522473e01000000e45468bdf25b21be62a8b33c00000000000000000000000000000000
+2026-11-26T12:12:44.854 IMU device ns 67465222175 accel[g], gyro[deg/s] (-0.2545, 0.9443, 0.1945, -0.0567, -0.1576, 0.0219)
+2026-11-26T12:12:44.855 input 60 010030000f00000030014db500000000c7d180be1a50723faf7d4d3e010000009fd4603cc03f1dbebd29bd3d00000000000000000000000000000000
+2026-11-26T12:12:44.856 IMU device ns 67466232112 accel[g], gyro[deg/s] (-0.2516, 0.9465, 0.2007, 0.0137, -0.1536, 0.0924)
+2026-11-26T12:12:44.857 input 60 010030000f00000051d95cb500000000d6f180becd95723ff4ac4a3e010000007f1c633cb92a66beb14fc53d00000000000000000000000000000000
+2026-11-26T12:12:44.858 IMU device ns 67467270481 accel[g], gyro[deg/s] (-0.2518, 0.9476, 0.1979, 0.0139, -0.2248, 0.0963)
+2026-11-26T12:12:44.859 input packets 3 distinct sensor timestamps 3
+2026-11-26T12:12:44.860 PC source 04 02 0e 01 hid-return 1 error 0
+2026-11-26T12:12:44.866 proximity 04 05 05 04 00 00 00 hid-return 1 error 0
+2026-11-26T12:12:44.869 AT^GETSOURCE? b'\r\n^SOURCE TYPE(0:phone, 1:PC):1\n\r\n\r\nOK\r\n' await-ms 2.3
+2026-11-26T12:12:46.078 heartbeat 33
+2026-11-26T12:12:48.078 heartbeat 34
+2026-11-26T12:12:50.078 heartbeat 35
+2026-11-26T12:12:54.078 heartbeat 37
+2026-11-26T12:13:04.077 heartbeat 42
+2026-11-26T12:13:14.077 heartbeat 47
+2026-11-26T12:13:24.078 heartbeat 52
+2026-11-26T12:13:34.078 heartbeat 57
+2026-11-26T12:13:44.078 heartbeat 62
+2026-11-26T12:13:54.078 heartbeat 67
+2026-11-26T12:14:04.079 heartbeat 72
+2026-11-26T12:14:09.416 proximity 1 0142000001010800020004000100ce03
+2026-11-26T12:14:09.418 AT^SWITCHSCREEN=1 b'\r\n^SWITCHSCREEN=1\r\n\r\nOK\r\n' await-ms 1.7
+2026-11-26T12:14:09.429 serial transition ReadFile failed (PermissionError(13, '拒绝访问。', None, 5))
+2026-11-26T12:14:28.526 finished
+
+Headset hub states (sequentially polled from Windows)
+2026-11-26T12:12:44.626 {'XHC1/1': '2109:2211/1', 'CV10/1': '12d1:1092/1', 'CV10/2': '12d1:107e/1', 'CV10/5': '2109:8888/1'}
+2026-11-26T12:14:09.437 {'XHC1/1': '0000:0000/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/1'}
+2026-11-26T12:14:09.473 {'XHC1/1': '0000:0000/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}
+2026-11-26T12:14:11.959 {'XHC1/1': '0000:0000/9'}
+2026-11-26T12:14:12.032 {'XHC1/1': '2109:2211/1'}
+2026-11-26T12:14:12.500 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}
+2026-11-26T12:14:12.609 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/9'}
+2026-11-26T12:14:12.646 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '2109:8888/1'}
+
+Active test target
+2026-11-26T12:12:45.169 display ('\\\\.\\DISPLAY3', 2560, 0, 3200, 1600, 90)
+
+Camera 1, 640x480, right lens. MJPEG frame count independently checked by sequential decode. Orange and green full-frame fractions measured by the same method as pc-original-pcmode-20261126.txt. Manual inspection of the frame with the most color found no recognizable R or arrow.
+{
+  "video": "transition-121246.avi",
+  "sha256": "b1d4ab234ba8641766f03cb7c63901e8c959b2d82386c250e2209661382e71a2",
+  "header_frames": 3003,
+  "decoded": 3003,
+  "columns": [
+    "orange_fraction",
+    "green_fraction",
+    "bright_fraction"
+  ],
+  "maxima": [
+    0.0002083,
+    0.0,
+    0.00125
+  ],
+  "ordinary_cable_images": {
+    "orange": [
+      0.7158333,
+      0.0,
+      0.7335417
+    ],
+    "green": [
+      0.0,
+      0.70875,
+      0.7100521
+    ]
+  }
+}

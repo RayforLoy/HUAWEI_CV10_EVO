@@ -1,0 +1,64 @@
+2026-11-26 UTC+08. XHC1, host and glasses connected by original phone cable, auxiliary charger disconnected before host attachment.
+Operator confirmed cold reconnection, black eyepiece, blue cable LED lit. Brightness/blink cadence not measured.
+
+[wear.log]
+2026-11-26T11:45:15.872 ports open
+2026-11-26T11:45:15.874 AT^DEVMODEL? b'\r\n^DEVMODEL:CV10\r\n\r\nOK\r\n' await-ms 1.4
+2026-11-26T11:45:15.918 AT^CABLEINFO? b'\r\n^CABLEINFO=10C094906255+280\r\n\r\nOK\r\n' await-ms 43.2
+2026-11-26T11:45:16.443 proximity enable 0 2026-11-26T11:45:16.361 MI03 HID sensormode prox bytes 04050504000000 length 128 accepted 1 error 0 
+2026-11-26T11:45:16.464 proximity 0 01420000010108000200040000004502
+2026-11-26T11:45:33.975 heartbeat 9
+2026-11-26T11:45:34.665 proximity 1 0142000001010800020004000100d002
+2026-11-26T11:45:34.674 AT^SWITCHSCREEN=1 b'' await-ms 7.6
+2026-11-26T11:45:34.676 serial transition ReadFile failed (PermissionError(13, '拒绝访问。', None, 5))
+
+[root.log]
+2026-11-26T11:45:15.790 {'XHC1/1': '2109:2211/1', 'CV10/1': '12d1:1092/1', 'CV10/2': '12d1:107e/1', 'CV10/5': '2109:8888/1'}
+2026-11-26T11:45:34.693 {'XHC1/1': '0000:0000/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}
+2026-11-26T11:45:37.291 {'XHC1/1': '2109:2211/1'}
+2026-11-26T11:45:38.055 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/9', 'CV10/2': '0000:0000/0', 'CV10/5': '2109:8888/1'}
+
+[capture.log]
+2026-11-26T11:45:17.718 display ('\\\\.\\DISPLAY3', 2560, 0, 3200, 1600, 90)
+2026-11-26T11:45:40.583 cam [0.0, 0.0, 0.0]
+
+[ddc.log]
+2026-11-26T11:45:16.117 0 00ffffffffffff0022f6030001000000 0
+2026-11-26T11:45:36.451 0 00000000000000000000000000000000 145
+
+[edid-full-after.txt]
+2026-11-26T11:46:29.675314 read without register 0 status 0
+align 193 header 00ffffffffffff0022f6 base checksum 0 monitor True base digest 1f9e2d197eaedb17e38087725e5424a54bdcc20c21f6bfc3a4dd0b82313aa2cc ext count 1 ext tag/checksum 0203 0
+2026-11-26T11:46:29.683313 read without register 1 status 0
+align 193 header 00ffffffffffff0022f6 base checksum 0 monitor True base digest 1f9e2d197eaedb17e38087725e5424a54bdcc20c21f6bfc3a4dd0b82313aa2cc ext count 1 ext tag/checksum 0203 0
+2026-11-26T11:46:29.691379 read without register 2 status 0
+align 193 header 00ffffffffffff0022f6 base checksum 0 monitor True base digest 1f9e2d197eaedb17e38087725e5424a54bdcc20c21f6bfc3a4dd0b82313aa2cc ext count 1 ext tag/checksum 0203 0
+
+[hub-after.txt]
+2026-11-26T11:46:08.329554 \\?\USB#VID_2109&PID_2211#6&287aff
+port 1 vid/pid 0000:0000 status 2
+port 2 vid/pid 0000:0000 status 0
+port 5 vid/pid 2109:8888 status 1
+
+[failed-port.txt]
+Host observed 2026-11-26T11:47:22.8989562+08:00
+未知 USB 设备(设备描述符请求失败)
+DEVPKEY_Device_LocationInfo Port_#0001.Hub_#0014
+DEVPKEY_Device_ProblemCode 43
+DEVPKEY_Device_HardwareIds USB\DEVICE_DESCRIPTOR_FAILURE
+
+[mccs-after.txt]
+2026-11-26T11:46:54.034006 \\.\DISPLAY3 ['MONITOR', 'HWV0003']
+capabilities length 0 0 error 0xc0262582
+GetVCP 0xd6 error 0xc0262582
+GetVCP 0x10 error 0xc0262582
+
+[recovery-port1.txt]
+2026-11-26T11:47:52.578952 CV10 port 1 status 2
+CyclePort Win32 error 31
+
+Optics: transition-114010.avi SHA256 3e4e49cb37905a5e30248dd3bc5129771e10be5519cf4e873aec24da37c05498
+OpenCV reported zero indexed frames in the unfinalized MJPEG file. Sequential decode returned 9,733 frames. Zero decoded frames had a pixel with abs(red-green)>35 in the (x=120:610,y=40:420) right-lens ROI.
+
+Three sequential 256-byte reads after dropping the headset control channel matched both Windows EDID reference blocks after circular alignment.
+EDID base + CTA, aligned SHA256 55f1e31462b6905922e91b7fa3732f84367175c3319a692a06529e7d23a629fb

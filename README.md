@@ -60,8 +60,13 @@ git clone --recurse-submodules --branch codex/cv10-phase1 https://github.com/Ray
 - [Android 显示测试程序](probe/Probe.java) 用系统 Presentation 接口向外屏提交左右眼测试图。Windows 构建命令为 `python probe/build.py`，输出在 `.research/probe/cv10-display.apk`。同一程序可经 USB 读取 CV10 型号、发送开屏命令及短时采集头显 HID 报告。需要 JDK、Android SDK Platform 36 和 Build-Tools 36.0.0。用 `adb -s <设备> install -r .research/probe/cv10-display.apk` 安装。解锁手机并打开「CV10 显示测试」，按屏幕名选择目标。通过 ADB 启动时可用 `adb -s <设备> shell am start --display 0 -n org.cv10.displayprobe/.Probe --ez auto_cv10 true` 在已识别的 HUAWEIAV03 上自动显示。
 - [Fold7 点亮手册](docs/fold7-bringup.md)、[原厂 APK 分析](docs/apk-research.md)及[样本清单](research/sources.json)保留复测步骤和前期证据。
 
-## 本地样本与发布范围
+## 资料归档与发布规则
 
-`resources/华为VR/` 为用户提供的可用软件集。01 至 06 逐一匹配样本清单；07 的 SHA-256 为 `fd363dbea8f8413e5de0b984e3151432e27fc788e579b72ec542a2a48f02882d`，与 QQ 包内手动提取的服务相同。P40 装机服务版本另见真机记录。QQ 的 Globalka 为 `com.samrat.vrglassbridge 0.14-installer`，可作为外屏参考；Wolvic 为 arm64 浏览器客户端，橙子 VR 仅带 ARMv7 原生库。手柄应用、模型与 PC 助手用于对应外设对照。
+| 资料 | 存放及获取方式 |
+| --- | --- |
+| 固件与烧录工具 | 线盒原版和测试镜像归入 `firmware_update/firmware/`。Windows、Android 烧录工具放在 `firmware_update/tools/`，厂商头显升级套件保留在 `firmware_update/official/`。按型号、CRC 和 SHA-256 选择文件。[固件与升级工具](docs/firmware-update.md) |
+| 文档和参考资料 | 指南、研究报告放在 `docs/`。PDF、Office 文档与升级日志放在 `docs/reference/`，保留原文件名。升级程序自带的许可和运行文件随套件保存。 |
+| Android 参考安装包 | 从设备提取的应用及群共享的独立 APK 作为 GitHub Release 附件。提取包命名为 `<原文件名去掉扩展名>_extracted.apk`，先按原文件字节计算 MD5 去重，再以 SHA-256 核对下载结果。群共享包保留普通 `.apk` 后缀。项目自建的 Android 烧录工具归固件目录。[APK 下载与校验清单](docs/apk-archive.md) |
+| 其他工具和附件 | 桌面发送端和定制 Globalka 客户端放在 `tools/globalka/`，外设助手、手柄模型及配套程序放在 `tools/accessories/`。 |
 
-项目拟以 GPL 发布原创代码。第三方 APK、厂商升级器、固件和原始真机日志保存在 Git 忽略的本地目录。GPL 允许下游商业分发；如需发布受售后非营利条件约束的材料，其授权范围须另行确认。[GNU GPL FAQ](https://www.gnu.org/licenses/gpl-faq.html#DoesTheGPLAllowMoney)
+`resources/` 仅作临时收件目录，整理完保持为空，整个目录由 Git 忽略。新资料按上表归档后再更新链接、构建脚本和校验清单。原始本机快照和未分发的厂商样本保留在本地。项目原创代码与第三方附件各自沿用其许可。

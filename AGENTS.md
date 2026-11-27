@@ -23,7 +23,7 @@ git -C ports/Monado_CV10 describe --tags --always
 - **验证整合功能**　安装 [Monado CV10 v0.1.4-rc.1](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1)，在 Broker 选择 **Monado CV10 Preview**。同一个 APK 提供启动器、Pocket XR 外显、CF20、6DoF 套件和软件瞳距入口。[整合验收与原厂对照](docs/cv10-unified-runtime.md)
 - **构建 Monado**　更新干净工作树后运行 `git submodule update --init --recursive`，再按 [v0.1.3 构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.3/README.md)构建。历史补丁和验证记录位于 `ports/Monado_CV10/history/`。
 - **移植其他应用**：可复用仓库内的 [OpenXR 移植流程](.agents/skills/cv10-openxr-port/SKILL.md)。[Globalka](ports/globalka/README.md) 已实测手机和 Windows 桌面投屏；[PiliPlus](https://github.com/RayforLoy/piliplus_monado/blob/de31798f68501b75c96977e9f64dbaf61944119a/README.md) 已验证手机端播放，仍待其自身的镜片与头动验收。
-- **本地资料**：`.research/` 是本机构建、日志和厂商样本的工作目录，`resources/` 放本地输入和产物，本地研究目录及 .gitignore 列出的个别大文件被 Git 忽略。新电脑上需另外准备所需上游源码、SDK 或样本；目录名和 ADB 序列号以当前机器为准。
+- **本地资料**：`.research/` 是本机构建、日志和厂商样本的工作目录，`resources/` 为 Git 忽略的临时收件目录，整理后保持为空。固件与烧录工具、文档、APK 附件和其余工具按 [README 归档规则](README.md#资料归档与发布规则)存放。新电脑上需另外准备所需上游源码、SDK 或样本；目录名和 ADB 序列号以当前机器为准。
 
 ## 设备与验收
 
@@ -45,4 +45,4 @@ Fold7 接原厂线后可从手机桌面启动原版 `hello_xr`。记录接线、
 
 Windows 连接线工具面向单独接入电脑的原厂手机线。早期对照使用原厂 C9.52.6 和 C9.49.6，均在 Fold7 复现黑屏，回刷后断电双读与原备份一致。后续 2 A 镜像仍可报告原版本字段，交接时应另记线盒使用的镜像及其来源。详见[连接线实测](docs/cable.md)、[头显固件研究](docs/firmware-resource-analysis.md)及[早期手机、电脑与镜片对照](docs/cv10-original-cable-overnight-20261126.md)。
 
-发布时把标签固定到已推送的提交，核对 APK 包名、签名及两个附件的 SHA-256。仓库共享补丁、工具源码和筛选后的证据；发布附件使用项目构建的运行时和诊断工具，厂商样本保留在本地。
+发布时把标签固定到已推送的提交。运行时与诊断工具的版本发布核对包名、签名和附件 SHA-256。单独的 APK 资料归档按 [README 规则](README.md#资料归档与发布规则)发布提取包和群共享包，按 MD5 去重并记录 SHA-256。其余本地厂商样本按固件索引留存。

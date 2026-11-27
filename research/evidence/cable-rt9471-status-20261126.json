@@ -1,0 +1,608 @@
+{
+  "date": "2026-11-26",
+  "timezone": "Asia/Hong_Kong",
+  "setup": "Same CV10 original phone cable on Windows with user-supplied external 5 V; glasses not enumerated. Kept connections in place throughout. No cell-voltage, current or physical temperature measurement.",
+  "baseline": {
+    "start": "2026-11-26T13:00:39.754+08:00",
+    "end": "2026-11-26T13:01:17.576+08:00",
+    "groups": 451,
+    "counts": {
+      "shared": {
+        "2": 451
+      },
+      "protect": {
+        "0": 451
+      },
+      "flag9": {
+        "192": 451
+      },
+      "last_rx_cache": {
+        "0": 423,
+        "70": 27,
+        "64": 1
+      },
+      "level": {
+        "255": 451
+      },
+      "temp_hi": {
+        "255": 451
+      },
+      "temp_lo": {
+        "255": 451
+      },
+      "charger_info": {
+        "105": 451
+      },
+      "port": {
+        "131": 451
+      },
+      "shared_after": {
+        "2": 450,
+        "0": 1
+      }
+    },
+    "rapid_shared_cache": {
+      "start": "2026-11-26T13:01:44.931+08:00",
+      "samples": 10638,
+      "counts": {
+        "2": 10636,
+        "255": 2
+      },
+      "transitions": [
+        [
+          0.078,
+          1,
+          2
+        ],
+        [
+          10.89,
+          3605,
+          255
+        ],
+        [
+          10.89,
+          3606,
+          2
+        ],
+        [
+          25.906,
+          8607,
+          255
+        ],
+        [
+          25.906,
+          8608,
+          2
+        ]
+      ]
+    }
+  },
+  "flash": {
+    "candidate": {
+      "bytes": 49152,
+      "version_raw": "0c094906",
+      "header_vid_pid": "2109:0105",
+      "crc16_usb": "d64b",
+      "sha256": "1784e234c95d78c970123679523771792c8fa9d4ad021426abfcbd9c7b3768f7"
+    },
+    "differing_sectors": 2,
+    "programmed_sectors": 2,
+    "runtime_version": "0c094906"
+  },
+  "method": "One existing diagnostic read per poll of I2C slave 0x53, using only live non-clearing configuration/status registers. Tagged low and high nibbles originate in consecutive (~5 s apart) reads. Each ordered set starts with INFO=69. No change to charger policy or the number of bus reads.",
+  "tagged_samples": [
+    {
+      "at": "2026-11-26T13:05:43.925+08:00",
+      "tag": 7,
+      "nibble": 14,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:05:45.967+08:00",
+      "tag": 8,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:05:51.035+08:00",
+      "tag": 9,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:05:56.104+08:00",
+      "tag": 10,
+      "nibble": 2,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:00.972+08:00",
+      "tag": 11,
+      "nibble": 0,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:06.041+08:00",
+      "tag": 12,
+      "nibble": 0,
+      "register": 19,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:11.109+08:00",
+      "tag": 13,
+      "nibble": 0,
+      "register": 19,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:15.977+08:00",
+      "tag": 14,
+      "nibble": 8,
+      "register": 12,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:21.046+08:00",
+      "tag": 15,
+      "nibble": 11,
+      "register": 12,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:26.116+08:00",
+      "tag": 0,
+      "nibble": 9,
+      "register": 11,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:31.186+08:00",
+      "tag": 1,
+      "nibble": 6,
+      "register": 11,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:36.053+08:00",
+      "tag": 2,
+      "nibble": 0,
+      "register": 2,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:41.121+08:00",
+      "tag": 3,
+      "nibble": 4,
+      "register": 2,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:46.189+08:00",
+      "tag": 4,
+      "nibble": 1,
+      "register": 15,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:51.056+08:00",
+      "tag": 5,
+      "nibble": 15,
+      "register": 15,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:06:56.123+08:00",
+      "tag": 6,
+      "nibble": 0,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:01.192+08:00",
+      "tag": 7,
+      "nibble": 12,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:06.058+08:00",
+      "tag": 8,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:11.126+08:00",
+      "tag": 9,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:16.194+08:00",
+      "tag": 10,
+      "nibble": 2,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:21.060+08:00",
+      "tag": 11,
+      "nibble": 0,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:26.129+08:00",
+      "tag": 12,
+      "nibble": 0,
+      "register": 19,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:31.196+08:00",
+      "tag": 13,
+      "nibble": 0,
+      "register": 19,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:36.063+08:00",
+      "tag": 14,
+      "nibble": 8,
+      "register": 12,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:41.130+08:00",
+      "tag": 15,
+      "nibble": 11,
+      "register": 12,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:46.199+08:00",
+      "tag": 0,
+      "nibble": 9,
+      "register": 11,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:51.065+08:00",
+      "tag": 1,
+      "nibble": 6,
+      "register": 11,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:07:56.134+08:00",
+      "tag": 2,
+      "nibble": 0,
+      "register": 2,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:01.202+08:00",
+      "tag": 3,
+      "nibble": 4,
+      "register": 2,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:06.069+08:00",
+      "tag": 4,
+      "nibble": 1,
+      "register": 15,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:11.136+08:00",
+      "tag": 5,
+      "nibble": 15,
+      "register": 15,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:16.204+08:00",
+      "tag": 6,
+      "nibble": 0,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:21.274+08:00",
+      "tag": 7,
+      "nibble": 12,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:26.140+08:00",
+      "tag": 8,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:31.208+08:00",
+      "tag": 9,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:36.276+08:00",
+      "tag": 10,
+      "nibble": 2,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:41.143+08:00",
+      "tag": 11,
+      "nibble": 0,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:46.209+08:00",
+      "tag": 12,
+      "nibble": 0,
+      "register": 19,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:51.277+08:00",
+      "tag": 13,
+      "nibble": 0,
+      "register": 19,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:08:56.143+08:00",
+      "tag": 14,
+      "nibble": 8,
+      "register": 12,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T13:09:01.211+08:00",
+      "tag": 15,
+      "nibble": 11,
+      "register": 12,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    }
+  ],
+  "complete_sets": [
+    {
+      "0B": {
+        "raw": "69",
+        "low_at": "2026-11-26T13:06:26.116+08:00",
+        "high_at": "2026-11-26T13:06:31.186+08:00"
+      },
+      "02": {
+        "raw": "40",
+        "low_at": "2026-11-26T13:06:36.053+08:00",
+        "high_at": "2026-11-26T13:06:41.121+08:00"
+      },
+      "0F": {
+        "raw": "F1",
+        "low_at": "2026-11-26T13:06:46.189+08:00",
+        "high_at": "2026-11-26T13:06:51.056+08:00"
+      },
+      "10": {
+        "raw": "C0",
+        "low_at": "2026-11-26T13:06:56.123+08:00",
+        "high_at": "2026-11-26T13:07:01.192+08:00"
+      },
+      "11": {
+        "raw": "00",
+        "low_at": "2026-11-26T13:07:06.058+08:00",
+        "high_at": "2026-11-26T13:07:11.126+08:00"
+      },
+      "12": {
+        "raw": "02",
+        "low_at": "2026-11-26T13:07:16.194+08:00",
+        "high_at": "2026-11-26T13:07:21.060+08:00"
+      },
+      "13": {
+        "raw": "00",
+        "low_at": "2026-11-26T13:07:26.129+08:00",
+        "high_at": "2026-11-26T13:07:31.196+08:00"
+      },
+      "0C": {
+        "raw": "B8",
+        "low_at": "2026-11-26T13:07:36.063+08:00",
+        "high_at": "2026-11-26T13:07:41.130+08:00"
+      }
+    },
+    {
+      "0B": {
+        "raw": "69",
+        "low_at": "2026-11-26T13:07:46.199+08:00",
+        "high_at": "2026-11-26T13:07:51.065+08:00"
+      },
+      "02": {
+        "raw": "40",
+        "low_at": "2026-11-26T13:07:56.134+08:00",
+        "high_at": "2026-11-26T13:08:01.202+08:00"
+      },
+      "0F": {
+        "raw": "F1",
+        "low_at": "2026-11-26T13:08:06.069+08:00",
+        "high_at": "2026-11-26T13:08:11.136+08:00"
+      },
+      "10": {
+        "raw": "C0",
+        "low_at": "2026-11-26T13:08:16.204+08:00",
+        "high_at": "2026-11-26T13:08:21.274+08:00"
+      },
+      "11": {
+        "raw": "00",
+        "low_at": "2026-11-26T13:08:26.140+08:00",
+        "high_at": "2026-11-26T13:08:31.208+08:00"
+      },
+      "12": {
+        "raw": "02",
+        "low_at": "2026-11-26T13:08:36.276+08:00",
+        "high_at": "2026-11-26T13:08:41.143+08:00"
+      },
+      "13": {
+        "raw": "00",
+        "low_at": "2026-11-26T13:08:46.209+08:00",
+        "high_at": "2026-11-26T13:08:51.277+08:00"
+      },
+      "0C": {
+        "raw": "B8",
+        "low_at": "2026-11-26T13:08:56.143+08:00",
+        "high_at": "2026-11-26T13:09:01.211+08:00"
+      }
+    }
+  ],
+  "stock_restored": {
+    "output": "D:\\HUAWEI_CV10_EVO\\.research\\stock-rt9471-20261126\\after.bin",
+    "independent_reads": 2,
+    "bytes": 49152,
+    "version_raw": "0c094906",
+    "header_vid_pid": "2109:0105",
+    "crc16_usb": "1a69",
+    "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+  },
+  "stock_compare_byte_for_byte": true,
+  "screenshot": {
+    "version": "c.9.52.6",
+    "size_display": "49.15 KB",
+    "progress_percent": 77,
+    "text": "更新了数据线与华为散热背夹的适配问题。",
+    "sha256": "919b31dcc878fab70f30e47610d758433504ce2d255756ea70051146c1e4b979"
+  }
+}

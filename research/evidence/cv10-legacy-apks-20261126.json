@@ -1,0 +1,136 @@
+{
+  "inspection_date": "2026-11-26",
+  "local_directory": ".research/legacy-vr/verified-six",
+  "scope": "Per-package research samples from different dates. Same-release compatibility on CV10 has not been verified.",
+  "rea_cli_version": "6.7.0",
+  "jadx_headless_version": "0.7.1",
+  "jadx_headless_jar_sha256": "6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75",
+  "items": [
+    {
+      "slot": "01",
+      "component": "SDK",
+      "package": "com.huawei.hvrsdkserverapp",
+      "version_name": "3.5.0.68",
+      "version_code": 35068,
+      "sample_kind": "historical",
+      "file": "01-com.huawei.hvrsdkserverapp-3.5.0.68.apk",
+      "bytes": 66416668,
+      "sha256": "5c60378ce4229e436fc6a929d4ad2fd362818faadead22008a3eae6dd0fe3547",
+      "signer_cert_sha256": "1e3eee2a88a6df75fb4af56adc8373bb818f3cb90a4935c7821582b8cebb694c",
+      "apk_signature_schemes_verified": [
+        "v2"
+      ],
+      "p40_reference_signer_sha256": "1e3eee2a88a6df75fb4af56adc8373bb818f3cb90a4935c7821582b8cebb694c",
+      "same_signer_as_p40_reference": true,
+      "public_source": "https://developer.huawei.com/consumer/cn/doc/graphics-Library/unity-sdk-download-0000001142315529/",
+      "rea_package_evidence_id": "ev_8738be186dbbcdfc1a614aa35e2bb9984712d8a1fe986ea71fd43eda8242ef85",
+      "public_download_entry": "https://appfile1.hicloud.com/FileServer/getFile/app/011/111/111/0000000000011111111.20211021191700.38494686162974099647973174714584:20471231000000:0001:348D852821A0C966564C87ED5ADBEA5A470C5A24536A9A32BD0B3973E7B74CC0.zip?needInitFileName=true",
+      "archive_member": "3.5.0.68.apk",
+      "appgallery_product": "https://appgallery.huawei.com/app/C100137735"
+    },
+    {
+      "slot": "02",
+      "component": "华为 VR 应用市场",
+      "package": "com.huawei.appmarket.vr",
+      "version_name": "12.2.1.301",
+      "version_code": 120201301,
+      "sample_kind": "p40-baseline",
+      "file": "02-com.huawei.appmarket.vr-12.2.1.301.apk",
+      "bytes": 69766327,
+      "sha256": "0b67aea288b8aca30388b2d2931d2b08172275159732da84258b51f59b2250d6",
+      "signer_cert_sha256": "a9436644e0bd71ff512c63839f8ac27114399f36956958688555dfcc63257ede",
+      "apk_signature_schemes_verified": [
+        "v2"
+      ],
+      "p40_reference_signer_sha256": "a9436644e0bd71ff512c63839f8ac27114399f36956958688555dfcc63257ede",
+      "same_signer_as_p40_reference": true,
+      "public_source": "https://github.com/EnYaoJingYa/huawei-vr-compat/tree/03bf1012493fd821f38114010e4b21fe20f1d4f1",
+      "rea_package_evidence_id": "ev_fe7df900a20a0694feaa227f647cd876aa29a3961567495a4faf1a8a3f4cf9da",
+      "public_download_entry": "https://raw.githubusercontent.com/EnYaoJingYa/huawei-vr-compat/03bf1012493fd821f38114010e4b21fe20f1d4f1/%E5%8E%9F%E5%8C%85/com.huawei.appmarket.vr.apk"
+    },
+    {
+      "slot": "03",
+      "component": "VR 视频",
+      "package": "com.huawei.himovie.vr",
+      "version_name": "8.0.4.303",
+      "version_code": 80004303,
+      "sample_kind": "historical",
+      "file": "03-com.huawei.himovie.vr-8.0.4.303.apk",
+      "bytes": 131341480,
+      "sha256": "fd9de29eb5128fa3ee4307c8eca65eb8c1cb21aee04c35e217f598a0c63f14a3",
+      "signer_cert_sha256": "1e3eee2a88a6df75fb4af56adc8373bb818f3cb90a4935c7821582b8cebb694c",
+      "apk_signature_schemes_verified": [
+        "v1",
+        "v2"
+      ],
+      "p40_reference_signer_sha256": "186cffecf55fe04654c3053947ac6572b9fff218723ab2883edd94f797b218f7",
+      "same_signer_as_p40_reference": false,
+      "public_source": "https://m.jb51.net/softs/656057.html",
+      "rea_package_evidence_id": "ev_7c7423e1a9ee2b6034153d7e46017a41f445ed78d14bff89f448f9665e191a03",
+      "appgallery_product": "https://appgallery.huawei.com/app/C100197257"
+    },
+    {
+      "slot": "04",
+      "component": "VR 手柄",
+      "package": "com.huawei.vrhandle",
+      "version_name": "10.0.0.374",
+      "version_code": 100000374,
+      "sample_kind": "historical",
+      "file": "04-com.huawei.vrhandle-10.0.0.374.apk",
+      "bytes": 4924053,
+      "sha256": "f360f4d7edafb99d66fdc98193a1bbf99a7d85c89b9e91231e70f24e008e3d43",
+      "signer_cert_sha256": "6566026fa4e242f3af01416a835499a2f77c2fe1c890e09ebdf5926d775ec8dc",
+      "apk_signature_schemes_verified": [
+        "v2"
+      ],
+      "p40_reference_signer_sha256": "6566026fa4e242f3af01416a835499a2f77c2fe1c890e09ebdf5926d775ec8dc",
+      "same_signer_as_p40_reference": true,
+      "public_source": "https://www.ddooo.com/softdown/160818.htm",
+      "rea_package_evidence_id": "ev_7c22ceef3cd500707adc49e9b4e1262cd29a68abbb084c8cfc41077ad17d92e2",
+      "public_download_entry": "https://api.ddooo.com/down/160818",
+      "appgallery_product": "https://appgallery.huawei.com/app/C100145747"
+    },
+    {
+      "slot": "05",
+      "component": "VR 桌面",
+      "package": "com.huawei.vrlauncherx",
+      "version_name": "11.1.0.337",
+      "version_code": 110100337,
+      "sample_kind": "p40-baseline",
+      "file": "05-com.huawei.vrlauncherx-11.1.0.337.apk",
+      "bytes": 59024225,
+      "sha256": "1e91f00d596c636c3f52dddc494ee6b745cdf90bb3a0838ff203f9ae54b92dd3",
+      "signer_cert_sha256": "fee6bf68c201ce94527d3ef0c67175c6b25221b29736f7ca241b24ff7c6e163b",
+      "apk_signature_schemes_verified": [
+        "v2"
+      ],
+      "p40_reference_signer_sha256": "fee6bf68c201ce94527d3ef0c67175c6b25221b29736f7ca241b24ff7c6e163b",
+      "same_signer_as_p40_reference": true,
+      "public_source": "https://github.com/EnYaoJingYa/huawei-vr-compat/tree/03bf1012493fd821f38114010e4b21fe20f1d4f1",
+      "rea_package_evidence_id": "ev_22d5783f487f7c51c6099da7278654034ece39bb188bb546aae6beffa92dbc4e",
+      "public_download_entry": "https://raw.githubusercontent.com/EnYaoJingYa/huawei-vr-compat/03bf1012493fd821f38114010e4b21fe20f1d4f1/%E5%8E%9F%E5%8C%85/com.huawei.vrlauncherx.apk",
+      "appgallery_product": "https://appgallery.huawei.com/app/C100136865"
+    },
+    {
+      "slot": "06",
+      "component": "VR 手机投屏",
+      "package": "com.huawei.vrvirtualscreen",
+      "version_name": "9.1.0.301",
+      "version_code": 90100301,
+      "sample_kind": "historical",
+      "file": "06-com.huawei.vrvirtualscreen-9.1.0.301.apk",
+      "bytes": 1910073,
+      "sha256": "00d69d873b087a0fcc85538f83fcc12d2521d8f26656d9f39977b1b361ce1a2a",
+      "signer_cert_sha256": "1e3eee2a88a6df75fb4af56adc8373bb818f3cb90a4935c7821582b8cebb694c",
+      "apk_signature_schemes_verified": [
+        "v2"
+      ],
+      "p40_reference_signer_sha256": "124e5c23e2e4335d56bb3589cd3734118403a82b883cfab453c5272b978db079",
+      "same_signer_as_p40_reference": false,
+      "public_source": "https://m.itmop.com/downinfo/342662.html",
+      "rea_package_evidence_id": "ev_c1a9a20159d49adc99a9c4fc8f1d8d21e01131f8fcc62aae9c13cbba8eb4554c",
+      "public_download_entry": "https://api.itmop.com/down/342662b3",
+      "appgallery_product": "https://appgallery.huawei.com/app/C100354873"
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "sample_type": "VL105 cable application image. C9.53.6 supplied by owner as an official service version; independent vendor signature or OTA digest not available in this comparison.",
+  "C9.52.6": {
+    "bytes": 49152,
+    "version_raw": "0c095206",
+    "header_vid_pid": "2109:0105",
+    "crc16_usb": "2dcb",
+    "sha256": "1ebf1217d0dda526f64ed3b15504db409fbdf25bc866f0fbebb874adcd00485a"
+  },
+  "C9.53.6": {
+    "bytes": 49152,
+    "version_raw": "0c095306",
+    "header_vid_pid": "2109:0105",
+    "crc16_usb": "d0db",
+    "sha256": "8e8d9d0df2809f2d3a673519834c83662acc5be6635060d75ef246133956843e"
+  },
+  "byte_differences_at_equal_offset": 35271,
+  "new_image_id_string": "idh3559_A0______idc0009_ids0006_",
+  "emulator": "emu8051; execute original code. Init starts at ADD2, low-level I2C calls and delay stubbed. No I2C status bit is raised in init fixture. Gauge sampling starts at A188 and stops at A1F7, with SOC and temperature reads injected, INFO 69, initial FUNCTION 00 or 01.",
+  "charger_init_writes_hex": {
+    "52": [
+      "03=14",
+      "03=14",
+      "03=14",
+      "07=32",
+      "08=09",
+      "0A=02",
+      "06=09",
+      "01=C0"
+    ],
+    "53": [
+      "03=14",
+      "03=14",
+      "03=1E",
+      "07=32",
+      "08=09",
+      "0A=02",
+      "06=0D",
+      "01=C0",
+      "A0=69",
+      "A1=96",
+      "46=26",
+      "A0=00"
+    ]
+  },
+  "gauge_threshold_both_images": [
+    {
+      "soc": "00",
+      "temperature_raw": "FFFF",
+      "before": 0,
+      "after": 1,
+      "function_writes": 1
+    },
+    {
+      "soc": "00",
+      "temperature_raw": "FFFF",
+      "before": 1,
+      "after": 1,
+      "function_writes": 0
+    },
+    {
+      "soc": "27",
+      "temperature_raw": "FFFF",
+      "before": 0,
+      "after": 1,
+      "function_writes": 1
+    },
+    {
+      "soc": "27",
+      "temperature_raw": "FFFF",
+      "before": 1,
+      "after": 1,
+      "function_writes": 0
+    },
+    {
+      "soc": "28",
+      "temperature_raw": "FFFF",
+      "before": 0,
+      "after": 0,
+      "function_writes": 0
+    },
+    {
+      "soc": "28",
+      "temperature_raw": "FFFF",
+      "before": 1,
+      "after": 1,
+      "function_writes": 0
+    },
+    {
+      "soc": "3C",
+      "temperature_raw": "FFFF",
+      "before": 0,
+      "after": 0,
+      "function_writes": 0
+    },
+    {
+      "soc": "3C",
+      "temperature_raw": "FFFF",
+      "before": 1,
+      "after": 1,
+      "function_writes": 0
+    },
+    {
+      "soc": "3D",
+      "temperature_raw": "FFFF",
+      "before": 0,
+      "after": 0,
+      "function_writes": 0
+    },
+    {
+      "soc": "3D",
+      "temperature_raw": "FFFF",
+      "before": 1,
+      "after": 0,
+      "function_writes": 1
+    },
+    {
+      "soc": "64",
+      "temperature_raw": "FFFF",
+      "before": 0,
+      "after": 0,
+      "function_writes": 0
+    },
+    {
+      "soc": "64",
+      "temperature_raw": "FFFF",
+      "before": 1,
+      "after": 0,
+      "function_writes": 1
+    },
+    {
+      "soc": "FF",
+      "temperature_raw": "FFFF",
+      "before": 0,
+      "after": 0,
+      "function_writes": 0
+    },
+    {
+      "soc": "FF",
+      "temperature_raw": "FFFF",
+      "before": 1,
+      "after": 0,
+      "function_writes": 1
+    }
+  ],
+  "pd_entry_points_hex": {
+    "import": [
+      "65EE",
+      "6613"
+    ],
+    "advertise": [
+      "5BFE",
+      "5C23"
+    ],
+    "request": [
+      "0EBE",
+      "0EBE"
+    ],
+    "port2": [
+      "6459",
+      "647E"
+    ]
+  },
+  "pd_replay_both_images": [
+    "fallback  header=41 10  PDOs=26019064 (5000 mV, 1000 mA)",
+    "input NDO=3, policy count after import=1, first entry=0000000064012C",
+    "stock upstream 5 V + 9 V + PPS  header=41 10  PDOs=26019096 (5000 mV, 1500 mA)",
+    "input NDO=3, policy count after import=1, first entry=0000000064012C",
+    "upstream initial Request  header=42 10  RDO=1304B12C",
+    "port 2 fallback  header=41 10  PDO=2601905A",
+    "input NDO=3, policy count after import=1, first entry=0000000064012C",
+    "counterfactual policy table seeded with 9 V and PPS  header=41 20  PDOs=26019096 (5000 mV, 1500 mA), 0002D12C (9000 mV, 3000 mA)"
+  ],
+  "hardware_tested": false
+}

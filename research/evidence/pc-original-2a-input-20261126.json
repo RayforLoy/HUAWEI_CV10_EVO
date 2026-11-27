@@ -1,0 +1,514 @@
+{
+  "date": "2026-11-26",
+  "timezone": "Asia/Hong_Kong; root.log timestamps are local, without an explicit offset.",
+  "setup": "Windows XHC1, original CV10 mobile cable, auxiliary adapter labeled 5 V / 2 A. Same PC port and display timing as preceding 1 A PC trials. USB camera 0 aligned to the right lens by the operator.",
+  "board_rating_source": {
+    "source": "Operator reported figures from a controlled board document. Not independently inspected.",
+    "input_node_continuous_A": 2,
+    "input_node_peak_A": 3,
+    "peak_duration_ms": 500
+  },
+  "change": "Verified C9.49.6 stock with the input monitor previously used at 1 A. Relative to that monitor, only the IAICR initialization value changes outside the image CRC. 2.00 A fixed limit; other power-control decisions remain OEM. The 3 A peak rating was not used.",
+  "firmware_and_readback": [
+    {
+      "at": "2026-11-26T15:09:59.482+08:00",
+      "event": "pretest-runtime",
+      "runtime": {
+        "version_raw": "0c094906",
+        "level_raw": 255,
+        "level_percent": null,
+        "temperature_raw": 65535,
+        "temperature_c": null,
+        "port_status_raw": 131,
+        "charger_info_raw": 105,
+        "charger_model": "RT9471"
+      }
+    },
+    {
+      "at": "2026-11-26T15:10:15.067+08:00",
+      "event": "stock-double-read",
+      "image": {
+        "bytes": 49152,
+        "version_raw": "0c094906",
+        "header_vid_pid": "2109:0105",
+        "crc16_usb": "1a69",
+        "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+      }
+    },
+    {
+      "at": "2026-11-26T15:10:15.102+08:00",
+      "event": "2a-candidate",
+      "image": {
+        "bytes": 49152,
+        "version_raw": "0c094906",
+        "header_vid_pid": "2109:0105",
+        "crc16_usb": "27b9",
+        "sha256": "34034349f4f991098569b385b7271adb9807a78d9f1dacc49d0413e483d786f5"
+      }
+    },
+    {
+      "at": "2026-11-26T15:10:39.847+08:00",
+      "event": "2a-installed",
+      "result": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "27b9",
+          "sha256": "34034349f4f991098569b385b7271adb9807a78d9f1dacc49d0413e483d786f5"
+        },
+        "differing_sectors": 2,
+        "programmed_sectors": 2,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "at": "2026-11-26T15:12:37.360+08:00",
+      "event": "unloaded-hardware-readback",
+      "registers": {
+        "03": 40,
+        "0B": 105,
+        "04": 70,
+        "02": 64,
+        "0F": 241,
+        "10": 192,
+        "11": 0,
+        "12": 2
+      }
+    },
+    {
+      "at": "2026-11-26T15:15:56.515+08:00",
+      "event": "stock-restored",
+      "result": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "1a69",
+          "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+        },
+        "differing_sectors": 2,
+        "programmed_sectors": 2,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "at": "2026-11-26T15:16:11.473+08:00",
+      "event": "restoration-double-read",
+      "image": {
+        "bytes": 49152,
+        "version_raw": "0c094906",
+        "header_vid_pid": "2109:0105",
+        "crc16_usb": "1a69",
+        "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+      },
+      "runtime": {
+        "version_raw": "0c094906",
+        "level_raw": 2,
+        "level_percent": 2,
+        "temperature_raw": 2989,
+        "temperature_c": 25.8,
+        "port_status_raw": 131,
+        "charger_info_raw": 105,
+        "charger_model": "RT9471"
+      }
+    }
+  ],
+  "unloaded_register_samples": [
+    {
+      "at": "2026-11-26T15:10:39.934+08:00",
+      "profile": "input",
+      "tag": 7,
+      "nibble": 4,
+      "register": 2,
+      "gauge_level": 2,
+      "gauge_temperature": 2984,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:10:42.001+08:00",
+      "profile": "input",
+      "tag": 8,
+      "nibble": 4,
+      "register": 15,
+      "gauge_level": 100,
+      "gauge_temperature": 2982,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:10:47.069+08:00",
+      "profile": "input",
+      "tag": 9,
+      "nibble": 15,
+      "register": 15,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:10:51.935+08:00",
+      "profile": "input",
+      "tag": 10,
+      "nibble": 0,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:10:57.003+08:00",
+      "profile": "input",
+      "tag": 11,
+      "nibble": 12,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:02.071+08:00",
+      "profile": "input",
+      "tag": 12,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:06.937+08:00",
+      "profile": "input",
+      "tag": 13,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:12.007+08:00",
+      "profile": "input",
+      "tag": 14,
+      "nibble": 2,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:17.075+08:00",
+      "profile": "input",
+      "tag": 15,
+      "nibble": 0,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:21.941+08:00",
+      "profile": "input",
+      "tag": 0,
+      "nibble": 8,
+      "register": 3,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:27.009+08:00",
+      "profile": "input",
+      "tag": 1,
+      "nibble": 2,
+      "register": 3,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:32.077+08:00",
+      "profile": "input",
+      "tag": 2,
+      "nibble": 9,
+      "register": 11,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:36.943+08:00",
+      "profile": "input",
+      "tag": 3,
+      "nibble": 6,
+      "register": 11,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:42.012+08:00",
+      "profile": "input",
+      "tag": 4,
+      "nibble": 6,
+      "register": 4,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:47.081+08:00",
+      "profile": "input",
+      "tag": 5,
+      "nibble": 4,
+      "register": 4,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:51.946+08:00",
+      "profile": "input",
+      "tag": 6,
+      "nibble": 0,
+      "register": 2,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:11:57.014+08:00",
+      "profile": "input",
+      "tag": 7,
+      "nibble": 4,
+      "register": 2,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:12:02.083+08:00",
+      "profile": "input",
+      "tag": 8,
+      "nibble": 1,
+      "register": 15,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:12:07.151+08:00",
+      "profile": "input",
+      "tag": 9,
+      "nibble": 15,
+      "register": 15,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:12:12.018+08:00",
+      "profile": "input",
+      "tag": 10,
+      "nibble": 0,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:12:17.086+08:00",
+      "profile": "input",
+      "tag": 11,
+      "nibble": 12,
+      "register": 16,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:12:22.154+08:00",
+      "profile": "input",
+      "tag": 12,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:12:27.021+08:00",
+      "profile": "input",
+      "tag": 13,
+      "nibble": 0,
+      "register": 17,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:12:32.091+08:00",
+      "profile": "input",
+      "tag": 14,
+      "nibble": 2,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    },
+    {
+      "at": "2026-11-26T15:12:37.159+08:00",
+      "profile": "input",
+      "tag": 15,
+      "nibble": 0,
+      "register": 18,
+      "gauge_level": 255,
+      "gauge_temperature": 65535,
+      "port": 131,
+      "protection_state": 0
+    }
+  ],
+  "gpu": "2026-11-26T15:13:32.992+08:00 display/target ('\\\\\\\\.\\\\DISPLAY3', 2560, 0, 3200, 1600, 90) (3200, 1600, 90.0, 529940000)",
+  "model": "2026-11-26T15:13:30.007+08:00 AT^DEVMODEL? b'\\r\\n^DEVMODEL:CV10\\r\\n\\r\\nOK\\r\\n' ms 1.4",
+  "cable": "2026-11-26T15:13:30.049+08:00 AT^CABLEINFO? b'\\r\\n^CABLEINFO=10C094906255+280\\r\\n\\r\\nOK\\r\\n' ms 42.1",
+  "usb_window": {
+    "near": "2026-11-26T15:14:08.266+08:00 proximity 1 0142000001010800020004000100f202",
+    "open_reply": "2026-11-26T15:14:08.269+08:00 AT^SWITCHSCREEN=1 b'\\r\\n^SWITCHSCREEN=1\\r\\n\\r\\nOK\\r\\n' ms 1.2",
+    "finish": "2026-11-26T15:14:43.640+08:00",
+    "open_ack_to_finish_s": 35.371,
+    "heartbeats": [
+      "2026-11-26T15:14:09.928+08:00 heartbeat 20",
+      "2026-11-26T15:14:11.928+08:00 heartbeat 21",
+      "2026-11-26T15:14:13.928+08:00 heartbeat 22",
+      "2026-11-26T15:14:15.928+08:00 heartbeat 23",
+      "2026-11-26T15:14:17.929+08:00 heartbeat 24",
+      "2026-11-26T15:14:19.928+08:00 heartbeat 25",
+      "2026-11-26T15:14:21.929+08:00 heartbeat 26",
+      "2026-11-26T15:14:23.928+08:00 heartbeat 27",
+      "2026-11-26T15:14:25.928+08:00 heartbeat 28",
+      "2026-11-26T15:14:27.929+08:00 heartbeat 29",
+      "2026-11-26T15:14:29.928+08:00 heartbeat 30",
+      "2026-11-26T15:14:31.929+08:00 heartbeat 31",
+      "2026-11-26T15:14:33.929+08:00 heartbeat 32",
+      "2026-11-26T15:14:35.929+08:00 heartbeat 33",
+      "2026-11-26T15:14:37.929+08:00 heartbeat 34",
+      "2026-11-26T15:14:39.929+08:00 heartbeat 35",
+      "2026-11-26T15:14:41.929+08:00 heartbeat 36"
+    ],
+    "root_at_open": "2026-11-26T15:13:29.787 {'XHC1/1': '2109:2211/1', 'CV10/1': '12d1:1092/1', 'CV10/2': '12d1:107e/1', 'CV10/5': '2109:8888/1'}",
+    "root_changes_after_open": [],
+    "serial_loss_after_open": null,
+    "subsequent_panel_off": {
+      "at": "2026-11-26T15:15:01.500+08:00",
+      "ports": [
+        "COM18",
+        "COM19"
+      ],
+      "model": "\r\n^DEVMODEL:CV10\r\n\r\nOK\r\n",
+      "screen_off": "\r\n^SWITCHSCREEN=0\r\n\r\nOK\r\n"
+    },
+    "enumeration_retry_before_test": [
+      "2026-11-26T15:13:29.740+08:00 serial/control transition SerialException(\"could not open port 'COM19': OSError(22, '指定不存在的设备。', None, 433)\")"
+    ]
+  },
+  "camera": {
+    "summary": {
+      "ready": "2026-11-26T15:13:33.575+08:00 READY_TO_COVER; FAR stable, right camera and native 90 Hz confirmed",
+      "near": "2026-11-26T15:14:08.266+08:00 proximity 1 0142000001010800020004000100f202",
+      "screen": "2026-11-26T15:14:08.269+08:00 AT^SWITCHSCREEN=1 b'\\r\\n^SWITCHSCREEN=1\\r\\n\\r\\nOK\\r\\n' ms 1.2",
+      "loss": null,
+      "near_to_loss_ms": null,
+      "camera_index": 0,
+      "recorded_frames": 6085,
+      "active_display_counts": {
+        "before_wear": 1026,
+        "after_wear": 1037
+      },
+      "peak_area_fractions_orange_green": {
+        "before_wear": [
+          0.00640625,
+          0.00015625
+        ],
+        "after_wear": [
+          0.7684895833333333,
+          0.75625
+        ]
+      },
+      "after_wear_expected_field_frames": 1003,
+      "after_wear_any_field_over_ten_percent_frames": 1034,
+      "after_wear_frames_with_known_pattern": 1037,
+      "first_frame_after_proximity": {
+        "index": 5048,
+        "at": "2026-11-26T15:14:08.272+08:00",
+        "ms_after_proximity": 6,
+        "file": "pc-original-2a-right-20261126.jpg",
+        "sha256": "804d5dcd9e5f52eff21899cd4359cb9a2b06fa14df9b8719319f171d23c3c195"
+      }
+    },
+    "visible": "Both orange and green shots show R and an upright arrow. Pattern phase changes about every three seconds.",
+    "evidence_frames": {
+      "orange": {
+        "file": "pc-original-2a-right-orange-20261126.jpg",
+        "sha256": "8e9dc2491cf1d6993dc09487acb2e1631396e682e9426a005135b7d9b50b9b36"
+      },
+      "green": {
+        "file": "pc-original-2a-right-green-20261126.jpg",
+        "sha256": "405497cf6520027a99704751a36b55b2ca96c6193ef8c044c5251da037931943"
+      }
+    },
+    "video_local": ".research/cable-1a-load-optics-20261126/run-20261126-151115-835599/transition-right.avi",
+    "video_bytes": 31300018,
+    "video_sha256": "b3055fc8695867f379baf98640c2377e082d1ccf85b298a06e5bfccebbd2a245",
+    "pattern_transitions": [
+      "2026-11-26T15:14:09.040+08:00 right test frame orange",
+      "2026-11-26T15:14:12.247+08:00 right test frame green",
+      "2026-11-26T15:14:15.088+08:00 right test frame orange",
+      "2026-11-26T15:14:18.292+08:00 right test frame green",
+      "2026-11-26T15:14:21.148+08:00 right test frame orange",
+      "2026-11-26T15:14:24.341+08:00 right test frame green",
+      "2026-11-26T15:14:27.181+08:00 right test frame orange",
+      "2026-11-26T15:14:30.027+08:00 right test frame green",
+      "2026-11-26T15:14:33.222+08:00 right test frame orange",
+      "2026-11-26T15:14:36.068+08:00 right test frame green",
+      "2026-11-26T15:14:39.271+08:00 right test frame orange",
+      "2026-11-26T15:14:42.129+08:00 right test frame green"
+    ]
+  },
+  "post_restore_gauge": {
+    "at": "2026-11-26T15:17:47.077+08:00",
+    "snapshot": {
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    }
+  },
+  "limits": "One short Windows trial. The register readback is a current-limit setting, not measured input current. No cell current, rail voltage waveform, phone validation, or C9.53.6 firmware comparison."
+}

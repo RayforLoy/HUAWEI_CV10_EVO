@@ -1,0 +1,216 @@
+{
+  "date": "2026-11-26",
+  "timezone": "Asia/Hong_Kong",
+  "model": "CV10 original mobile cable, Windows XHC1",
+  "observation": "Same unit and same external supply. Auxiliary power applied to the standalone cable, then CV10 connected and proximity covered. The Billboard cache becomes inaccessible when the headset is connected. Diagnostic 2E00 is IC_STATUS on the two test images, INFO on stock.",
+  "software_guard": "Only FF + IC_STATUS F1..F7 + temperature raw 2831..3131 holds existing CHG_EN. Other FF goes through factory inhibit. No I2C write added.",
+  "verification": {
+    "guarded_paths": 198400,
+    "stock_paths": 65536,
+    "observer_paths": 65536,
+    "temp_words": 65536,
+    "status_bytes": 256,
+    "passed": true
+  },
+  "observer": {
+    "program": {
+      "candidate": {
+        "bytes": 49152,
+        "version_raw": "0c094906",
+        "header_vid_pid": "2109:0105",
+        "crc16_usb": "a682",
+        "sha256": "7a9d447cab7c3191fd5e682f13bf4d7419e0859bb4fc7212286f6cf4e748e84e"
+      },
+      "differing_sectors": 2,
+      "programmed_sectors": 2,
+      "runtime_version": "0c094906"
+    },
+    "standalone": {
+      "host": {
+        "samples": [
+          {
+            "port": "0x81",
+            "level": "0xff",
+            "temp_word": "0xffff",
+            "ic_status": "0xf7",
+            "first": "2026-11-26T12:42:28.750+08:00",
+            "samples": 9,
+            "last": "2026-11-26T12:42:33.293+08:00"
+          },
+          {
+            "port": "0x81",
+            "level": "0xff",
+            "temp_word": "0xffff",
+            "ic_status": "0xf1",
+            "first": "2026-11-26T12:42:33.858+08:00",
+            "samples": 49,
+            "last": "2026-11-26T12:43:00.740+08:00"
+          }
+        ],
+        "read_errors": 0,
+        "log": ".research/cable-charge-1126/observer-host.jsonl"
+      },
+      "aux": {
+        "samples": [
+          {
+            "port": "0x81",
+            "level": "0xff",
+            "temp_word": "0xffff",
+            "ic_status": "0xf1",
+            "first": "2026-11-26T12:42:51.107+08:00",
+            "samples": 22,
+            "last": "2026-11-26T12:43:14.487+08:00"
+          },
+          {
+            "port": "0x83",
+            "level": "0xff",
+            "temp_word": "0xffff",
+            "ic_status": "0xf1",
+            "first": "2026-11-26T12:43:15.555+08:00",
+            "samples": 119,
+            "last": "2026-11-26T12:45:21.108+08:00"
+          }
+        ],
+        "read_errors": 1,
+        "log": ".research/cable-charge-1126/observer-aux.jsonl"
+      }
+    },
+    "control": [
+      "2026-11-26T12:45:42.905 AT^CABLEINFO? b'\\r\\n^CABLEINFO=10C094906255+280\\r\\n\\r\\nOK\\r\\n' await-ms 42.2",
+      "2026-11-26T12:45:44.021 proximity 0 01420000010108000200040000001202",
+      "2026-11-26T12:45:58.590 proximity 1 01420000010108000200040001002a03",
+      "2026-11-26T12:45:58.597 AT^SWITCHSCREEN=1 b'' await-ms 5.3",
+      "2026-11-26T12:45:58.600 serial transition ReadFile failed (PermissionError(13, '拒绝访问。', None, 5))"
+    ],
+    "wear_to_first_serial_read_error_ms": 10,
+    "desktop": [
+      "2026-11-26T12:45:44.148 display ('\\\\\\\\.\\\\DISPLAY2', 0, 0, 3200, 1600, 90)"
+    ],
+    "optics": {
+      "frames": 1730,
+      "maxima_orange_green_bright": [
+        5.208333333333334e-05,
+        0.0,
+        0.0013020833333333333
+      ],
+      "direct_reference": {
+        "orange": [
+          0.7158333333333333,
+          0.0,
+          0.7335416666666666
+        ],
+        "green": [
+          0.0,
+          0.70875,
+          0.7100520833333334
+        ]
+      }
+    },
+    "video": ".research/cable-charge-observer-optics-1126/transition-124506.avi"
+  },
+  "guarded": {
+    "program": {
+      "candidate": {
+        "bytes": 49152,
+        "version_raw": "0c094906",
+        "header_vid_pid": "2109:0105",
+        "crc16_usb": "cbe1",
+        "sha256": "2e6bba30d3d78ded84bb10d61b3a145c1190b3dc56f514b3be7a7f5084c9cb5d"
+      },
+      "differing_sectors": 2,
+      "programmed_sectors": 2,
+      "runtime_version": "0c094906"
+    },
+    "standalone": {
+      "host": {
+        "samples": [
+          {
+            "port": "0x81",
+            "level": "0xff",
+            "temp_word": "0xffff",
+            "ic_status": "0xf7",
+            "first": "2026-11-26T12:48:35.080+08:00",
+            "samples": 9,
+            "last": "2026-11-26T12:48:39.663+08:00"
+          },
+          {
+            "port": "0x81",
+            "level": "0xff",
+            "temp_word": "0xffff",
+            "ic_status": "0xf1",
+            "first": "2026-11-26T12:48:40.228+08:00",
+            "samples": 63,
+            "last": "2026-11-26T12:49:15.087+08:00"
+          }
+        ],
+        "read_errors": 0,
+        "log": ".research/cable-charge-1126/guarded-host.jsonl"
+      },
+      "aux": {
+        "samples": [
+          {
+            "port": "0x81",
+            "level": "0xff",
+            "temp_word": "0xffff",
+            "ic_status": "0xf1",
+            "first": "2026-11-26T12:49:07.023+08:00",
+            "samples": 60,
+            "last": "2026-11-26T12:50:12.053+08:00"
+          },
+          {
+            "port": "0x83",
+            "level": "0xff",
+            "temp_word": "0xffff",
+            "ic_status": "0xf1",
+            "first": "2026-11-26T12:50:13.121+08:00",
+            "samples": 45,
+            "last": "2026-11-26T12:51:00.051+08:00"
+          }
+        ],
+        "read_errors": 39,
+        "log": ".research/cable-charge-1126/guarded-aux.jsonl"
+      }
+    },
+    "control": [
+      "2026-11-26T12:51:03.283 AT^CABLEINFO? b'\\r\\n^CABLEINFO=10C094906255+280\\r\\n\\r\\nOK\\r\\n' await-ms 42.6",
+      "2026-11-26T12:51:04.195 proximity 0 01420000010108000200040000001902",
+      "2026-11-26T12:51:14.089 proximity 1 01420000010108000200040001000d03",
+      "2026-11-26T12:51:14.093 AT^SWITCHSCREEN=1 b'\\r\\n^SWITCHSCREEN=1\\r\\n\\r\\nOK\\r\\n' await-ms 1.9",
+      "2026-11-26T12:51:14.101 serial transition ReadFile failed (PermissionError(13, '拒绝访问。', None, 5))"
+    ],
+    "wear_to_first_serial_read_error_ms": 12,
+    "desktop": [
+      "2026-11-26T12:51:04.209 display ('\\\\\\\\.\\\\DISPLAY2', 0, 0, 3200, 1600, 90)"
+    ],
+    "optics": {
+      "frames": 3886,
+      "maxima_orange_green_bright": [
+        0.0,
+        0.0,
+        0.00046875
+      ],
+      "direct_reference": {
+        "orange": [
+          0.7158333333333333,
+          0.0,
+          0.7335416666666666
+        ],
+        "green": [
+          0.0,
+          0.70875,
+          0.7100520833333334
+        ]
+      }
+    },
+    "video": ".research/cable-charge-guarded-optics-1126/transition-124908.avi"
+  },
+  "restoration": {
+    "output": "D:\\HUAWEI_CV10_EVO\\.research\\cable-charge-1126\\stock-after.bin",
+    "independent_reads": 2,
+    "bytes": 49152,
+    "version_raw": "0c094906",
+    "header_vid_pid": "2109:0105",
+    "crc16_usb": "1a69",
+    "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+  }
+}

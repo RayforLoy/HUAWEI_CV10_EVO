@@ -1,0 +1,279 @@
+{
+  "trial": "C9.49.6 original mobile cable, factory power policy and factory 1 A input current setting, command/port observer at four OEM hooks.",
+  "host": "Windows XHC1; independent auxiliary supply labeled 5 V / 2 A, continuously connected; CV10 original mobile cable. The phone was not used during this capture.",
+  "date": "2026-11-26",
+  "timezone": "Asia/Hong_Kong",
+  "interpretation": "The measurement epoch survived. After headset removal both reads were A0, the same as the unloaded control. Neither of the two logical ports completed the monitored six-state GPIO pulse, and no call reaching the monitored native I2C writer requested changing FUNCTION at address 0x53 register 0x02 during the window. Other software paths, autonomous charger state, actual switch conduction and rail voltages are outside the trace.",
+  "firmware_and_trace_operations": [
+    {
+      "at": "2026-11-26T14:53:09.991+08:00",
+      "event": "stock-double-read",
+      "image": {
+        "bytes": 49152,
+        "version_raw": "0c094906",
+        "header_vid_pid": "2109:0105",
+        "crc16_usb": "1a69",
+        "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+      }
+    },
+    {
+      "at": "2026-11-26T14:53:37.760+08:00",
+      "event": "trace-installed",
+      "result": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "74b8",
+          "sha256": "6f7e6f4f4c9a0779a237929399593f8d5f772474148a4dc66ff4cfae4c5360bc"
+        },
+        "differing_sectors": 4,
+        "programmed_sectors": 4,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "at": "2026-11-26T14:53:54.798+08:00",
+      "event": "idle-arm",
+      "trace": {
+        "raw": "A0",
+        "armed": true,
+        "port1_pulse_completed": false,
+        "port2_pulse_completed": false,
+        "battery_disconnect_requested": false,
+        "battery_disconnect_bit_written_clear": false
+      }
+    },
+    {
+      "at": "2026-11-26T14:54:05.910+08:00",
+      "event": "idle-read",
+      "trace": {
+        "raw": "A0",
+        "armed": true,
+        "port1_pulse_completed": false,
+        "port2_pulse_completed": false,
+        "battery_disconnect_requested": false,
+        "battery_disconnect_bit_written_clear": false
+      }
+    },
+    {
+      "at": "2026-11-26T14:54:15.074+08:00",
+      "event": "load-arm",
+      "trace": {
+        "raw": "A0",
+        "armed": true,
+        "port1_pulse_completed": false,
+        "port2_pulse_completed": false,
+        "battery_disconnect_requested": false,
+        "battery_disconnect_bit_written_clear": false
+      }
+    },
+    {
+      "at": "2026-11-26T14:56:31.576+08:00",
+      "event": "load-read",
+      "trace": {
+        "raw": "A0",
+        "armed": true,
+        "port1_pulse_completed": false,
+        "port2_pulse_completed": false,
+        "battery_disconnect_requested": false,
+        "battery_disconnect_bit_written_clear": false
+      }
+    },
+    {
+      "at": "2026-11-26T14:57:14.589+08:00",
+      "event": "stock-restored",
+      "result": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "1a69",
+          "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+        },
+        "differing_sectors": 4,
+        "programmed_sectors": 4,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "at": "2026-11-26T14:57:30.214+08:00",
+      "event": "restoration-double-read",
+      "image": {
+        "bytes": 49152,
+        "version_raw": "0c094906",
+        "header_vid_pid": "2109:0105",
+        "crc16_usb": "1a69",
+        "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+      },
+      "runtime": {
+        "version_raw": "0c094906",
+        "level_raw": 2,
+        "level_percent": 2,
+        "temperature_raw": 2988,
+        "temperature_c": 25.7,
+        "port_status_raw": 131,
+        "charger_info_raw": 105,
+        "charger_model": "RT9471"
+      }
+    }
+  ],
+  "usb_standalone": [
+    {
+      "at": "2026-11-26T14:54:46.563+08:00",
+      "stage": "headset-identified",
+      "standalone_box": false,
+      "trace": null
+    },
+    {
+      "at": "2026-11-26T14:55:32.766+08:00",
+      "stage": "panel-command",
+      "standalone_box": false,
+      "trace": null
+    },
+    {
+      "at": "2026-11-26T14:56:20.504+08:00",
+      "stage": "panel-command",
+      "standalone_box": true,
+      "trace": {
+        "raw": "A0",
+        "armed": true,
+        "port1_pulse_completed": false,
+        "port2_pulse_completed": false,
+        "battery_disconnect_requested": false,
+        "battery_disconnect_bit_written_clear": false
+      }
+    }
+  ],
+  "headset": {
+    "model": "2026-11-26T14:54:40.036+08:00 AT^DEVMODEL? b'\\r\\n^DEVMODEL:CV10\\r\\n\\r\\nOK\\r\\n' ms 1.7",
+    "reported_cable": "2026-11-26T14:54:40.079+08:00 AT^CABLEINFO? b'\\r\\n^CABLEINFO=10C094906255+280\\r\\n\\r\\nOK\\r\\n' ms 42.0",
+    "far": "2026-11-26T14:54:40.200+08:00 proximity 0 01420000010108000200040000002102",
+    "near": "2026-11-26T14:55:32.702+08:00 proximity 1 01420000010108000200040001001703",
+    "screen_on_read_result": "2026-11-26T14:55:32.709+08:00 AT^SWITCHSCREEN=1 b'' ms 5.4",
+    "acknowledged": false,
+    "control_loss": "2026-11-26T14:55:32.711+08:00 serial/control transition SerialException(\"ReadFile failed (PermissionError(13, '拒绝访问。', None, 5))\")",
+    "near_to_control_loss_ms": 9,
+    "root_hub_loss": "2026-11-26T14:55:32.717 {'XHC1/1': '0000:0000/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}"
+  },
+  "display": "2026-11-26T14:54:43.251+08:00 display/target ('\\\\\\\\.\\\\DISPLAY3', 2560, 0, 3200, 1600, 90) (3200, 1600, 90.0, 529940000)",
+  "optics": {
+    "lens": "right",
+    "resolution": [
+      640,
+      480
+    ],
+    "recorded_frames": 3212,
+    "from_display_ready_through_end": {
+      "ready": "2026-11-26T14:54:43.794000+08:00",
+      "near": "2026-11-26T14:55:32.702000+08:00",
+      "active_display_frames": 1655,
+      "active_orange_green_max": [
+        0.0040625,
+        5.208333333333334e-05
+      ],
+      "first_frame_after_near": {
+        "frame": 3004,
+        "at": "2026-11-26T14:55:32.729+08:00",
+        "ms_after_near": 27
+      }
+    },
+    "result": "No sustained alternation of the green/orange test field or legible right-eye arrow was observed. Color peaks over all frames occurred during physical attachment, before the test pattern was ready.",
+    "reference_chroma": {
+      "orange": [
+        0.7158333333333333,
+        0.0,
+        0.7335416666666666
+      ],
+      "green": [
+        0.0,
+        0.70875,
+        0.7100520833333334
+      ]
+    },
+    "photo": "pc-original-port-trace-right-20261126.jpg",
+    "photo_sha256": "52fe87e789b75ee8de6d413365dc48697d4ab6606408c5b7e73947867bd988fb",
+    "video_local": ".research/cable-1a-load-optics-20261126/run-20261126-145349-497868/transition-right.avi",
+    "video_sha256": "9e3cc3ee5ace806db763f14503e883421e71d23affe4c43fe37f798fb04dae8d",
+    "video_bytes": 11171516,
+    "alignment": "Operator noticed the camera may have shifted. The field/reflections changed during attachment. No known-good lit image was obtained with this exact final alignment. No target was captured; whether the panel briefly emitted light is undetermined."
+  },
+  "offline_check": {
+    "emulator": "emu8051",
+    "commit": "5dc681275151c4a5d7b85ec9ff4ceb1b25abd5a8",
+    "i2c_inputs": 163840,
+    "pulse_inputs": 40960,
+    "identity_command_inputs": 4800,
+    "reset_inputs": 160,
+    "test_total": 209760,
+    "scope": "Stock vs instrumented return state and expected trace bits; no electrical validation. No independent positive-control activation of each bit on the real board."
+  },
+  "post_restore_standalone_gauge_samples": [
+    {
+      "at": "2026-11-26T14:57:42.988+08:00",
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T14:57:47.056+08:00",
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T14:57:51.124+08:00",
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T14:57:55.193+08:00",
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T14:57:59.260+08:00",
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    },
+    {
+      "at": "2026-11-26T14:58:03.328+08:00",
+      "version_raw": "0c094906",
+      "level_raw": 255,
+      "level_percent": null,
+      "temperature_raw": 65535,
+      "temperature_c": null,
+      "port_status_raw": 131,
+      "charger_info_raw": 105,
+      "charger_model": "RT9471"
+    }
+  ]
+}

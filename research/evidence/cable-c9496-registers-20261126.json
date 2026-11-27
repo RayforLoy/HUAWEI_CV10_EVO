@@ -1,0 +1,451 @@
+{
+  "timestamp": "2026-11-26T12:49:59+08:00",
+  "vid_pid": "2109:0105",
+  "bcd_device": "0c49",
+  "manufacturer": "VIA Technologies Inc.",
+  "product": "USB 2.0 BILLBOARD",
+  "bos": "050f580004141004000000000000000000000000000000000030100d040100010003000000000000000000000000000000000000000000000000000000000000002101000001ff000408100f000000000007100200000000",
+  "version_raw": "0c094906",
+  "mode": "runtime",
+  "project_register": "A0",
+  "mode_register": "81",
+  "config": "09021200010204c000090400000011000004",
+  "interfaces": [
+    {
+      "number": 0,
+      "alternate": 0,
+      "endpoints": 0,
+      "usb_class": 17
+    }
+  ],
+  "modes": [
+    {
+      "svid": "FF01",
+      "alternate_mode": 0,
+      "configuration": 3
+    }
+  ],
+  "battery": {
+    "version_raw": "0c094906",
+    "level_raw": 255,
+    "level_percent": null,
+    "temperature_raw": 65535,
+    "temperature_c": null,
+    "port_status_raw": 129,
+    "charger_info_raw": 241,
+    "charger_model": null
+  },
+  "battery_error": null,
+  "registers": {
+    "presets": [
+      {
+        "group": "芯片与 GPIO",
+        "address": 3,
+        "name": "GPIO A 控制",
+        "raw": 241,
+        "error": null,
+        "note": "位 3 用于固件端口切换，板级信号待确认",
+        "interpretation": "位3=0"
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 9,
+        "name": "控制标志",
+        "raw": 192,
+        "error": null,
+        "note": "低电量与保护处理路径更改位 2、3",
+        "interpretation": "位2=0 · 位3=0"
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 15,
+        "name": "控制标志",
+        "raw": 192,
+        "error": null,
+        "note": "保护处理分支会清位 3",
+        "interpretation": "位3=0"
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 21,
+        "name": "UART-Rx 配置",
+        "raw": 84,
+        "error": null,
+        "note": "fwupd 维护流程调整的 UART-Rx 配置",
+        "interpretation": ""
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 24,
+        "name": "芯片识别",
+        "raw": 160,
+        "error": null,
+        "note": "高四位 A 对应 VL105",
+        "interpretation": ""
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 25,
+        "name": "Watch Mode 配置",
+        "raw": 0,
+        "error": null,
+        "note": "fwupd 维护流程调整的调试配置",
+        "interpretation": ""
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 28,
+        "name": "GPIO 方向控制",
+        "raw": 70,
+        "error": null,
+        "note": "fwupd 维护流程使用的配置原值",
+        "interpretation": ""
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 156,
+        "name": "工程 ID 高字节",
+        "raw": 85,
+        "error": null,
+        "note": "芯片系列备用 ID 地址，保留原值",
+        "interpretation": ""
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 157,
+        "name": "工程 ID 低字节",
+        "raw": 85,
+        "error": null,
+        "note": "芯片系列备用 ID 地址，保留原值",
+        "interpretation": ""
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 247,
+        "name": "执行模式",
+        "raw": 129,
+        "error": null,
+        "note": "位 7 指示应用运行态",
+        "interpretation": "运行态"
+      },
+      {
+        "group": "芯片与 GPIO",
+        "address": 283,
+        "name": "端口 2 控制",
+        "raw": 192,
+        "error": null,
+        "note": "固件会在端口切换时更改位 2",
+        "interpretation": "位2=0"
+      },
+      {
+        "group": "电池与供电",
+        "address": 11774,
+        "name": "电量缓存",
+        "raw": 255,
+        "error": null,
+        "note": "来自电量计 55:2C",
+        "interpretation": "电量未知"
+      },
+      {
+        "group": "电池与供电",
+        "address": 11775,
+        "name": "VL105 端口事件位",
+        "raw": 129,
+        "error": null,
+        "note": "位 1 曾随辅助电源变化",
+        "interpretation": "端口1事件位=0 · 端口2事件位=0"
+      },
+      {
+        "group": "电池与供电",
+        "address": 11776,
+        "name": "充电芯片身份缓存",
+        "raw": 241,
+        "error": null,
+        "note": "来自 RT9471 INFO 53:0B",
+        "interpretation": "未知充电芯片型号"
+      },
+      {
+        "group": "电池与供电",
+        "address": 11777,
+        "name": "温度缓存低字节",
+        "raw": 255,
+        "error": null,
+        "note": "与 2E02 组成温度原值",
+        "interpretation": ""
+      },
+      {
+        "group": "电池与供电",
+        "address": 11778,
+        "name": "温度缓存高字节",
+        "raw": 255,
+        "error": null,
+        "note": "0000 和 FFFF 为无效温度",
+        "interpretation": ""
+      },
+      {
+        "group": "DP 与 HPD",
+        "address": 10563,
+        "name": "DP 状态低字节",
+        "raw": 10,
+        "error": null,
+        "note": "用于构造 DP Status / Attention 数据",
+        "interpretation": "HPD 缓存=0"
+      },
+      {
+        "group": "DP 与 HPD",
+        "address": 10564,
+        "name": "DP 状态次低字节",
+        "raw": 0,
+        "error": null,
+        "note": "用于构造 DP Status / Attention 数据",
+        "interpretation": "HPD IRQ 缓存=0"
+      },
+      {
+        "group": "DP 与 HPD",
+        "address": 10568,
+        "name": "上次 HPD 处理状态",
+        "raw": 0,
+        "error": null,
+        "note": "上一次保存的事件状态",
+        "interpretation": ""
+      },
+      {
+        "group": "DP 与 HPD",
+        "address": 10569,
+        "name": "当前 HPD 处理状态",
+        "raw": 0,
+        "error": null,
+        "note": "本轮固件事件状态",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 11243,
+        "name": "端口控制触发标志",
+        "raw": 0,
+        "error": null,
+        "note": "多个控制分支共用",
+        "interpretation": ""
+      },
+      {
+        "group": "USB 诊断",
+        "address": 11504,
+        "name": "USB wValue 低字节回显",
+        "raw": 1,
+        "error": null,
+        "note": "读取时回显本次 E0 查询",
+        "interpretation": ""
+      },
+      {
+        "group": "USB 诊断",
+        "address": 11505,
+        "name": "USB 请求号回显",
+        "raw": 224,
+        "error": null,
+        "note": "读取时回显本次 E0 查询",
+        "interpretation": ""
+      },
+      {
+        "group": "USB 诊断",
+        "address": 11512,
+        "name": "USB wValue 高字节回显",
+        "raw": 248,
+        "error": null,
+        "note": "读取时回显本次 E0 查询",
+        "interpretation": ""
+      },
+      {
+        "group": "USB 诊断",
+        "address": 11513,
+        "name": "USB wIndex 低字节回显",
+        "raw": 44,
+        "error": null,
+        "note": "核对高位地址寻址",
+        "interpretation": ""
+      },
+      {
+        "group": "电池与供电",
+        "address": 10844,
+        "name": "I²C 状态共用缓存",
+        "raw": 2,
+        "error": null,
+        "note": "55:32、53:11、53:12 可写入此处",
+        "interpretation": ""
+      },
+      {
+        "group": "电池与供电",
+        "address": 10915,
+        "name": "线控保护状态",
+        "raw": 0,
+        "error": null,
+        "note": "A1 是固件会处理的保护状态",
+        "interpretation": ""
+      },
+      {
+        "group": "电池与供电",
+        "address": 11067,
+        "name": "电量阈值控制状态",
+        "raw": 0,
+        "error": null,
+        "note": "参与电量 30 阈值附近的端口处理",
+        "interpretation": ""
+      },
+      {
+        "group": "DP 与 HPD",
+        "address": 10843,
+        "name": "Attention 状态暂存",
+        "raw": 0,
+        "error": null,
+        "note": "部分 Attention 分支用于生成状态字",
+        "interpretation": ""
+      },
+      {
+        "group": "DP 与 HPD",
+        "address": 11056,
+        "name": "待处理的 HPD 操作",
+        "raw": 0,
+        "error": null,
+        "note": "1 为 IRQ、2 为拉高、3 为拉低",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 10846,
+        "name": "端口控制状态",
+        "raw": 0,
+        "error": null,
+        "note": "含电量阈值分支写入的状态",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 10911,
+        "name": "端口切换状态机",
+        "raw": 0,
+        "error": null,
+        "note": "跟踪共同的 1–6 状态切换",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 10917,
+        "name": "线缆身份交换序号",
+        "raw": 0,
+        "error": null,
+        "note": "线缆序列号和信息两个响应分支",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 11069,
+        "name": "PD 发现路径状态",
+        "raw": 6,
+        "error": null,
+        "note": "Discover SVIDs / Discover Modes 构帧路径使用",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 11087,
+        "name": "VDM 暂存字节 0",
+        "raw": 0,
+        "error": null,
+        "note": "首个 VDO 的固件构帧暂存",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 11088,
+        "name": "VDM 暂存字节 1",
+        "raw": 0,
+        "error": null,
+        "note": "首个 VDO 的固件构帧暂存",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 11089,
+        "name": "VDM 暂存字节 2",
+        "raw": 0,
+        "error": null,
+        "note": "首个 VDO 的固件构帧暂存",
+        "interpretation": ""
+      },
+      {
+        "group": "PD 与端口",
+        "address": 11090,
+        "name": "VDM 暂存字节 3",
+        "raw": 0,
+        "error": null,
+        "note": "首个 VDO 的固件构帧暂存",
+        "interpretation": ""
+      }
+    ],
+    "manual": [
+      {
+        "group": "芯片与 GPIO",
+        "address": 3,
+        "name": "GPIO A 控制",
+        "raw": 241,
+        "error": null,
+        "note": "位 3 用于固件端口切换，板级信号待确认",
+        "interpretation": "位3=0"
+      },
+      {
+        "group": "手动读取",
+        "address": 10912,
+        "name": "自定义地址",
+        "raw": 0,
+        "error": null,
+        "note": "VL105 XDATA 原值",
+        "interpretation": ""
+      },
+      {
+        "group": "电池与供电",
+        "address": 11774,
+        "name": "电量缓存",
+        "raw": 255,
+        "error": null,
+        "note": "来自电量计 55:2C",
+        "interpretation": "电量未知"
+      },
+      {
+        "group": "电池与供电",
+        "address": 11775,
+        "name": "VL105 端口事件位",
+        "raw": 129,
+        "error": null,
+        "note": "位 1 曾随辅助电源变化",
+        "interpretation": "端口1事件位=0 · 端口2事件位=0"
+      },
+      {
+        "group": "电池与供电",
+        "address": 11776,
+        "name": "充电芯片身份缓存",
+        "raw": 241,
+        "error": null,
+        "note": "来自 RT9471 INFO 53:0B",
+        "interpretation": "未知充电芯片型号"
+      },
+      {
+        "group": "电池与供电",
+        "address": 11777,
+        "name": "温度缓存低字节",
+        "raw": 255,
+        "error": null,
+        "note": "与 2E02 组成温度原值",
+        "interpretation": ""
+      },
+      {
+        "group": "电池与供电",
+        "address": 11778,
+        "name": "温度缓存高字节",
+        "raw": 255,
+        "error": null,
+        "note": "0000 和 FFFF 为无效温度",
+        "interpretation": ""
+      }
+    ],
+    "layout_error": null
+  }
+}

@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\resources')
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'globalka')
 )
 
 $ErrorActionPreference = 'Stop'

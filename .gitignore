@@ -1,10 +1,5 @@
 /.research/
 __pycache__/
 /华为VR/
-/resources/CV10-before-*.bin
-/resources/CV10-after-*.bin
-/resources/CV10-restored-*.bin
-
-/resources/PiliPlus_VR_Quest3_11.19.zip
-/resources/华为VR/03华为VR视频.apk
-/resources/qq_gourp/Wolvic浏览器.apk.1
+/resources/
+/docs/reference/RT9471-DS9471D-04.pdf

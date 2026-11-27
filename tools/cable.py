@@ -3,6 +3,7 @@ import argparse
 from contextlib import contextmanager
 import ctypes
 from ctypes import wintypes
+from datetime import datetime
 import hashlib
 import json
 import os
@@ -19,6 +20,9 @@ VID_PID = (0x2109, 0x0105)
 IMAGE_SIZE = 0xC000
 HEADER = 0x1003
 TRANSFER_SIZE = 32
+CV10_RUNTIME_VERSIONS = ('0c094906', '0c095206')
+CHARGER_MODELS = {0x0d: 'RT9471', 0x0e: 'RT9471D'}
+MAX_CUSTOM_REGISTERS = 64
 
 
 def crc16_usb(data):
@@ -45,6 +49,11 @@ def inspect_image(data):
         raise ValueError(f'PD CRC mismatch: stored {stored_crc:04x}, computed {actual_crc:04x}')
     return dict(bytes=len(data), version_raw=version.hex(), header_vid_pid='%04x:%04x' % ids,
                 crc16_usb=f'{actual_crc:04x}', sha256=hashlib.sha256(data).hexdigest())
+
+
+def format_version(raw):
+    tag, major, minor, patch = bytes.fromhex(raw)
+    return f'{tag:X}{major:X}.{minor:X}.{patch:X}'
 
 
 class Setup(ctypes.Structure):
@@ -168,16 +177,23 @@ def dump_native(read, info):
 
 
 def read_register(read, address):
+    if not 0 <= address <= 0xffff:
+        raise ValueError('VL105 寄存器地址必须在 0000–FFFF 内')
     return read(0xe0, ((address & 0xff) << 8) | 1, address >> 8, 1)[0]
 
 
-def battery_status(read):
-    info = probe(read)
-    if info['mode'] != 'runtime' or info['version_raw'] not in ('0c094906', '0c095206'):
-        raise ValueError('Battery telemetry layout is known only for running C9.49.6 and C9.52.6')
-    # The USB request handler saves bRequest and wIndex low here before serving the read.
+def verify_xdata_addressing(read):
+    # The handler records bRequest and wIndex before reading the requested byte.
     if read_register(read, 0x2cf1) != 0xe0 or read_register(read, 0x2cf9) != 0x2c:
-        raise ValueError('Could not verify the 16-bit runtime register address')
+        raise ValueError('未能验证 VL105 的 16 位寄存器寻址')
+
+
+def battery_status(read, *, info=None):
+    if info is None:
+        info = probe(read)
+    if info['mode'] != 'runtime' or info['version_raw'] not in CV10_RUNTIME_VERSIONS:
+        raise ValueError('电池缓存布局仅在 C9.49.6 和 C9.52.6 运行态下已确认')
+    verify_xdata_addressing(read)
     level = read_register(read, 0x2dfe)
     for _ in range(3):
         high = read_register(read, 0x2e02)
@@ -187,9 +203,163 @@ def battery_status(read):
     else:
         raise ValueError('Temperature changed during all three reads')
     raw = (high << 8) | low
+    port_status = read_register(read, 0x2dff)
+    charger_info = read_register(read, 0x2e00)
+    # Include the reset bit in the key so asserted or invalid INFO values stay unknown.
+    charger_id = charger_info >> 3
     return dict(version_raw=info['version_raw'], level_raw=level,
+                level_percent=level if level <= 100 else None,
                 temperature_raw=raw,
-                temperature_c=(raw - 2731) / 10 if raw not in (0, 0xffff) else None)
+                temperature_c=(raw - 2731) / 10 if raw not in (0, 0xffff) else None,
+                port_status_raw=port_status, charger_info_raw=charger_info,
+                charger_model=CHARGER_MODELS.get(charger_id))
+
+
+# Chip registers come from fwupd and the two CV10 application images.
+CHIP_REGISTERS = (
+    ('芯片与 GPIO', 0x0003, 'GPIO A 控制', '位 3 用于固件端口切换，板级信号待确认'),
+    ('芯片与 GPIO', 0x0009, '控制标志', '低电量与保护处理路径更改位 2、3'),
+    ('芯片与 GPIO', 0x000f, '控制标志', '保护处理分支会清位 3'),
+    ('芯片与 GPIO', 0x0015, 'UART-Rx 配置', 'fwupd 维护流程调整的 UART-Rx 配置'),
+    ('芯片与 GPIO', 0x0018, '芯片识别', '高四位 A 对应 VL105'),
+    ('芯片与 GPIO', 0x0019, 'Watch Mode 配置', 'fwupd 维护流程调整的调试配置'),
+    ('芯片与 GPIO', 0x001c, 'GPIO 方向控制', 'fwupd 维护流程使用的配置原值'),
+    ('芯片与 GPIO', 0x009c, '工程 ID 高字节', '芯片系列备用 ID 地址，保留原值'),
+    ('芯片与 GPIO', 0x009d, '工程 ID 低字节', '芯片系列备用 ID 地址，保留原值'),
+    ('芯片与 GPIO', 0x00f7, '执行模式', '位 7 指示应用运行态'),
+    ('芯片与 GPIO', 0x011b, '端口 2 控制', '固件会在端口切换时更改位 2'),
+)
+
+RUNTIME_REGISTERS = (
+    ('电池与供电', 0x2dfe, '电量缓存', '来自电量计 55:2C'),
+    ('电池与供电', 0x2dff, 'VL105 端口事件位', '位 1 曾随辅助电源变化'),
+    ('电池与供电', 0x2e00, '充电芯片身份缓存', '来自 RT9471 INFO 53:0B'),
+    ('电池与供电', 0x2e01, '温度缓存低字节', '与 2E02 组成温度原值'),
+    ('电池与供电', 0x2e02, '温度缓存高字节', '0000 和 FFFF 为无效温度'),
+    ('DP 与 HPD', 0x2943, 'DP 状态低字节', '用于构造 DP Status / Attention 数据'),
+    ('DP 与 HPD', 0x2944, 'DP 状态次低字节', '用于构造 DP Status / Attention 数据'),
+    ('DP 与 HPD', 0x2948, '上次 HPD 处理状态', '上一次保存的事件状态'),
+    ('DP 与 HPD', 0x2949, '当前 HPD 处理状态', '本轮固件事件状态'),
+    ('PD 与端口', 0x2beb, '端口控制触发标志', '多个控制分支共用'),
+    ('USB 诊断', 0x2cf0, 'USB wValue 低字节回显', '读取时回显本次 E0 查询'),
+    ('USB 诊断', 0x2cf1, 'USB 请求号回显', '读取时回显本次 E0 查询'),
+    ('USB 诊断', 0x2cf8, 'USB wValue 高字节回显', '读取时回显本次 E0 查询'),
+    ('USB 诊断', 0x2cf9, 'USB wIndex 低字节回显', '核对高位地址寻址'),
+)
+
+# Address pairs are ordered C9.49.6, C9.52.6.
+VERSIONED_REGISTERS = (
+    ('电池与供电', (0x2a5c, 0x2a5d), 'I²C 状态共用缓存', '55:32、53:11、53:12 可写入此处'),
+    ('电池与供电', (0x2aa3, 0x2aa4), '线控保护状态', 'A1 是固件会处理的保护状态'),
+    ('电池与供电', (0x2b3b, 0x2b3c), '电量阈值控制状态', '参与电量 30 阈值附近的端口处理'),
+    ('DP 与 HPD', (0x2a5b, 0x2a5c), 'Attention 状态暂存', '部分 Attention 分支用于生成状态字'),
+    ('DP 与 HPD', (0x2b30, 0x2b31), '待处理的 HPD 操作', '1 为 IRQ、2 为拉高、3 为拉低'),
+    ('PD 与端口', (0x2a5e, 0x2a5f), '端口控制状态', '含电量阈值分支写入的状态'),
+    ('PD 与端口', (0x2a9f, 0x2aa0), '端口切换状态机', '跟踪共同的 1–6 状态切换'),
+    ('PD 与端口', (0x2aa5, 0x2aa6), '线缆身份交换序号', '线缆序列号和信息两个响应分支'),
+    ('PD 与端口', (0x2b3d, 0x2b3e), 'PD 发现路径状态', 'Discover SVIDs / Discover Modes 构帧路径使用'),
+    *(
+        ('PD 与端口', (0x2b4f + i, 0x2b50 + i), f'VDM 暂存字节 {i}', '首个 VDO 的固件构帧暂存')
+        for i in range(4)
+    ),
+)
+
+REGISTER_BITS = {
+    0x0003: ((3, '位3'),),
+    0x0009: ((2, '位2'), (3, '位3')),
+    0x000f: ((3, '位3'),),
+    0x011b: ((2, '位2'),),
+    0x2943: ((7, 'HPD 缓存'),),
+    0x2944: ((0, 'HPD IRQ 缓存'),),
+    0x2dff: ((1, '端口1事件位'), (2, '端口2事件位')),
+}
+
+
+def parse_register_addresses(query):
+    if not query.strip():
+        return ()
+    addresses = set()
+    query = re.sub(r'\s*-\s*', '-', query.strip())
+    for item in re.split(r'[\s,，;；]+', query):
+        match = re.fullmatch(r'(?:0x)?([\da-f]{1,4})(?:-(?:0x)?([\da-f]{1,4}))?',
+                             item, re.IGNORECASE | re.ASCII)
+        if match is None:
+            raise ValueError(f'无效的十六进制地址或范围：{item}')
+        start = int(match[1], 16)
+        end = int(match[2] or match[1], 16)
+        if end < start:
+            raise ValueError(f'结束地址必须大于或等于起始地址：{item}')
+        if end - start >= MAX_CUSTOM_REGISTERS:
+            raise ValueError(f'每次最多读取 {MAX_CUSTOM_REGISTERS} 个手动地址')
+        addresses.update(range(start, end + 1))
+        if len(addresses) > MAX_CUSTOM_REGISTERS:
+            raise ValueError(f'每次最多读取 {MAX_CUSTOM_REGISTERS} 个手动地址')
+    return tuple(sorted(addresses))
+
+
+def register_interpretation(address, value):
+    if address == 0x00f7:
+        return '运行态' if value & 0x80 else 'ROM'
+    if address in (0x2948, 0x2949):
+        return {1: 'HPD 拉低', 2: 'HPD 拉高', 3: 'HPD IRQ'}.get(value, '')
+    if address == 0x2dfe:
+        return f'{value}%' if value <= 100 else '电量未知'
+    if address == 0x2e00:
+        model = CHARGER_MODELS.get(value >> 3)
+        return f'{model} Rev {value & 7}' if model else '未知充电芯片型号'
+    return ' · '.join(f'{label}={(value >> bit) & 1}'
+                      for bit, label in REGISTER_BITS.get(address, ()))
+
+
+def register_snapshot(read, info, addresses=(), *, captured=None):
+    cache = {address: (value, None) for address, value in (captured or {}).items()}
+
+    def row(field, *, decode=True):
+        group, address, name, note = field
+        if address not in cache:
+            try:
+                cache[address] = (read_register(read, address), None)
+            except (OSError, ValueError) as error:
+                cache[address] = (None, str(error))
+        raw, error = cache[address]
+        return dict(group=group, address=address, name=name, raw=raw, error=error, note=note,
+                    interpretation=register_interpretation(address, raw)
+                    if decode and raw is not None else '')
+
+    presets = [row(field) for field in CHIP_REGISTERS]
+    by_address = {entry['address']: entry for entry in presets}
+    chip = by_address[0x0018]['raw']
+    is_vl105 = chip is not None and chip & 0xf0 == 0xa0
+    layout_error = None
+    if not is_vl105:
+        layout_error = '未能确认芯片为 VL105'
+    elif info['mode'] != 'runtime' or info['version_raw'] not in CV10_RUNTIME_VERSIONS:
+        layout_error = '当前模式或固件版本的运行态地址布局待确认'
+    else:
+        try:
+            verify_xdata_addressing(read)
+        except (OSError, ValueError) as error:
+            layout_error = str(error)
+
+    if layout_error is None:
+        index = CV10_RUNTIME_VERSIONS.index(info['version_raw'])
+        layouts = [(group, offsets[index], name, note)
+                   for group, offsets, name, note in VERSIONED_REGISTERS]
+        if index == 1:
+            layouts.append(('PD 与端口', 0x2a5b, '延迟脉冲状态', 'C9.52.6 的追加控制路径'))
+        presets.extend(row(field) for field in (*RUNTIME_REGISTERS, *layouts))
+        by_address.update((entry['address'], entry) for entry in presets)
+
+    manual = []
+    for address in addresses:
+        entry = by_address.get(address)
+        if entry is None:
+            if not is_vl105:
+                cache[address] = (None, layout_error)
+            note = 'VL105 XDATA 原值' if layout_error is None else '当前固件的地址布局待确认'
+            entry = row(('手动读取', address, '自定义地址', note), decode=False)
+        manual.append(entry)
+    return dict(presets=presets, manual=manual, layout_error=layout_error)
 
 
 def wait_mode(path, runtime):
@@ -280,29 +450,47 @@ def dump_fwupd(executable, work):
     return images[0]
 
 
-def export(args):
-    destination = args.file.resolve()
-    if destination.exists():
-        raise FileExistsError(destination)
+def dump_maintenance():
+    with maintenance_session() as (read, _, info):
+        return dump_native(read, info)
+
+
+def publish_dump(destination, image, metadata):
+    destination = destination.resolve()
     with tempfile.TemporaryDirectory(dir=destination.parent) as staging:
-        work = Path(staging)
-        if args.fwupdtool:
-            image = dump_fwupd(args.fwupdtool, work)
-        elif args.maintenance:
-            with maintenance_session() as (read, _, info):
-                image = dump_native(read, info)
-        else:
-            with cable_reader() as read:
-                image = dump_native(read, probe(read))
-        metadata = inspect_image(image)
-        staged = work / 'verified.bin'
-        staged.write_bytes(image)
+        staged = Path(staging) / 'verified.bin'
+        with staged.open('wb') as output:
+            output.write(image)
+            output.flush()
+            os.fsync(output.fileno())
         # Publish exclusively only after both reads and the image CRC pass.
         if os.name == 'nt':
             os.rename(staged, destination)  # Windows refuses to replace an existing file.
         else:
             os.link(staged, destination)
     return dict(output=str(destination), independent_reads=2, **metadata)
+
+
+def save_versioned_dump(directory, image):
+    metadata = inspect_image(image)
+    version = format_version(metadata['version_raw'])
+    timestamp = datetime.now().strftime('%Y%m%d-%H%M%S-%f')
+    return publish_dump(directory / f'CV10-cable-{version}-{timestamp}.bin', image, metadata)
+
+
+def export(args):
+    destination = args.file.resolve()
+    if destination.exists():
+        raise FileExistsError(destination)
+    if args.fwupdtool:
+        with tempfile.TemporaryDirectory(dir=destination.parent) as staging:
+            image = dump_fwupd(args.fwupdtool, Path(staging))
+    elif args.maintenance:
+        image = dump_maintenance()
+    else:
+        with cable_reader() as read:
+            image = dump_native(read, probe(read))
+    return publish_dump(destination, image, inspect_image(image))
 
 
 def install_cab(args):
@@ -362,20 +550,39 @@ def program_sector(read, send, address, data):
         raise ValueError(f'Sector write verification failed at {address:#x}')
 
 
-def flash_raw(args, *, expected_sha256=None):
+def changed_sectors(image, backup):
+    if image[HEADER + 4:HEADER + 8] != backup[HEADER + 4:HEADER + 8]:
+        raise ValueError('Candidate and backup have different header VID/PID')
+    return [offset for offset in range(0, IMAGE_SIZE, SECTOR_SIZE)
+            if image[offset:offset + SECTOR_SIZE] != backup[offset:offset + SECTOR_SIZE]]
+
+
+def prepare_upgrade(candidate_file, backup_directory):
+    image = candidate_file.read_bytes()
+    metadata = inspect_image(image)
+    backup_directory.mkdir(parents=True, exist_ok=True)
+    with maintenance_session() as (read, _, info):
+        backup = dump_native(read, info)
+        changed = changed_sectors(image, backup)
+        if read_region(read, PD_OFFSET, IMAGE_SIZE) != backup:
+            raise ValueError('The write region differs from the current firmware image')
+    saved = save_versioned_dump(backup_directory, backup)
+    return dict(candidate=metadata, backup=saved, differing_sectors=len(changed))
+
+
+def flash_raw(args, *, expected_sha256=None, expected_backup_sha256=None):
     image = args.file.read_bytes()
     backup = args.backup.read_bytes()
     metadata = inspect_image(image)
     if expected_sha256 is not None and metadata['sha256'] != expected_sha256:
         raise ValueError('候选文件在预检后发生变化，请重新选择。')
-    inspect_image(backup)
-    if image[HEADER + 4:HEADER + 8] != backup[HEADER + 4:HEADER + 8]:
-        raise ValueError('Candidate and backup have different header VID/PID')
+    backup_metadata = inspect_image(backup)
+    if expected_backup_sha256 is not None and backup_metadata['sha256'] != expected_backup_sha256:
+        raise ValueError('自动备份在预检后发生变化，请重新开始烧录。')
+    changed = changed_sectors(image, backup)
     with maintenance_session() as (read, send, info):
         if dump_native(read, info) != backup or read_region(read, PD_OFFSET, IMAGE_SIZE) != backup:
             raise ValueError('The running image and write region must both match the supplied backup')
-        changed = [offset for offset in range(0, IMAGE_SIZE, SECTOR_SIZE)
-                   if image[offset:offset + SECTOR_SIZE] != backup[offset:offset + SECTOR_SIZE]]
         if changed and args.apply:
             if read(0xc2, 5, 0, 1)[0] != 0:
                 raise ValueError('Unexpected SPI status before programming')
@@ -423,6 +630,8 @@ def main():
     commands = parser.add_subparsers(dest='command', required=True)
     commands.add_parser('probe', help='read USB descriptors, version and execution mode')
     commands.add_parser('battery', help='read cached cable gauge values in normal Billboard mode')
+    register_parser = commands.add_parser('registers', help='capture VL105 registers and optional addresses')
+    register_parser.add_argument('addresses', nargs='*', help='hex addresses or inclusive ranges, e.g. 0003 2DFE-2E02')
     dump_parser = commands.add_parser('dump', help='read and verify the raw PD image twice')
     dump_parser.add_argument('file', type=Path)
     backend = dump_parser.add_mutually_exclusive_group()
@@ -446,6 +655,11 @@ def main():
         result = install_cab(args)
     elif args.command == 'flash-raw':
         result = flash_raw(args)
+    elif args.command == 'registers':
+        addresses = parse_register_addresses(' '.join(args.addresses))
+        with cable_reader() as read:
+            info = probe(read)
+            result = dict(**info, registers=register_snapshot(read, info, addresses))
     else:
         with cable_reader() as read:
             result = battery_status(read) if args.command == 'battery' else probe(read)

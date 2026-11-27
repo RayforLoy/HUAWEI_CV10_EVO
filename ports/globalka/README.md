@@ -37,13 +37,13 @@ $classes = New-Item -Force -ItemType Directory "$src/build/pose-test"
 
 ## Fold7 真机验收 · 2026-11-25
 
-Fold7 用普通 C-C 线直连 CV10，三星外接显示器保持「已镜像」。两项测试均使用手机上的 `Globalka CV10 IMU`。从手机回读已安装 APK 并计算 SHA-256，与 [本机安装包](../../resources/Globalka-CV10-IMU.apk) 一致。QQ 原版也已安装，可作为对照。
+Fold7 用普通 C-C 线直连 CV10，三星外接显示器保持「已镜像」。两项测试均使用手机上的 `Globalka CV10 IMU`。从手机回读已安装 APK 并计算 SHA-256，与 [本机安装包](../../tools/globalka/Globalka-CV10-IMU.apk) 一致。QQ 原版也已安装，可作为对照。
 
 | 场景 | 摄像头观察 | 渲染与传输证据 |
 | --- | --- | --- |
-| 投手机桌面 / Mirror phone | 左镜片可辨认三星桌面的 Gmail、QQ、淘宝图标及文字。[左镜片实拍](../../.research/globalka-test/verified-home2-lens.jpg) | Android MediaProjection 持有者为本包，14:05:02 渲染器首次记录 `scene=mirror` 使用 CV10 姿态，66 秒累计 65,954 个有效报告。 |
-| PC / Mac screen in VR | 左镜片可读 Windows 副屏交替色块上的 `PC` 和计时 `0019`。[左镜片实拍](../../.research/globalka-test/verified-pc-tiles-lens.jpg) | Windows 桌面实际捕获，Fold7 接收 1599×1000 JPEG。数次测试手机端约 10–16 fps。14:06:15 渲染器首次记录 `scene=remote` 使用 CV10 姿态，147 秒累计 146,933 个有效报告。 |
+| 投手机桌面 / Mirror phone | 左镜片可辨认三星桌面的 Gmail、QQ、淘宝图标及文字。本机实拍留存于 `.research/globalka-test/verified-home2-lens.jpg`。 | Android MediaProjection 持有者为本包，14:05:02 渲染器首次记录 `scene=mirror` 使用 CV10 姿态，66 秒累计 65,954 个有效报告。 |
+| PC / Mac screen in VR | 左镜片可读 Windows 副屏交替色块上的 `PC` 和计时 `0019`。本机实拍留存于 `.research/globalka-test/verified-pc-tiles-lens.jpg`。 | Windows 桌面实际捕获，Fold7 接收 1599×1000 JPEG。数次测试手机端约 10–16 fps。14:06:15 渲染器首次记录 `scene=remote` 使用 CV10 姿态，147 秒累计 146,933 个有效报告。 |
 
 在同签名的前一轮适配版上，操作者保持手机静止、转动眼镜并放回，朝向向量由 `(-0.001,0.001,-1.000)` 变为 `(0.028,0.063,-0.998)`，随后回到接近初始方向。日志每三秒记录一次，不能用该差值推算实际转动峰值。验证了眼镜输入引起的姿态变化；尚未逐轴标定方向、增益，光学照片只覆盖左眼。
 
-复用时点首页的「投手机桌面 / Mirror phone」，选择共享整个手机屏幕；投电脑时选「PC / Mac screen in VR」，在 [Windows 发送端](../../resources/VRGlassPC.exe) 填写手机此轮显示的地址和六位码，再选择目标显示器。[发送端配置](../../docs/windows-desktop-sender.md) 测试结束后已退出接收页，确认 USB 停用请求返回 5 字节，手机媒体投影为空。实拍保存在本地忽略目录。
+复用时点首页的「投手机桌面 / Mirror phone」，选择共享整个手机屏幕；投电脑时选「PC / Mac screen in VR」，在 [Windows 发送端](../../tools/globalka/VRGlassPC.exe) 填写手机此轮显示的地址和六位码，再选择目标显示器。[发送端配置](../../docs/windows-desktop-sender.md) 测试结束后已退出接收页，确认 USB 停用请求返回 5 字节，手机媒体投影为空。实拍保存在本地忽略目录。

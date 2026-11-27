@@ -15,7 +15,18 @@
 
 资料包第 07 个 APK 中，`VRUtils.isCableDevice` 匹配 `2109:0105`。fwupd 源码也将这个 ID 映射到 VL105。该 ID 可由其他品牌的 VL105 产品共用，采集时只将一根待测原厂线接入。[fwupd 2.1.9 设备映射](https://github.com/fwupd/fwupd/blob/2.1.9/plugins/vli/vli-noinst.quirk)
 
-## 操作
+## Windows 图形工具
+
+单独将原厂线标有“连接手机”的插头接电脑，打开 Windows x64 工具。[CV10-Cable-Tool.exe](../firmware_update/tools/windows/CV10-Cable-Tool.exe)
+
+- **导出固件**只需选择保存目录。两次回读一致且 CRC 校验通过后，工具用镜像版本和时间戳生成文件名，例如 `CV10-cable-C9.49.6-20261126-142530-123456.bin`。
+- **烧录固件**只需选择待烧录的 `.bin`。工具双读当前固件、比对写入区，并把原始镜像保存到 `%LOCALAPPDATA%\CV10-Cable-Tool\Backups`。预检显示当前版本、目标版本、差异扇区和备份路径。确认后才对差异扇区写入。若预检后目标或备份文件发生改动，工具会要求重新预检。
+- **连接线诊断**读取线盒电量和温度缓存、VL105 端口状态原值、RT9471 身份字节，可随快照导出 JSON。电量原值超过 100 时显示“未知”，温度 `0000` 或 `FFFF` 同样显示“未知”。C9.49.6 的端口状态 `81 → 83` 曾随辅助 5 V 接入改变。充电芯片身份和端口状态均无法确认电芯正在充电。电芯电压、电流和充电阶段尚无经验证的读法。[回读证据](../research/evidence/fold7-original-firmware-retest-20261126.txt) · [线盒芯片及状态字分析](cv10-original-cable-handoff-20261126/vl105-pd-analysis.md#从实机身份字节识别充电芯片)
+- **连接线诊断 → 寄存器**自动读取芯片与 GPIO、电池与供电、DP 与 HPD、PD 与端口以及 USB 回显。C9.49.6 有 38 项预设，C9.52.6 另含延迟脉冲状态。可输入 `0003, 2DFE-2E02` 单次读取指定地址。周期刷新采集预设，手动结果保留在表格顶部并记录时间。导出的 JSON 含数值地址、原值、解释和逐地址错误。自定义范围每次最多 64 个不同的十六进制地址，读取未知硬件地址时需考虑读后清除等寄存器副作用。[寄存器映射与验证](cable-firmware-research.md#运行态寄存器读数)
+
+久置后按华为说明，通过线盒充电口用合规 5 V 电源充电半小时再试。RT9471 在满足电池通路、温度及充电条件时自行进入涓流、预充或恒流等阶段。当前 `FF/FFFF` 无法判断电芯是否亏电，也无法据此选择外加强制电流。本线曾按官方方式充电，之后仍复现黑屏。电芯是否恢复仍需独立的电压和充电状态证据。[华为供电与黑屏排查](https://consumer.huawei.com/cn/support/content/zh-cn00757290/) · [华为久置处理](https://consumer.huawei.com/cn/support/content/zh-cn00776811/) · [RT9471/D 充电流程](https://www.richtek.com/content/dam/richtek/data/en/resources/product-specifications/rt94/rt9471-rt9471d/product-data-sheets/pdf/DS9471D-04.pdf#page=25) · [本线充电对照](cv10-original-cable-overnight-20261126.md)
+
+## 命令行操作
 
 Windows 上查询本机线的版本、厂商及 BOS，仅需 Python 3 和已绑定的 WinUSB 驱动。每次用一根线记录型号、接法、手机界面版本，再执行下列命令。
 
@@ -23,13 +34,16 @@ Windows 上查询本机线的版本、厂商及 BOS，仅需 Python 3 和已绑�
 python tools/cable.py probe
 ```
 
-将标有“连接手机”的插头单独接电脑，在 Windows 上读取线控缓存的电量字节和温度原值可以运行下面的命令。可接辅助 5 V 对照。命令在正常 Billboard 模式下通过 WinUSB 读取，支持已定位寄存器布局的 C9.49.6 和 C9.52.6。这台电脑的实机读数来自 C9.49.6。
+将标有“连接手机”的插头单独接电脑，在 Windows 上用下面的命令读取电量、温度、端口状态和充电芯片原值。可接辅助 5 V 对照。命令在正常 Billboard 模式下通过 WinUSB 读取，支持已定位寄存器布局的 C9.49.6 和 C9.52.6。这台电脑的实机读数来自 C9.49.6。
 
 ```powershell
 python tools/cable.py battery
+python tools/cable.py registers 0003 2DFE-2E02
 ```
 
-本线返回 `level_raw=255`、`temperature_raw=65535`、`temperature_c=null`。在接回 5 V 后的 96 次采样中保持一致。255 超出百分比范围；温度原值 `FFFF` 会被头显格式化成和 28.0°C 相同的文字。接上头显后，Windows 上的线控 Billboard 接口退出，光学、USB 枚举和盒内计量需要分别记录。[固件的字段定义](firmware-resource-analysis.md#头显怎样解码连接线的回包) · [实机证据](../research/evidence/fold7-original-firmware-retest-20261126.txt)
+本线早期接回 5 V 后的 96 次采样均返回 `level_raw=255`、`temperature_raw=65535`、`temperature_c=null`。255 超出百分比范围，温度原值 `FFFF` 会被头显格式化成和 28.0 °C 相同的文字。接上头显后，Windows 上的线控 Billboard 接口退出，光学、USB 枚举和盒内计量需要分别记录。[固件的字段定义](firmware-resource-analysis.md#头显怎样解码连接线的回包) · [早期实机证据](../research/evidence/fold7-original-firmware-retest-20261126.txt)
+
+2026-11-26 复测 C9.49.6 时保持接线不动。双读导出前为 `FF/FFFF`。从 ROM 恢复运行后，前 4 秒采样为 1% 和 25.1 °C，第 8 秒为 50% 和 25.1 °C，第 12、18 秒再次为 `FF/FFFF`。端口状态全程为 `83`，充电芯片身份全程为 `69`。短时变化表明电量缓存不稳定，电芯电压、充电电流与是否进入预充仍待测量。[带时间戳的实机记录](../research/evidence/cable-c9496-gauge-after-rom-20261126.json)
 
 若有工作的同硬件版本线，可尝试双读导出。目标目录需已存在，文件名需未被使用。默认后端仅发设备到主机的查询。头部版本、两份数据、长度和 CRC 都通过后才发布结果。
 
@@ -42,7 +56,7 @@ python tools/cable.py inspect donor-vl105.bin
 
 ## 原生烧录与实机备份
 
-本机导出文件为 `resources/CV10-cable-C9.49.6.bin`，大小 49152 字节，CRC-16/USB 为 `1a69`，SHA-256 为 `f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02`。备份覆盖 PD 镜像区。实机从零地址和上游 VL105 写入基址 `0x20000` 读取的整个镜像均与备份一致；两段地址是否映射到同一物理扇区仍未知。
+本机导出文件为 `firmware_update/firmware/cable/stock/CV10-cable-C9.49.6.bin`，大小 49152 字节，CRC-16/USB 为 `1a69`，SHA-256 为 `f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02`。备份覆盖 PD 镜像区。实机从零地址和上游 VL105 写入基址 `0x20000` 读取的整个镜像均与备份一致；两段地址是否映射到同一物理扇区仍未知。
 
 先将目标线的当前固件导出为独立备份，再比较同板型候选镜像：
 

@@ -1,0 +1,93 @@
+CV10 / original phone cable / no auxiliary charger / laptop XHC1 / HK time 2026-11-26
+Initial headset-end replug reported by operator. No port identity change captured, no HID write attempted.
+Windows PnP restart of 2109:2211 and child rescan returned Access is denied. The operator then cold replugged the computer end.
+Native Windows HID API and PCUI/VCOM replay, not an end-to-end invocation of SteamVR or the closed-source GUI.
+All HID features below were 128 bytes, unused bytes zero. Input validation used Cv10UsbReader sensor tokens, finite axes and advancing 64-bit device timestamps.
+2026-11-26T11:57:20.473 armed; waiting on CV10 verified Huawei COM18+COM19 on original port
+2026-11-26T12:00:47.470 ports open
+2026-11-26T12:00:47.472 AT^DEVMODEL? b'\r\n^DEVMODEL:CV10\r\n\r\nOK\r\n' await-ms 1.4
+2026-11-26T12:00:47.514 AT^CABLEINFO? b'\r\n^CABLEINFO=10C094906255+280\r\n\r\nOK\r\n' await-ms 41.6
+2026-11-26T12:00:47.517 AT^GETSOURCE? b'\r\n^SOURCE TYPE(0:phone, 1:PC):1\n\r\n\r\nOK\r\n' await-ms 1.4
+2026-11-26T12:00:47.519 HID input/feature lengths 60 128
+2026-11-26T12:00:47.526 enable IMU 04 02 05 02 hid-return 1 error 0
+2026-11-26T12:00:47.850 input 60 010030000000000011db11af000000009b9463be604a743f3fc3533e010000007f72503cd2a575bca5e3753c00000000000000000000000000000000
+2026-11-26T12:00:47.851 IMU device ns 2937182993 accel[g], gyro[deg/s] (-0.2222, 0.9543, 0.2068, 0.0127, -0.015, 0.015)
+2026-11-26T12:00:47.852 input 60 0100300000000000b16a22af00000000701364be773c743ffd47543e010000003f02553c503021be7221bc3c00000000000000000000000000000000
+2026-11-26T12:00:47.852 IMU device ns 2938268337 accel[g], gyro[deg/s] (-0.2227, 0.954, 0.2073, 0.013, -0.1574, 0.023)
+2026-11-26T12:00:47.852 input 60 0100300000000000ee2131af00000000a41961be0611743fd3ca553e01000000ffc7423c2d5ab8bda71052bd00000000000000000000000000000000
+2026-11-26T12:00:47.854 IMU device ns 2939232750 accel[g], gyro[deg/s] (-0.2198, 0.9534, 0.2088, 0.0119, -0.09, -0.0513)
+2026-11-26T12:00:47.854 input packets 3 distinct sensor timestamps 3
+2026-11-26T12:00:47.856 PC source 04 02 0e 01 hid-return 1 error 0
+2026-11-26T12:00:47.862 proximity 04 05 05 04 00 00 00 hid-return 1 error 0
+2026-11-26T12:00:47.867 AT^GETSOURCE? b'\r\n^SOURCE TYPE(0:phone, 1:PC):1\n\r\n\r\nOK\r\n' await-ms 4.8
+2026-11-26T12:00:47.868 heartbeat 0
+2026-11-26T12:00:47.964 proximity 0 01420000010108000200040000001402
+2026-11-26T12:00:47.965 FAR; waiting for actual wear before first open
+2026-11-26T12:00:49.603 heartbeat 1
+2026-11-26T12:00:51.602 heartbeat 2
+2026-11-26T12:00:55.603 heartbeat 4
+2026-11-26T12:00:59.165 proximity 1 01420000010108000200040001004a03
+2026-11-26T12:00:59.172 AT^SWITCHSCREEN=1 b'' await-ms 5.9
+2026-11-26T12:00:59.172 wear reply missing
+2026-11-26T12:00:59.174 serial transition ReadFile failed (PermissionError(13, '拒绝访问。', None, 5))
+2026-11-26T12:01:05.970 finished
+
+USB identities (timestamps taken after polling ports sequentially; not a continuous electrical measurement)
+2026-11-26T11:57:20.639 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/2', 'CV10/2': '0000:0000/0', 'CV10/5': '2109:8888/1'}
+2026-11-26T12:00:37.325 {'XHC1/1': '0000:0000/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}
+2026-11-26T12:00:39.825 {'XHC1/1': '0000:0000/0'}
+2026-11-26T12:00:46.365 {'XHC1/1': '0000:0000/9'}
+2026-11-26T12:00:46.474 {'XHC1/1': '2109:2211/1'}
+2026-11-26T12:00:46.906 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}
+2026-11-26T12:00:47.015 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/9', 'CV10/2': '0000:0000/9', 'CV10/5': '0000:0000/9'}
+2026-11-26T12:00:47.232 {'XHC1/1': '2109:2211/1', 'CV10/1': '12d1:1092/1', 'CV10/2': '0000:0000/9', 'CV10/5': '0000:0000/9'}
+2026-11-26T12:00:47.341 {'XHC1/1': '2109:2211/1', 'CV10/1': '12d1:1092/1', 'CV10/2': '12d1:107e/1', 'CV10/5': '0000:0000/9'}
+2026-11-26T12:00:47.378 {'XHC1/1': '2109:2211/1', 'CV10/1': '12d1:1092/1', 'CV10/2': '12d1:107e/1', 'CV10/5': '0000:0000/1'}
+2026-11-26T12:00:47.414 {'XHC1/1': '2109:2211/1', 'CV10/1': '12d1:1092/1', 'CV10/2': '12d1:107e/1', 'CV10/5': '2109:8888/1'}
+2026-11-26T12:00:59.171 {'XHC1/1': '0000:0000/1', 'CV10/1': '0000:0000/1', 'CV10/2': '0000:0000/1', 'CV10/5': '0000:0000/1'}
+2026-11-26T12:00:59.208 {'XHC1/1': '0000:0000/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}
+2026-11-26T12:01:01.693 {'XHC1/1': '0000:0000/9'}
+2026-11-26T12:01:01.802 {'XHC1/1': '2109:2211/1'}
+2026-11-26T12:01:02.237 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}
+2026-11-26T12:01:02.345 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/9'}
+2026-11-26T12:01:02.382 {'XHC1/1': '2109:2211/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '2109:8888/1'}
+
+Display seen by Windows, color pattern alternated orange/green on the right every 3 seconds
+2026-11-26T11:57:21.159 display ('\\\\.\\DISPLAY3', 2560, 0, 3200, 1600, 90)
+2026-11-26T12:00:38.030 display None
+2026-11-26T12:00:49.355 display ('\\\\.\\DISPLAY3', 2560, 0, 3200, 1600, 90)
+
+GPU DDC read of the active HUAWEI target one minute after loss
+2026-11-26T12:02:01.464987 read without register 0 status -1
+2026-11-26T12:02:01.467983 read without register 1 status -1
+2026-11-26T12:02:01.471985 read without register 2 status -1
+
+Camera 1 / 640x480 MJPEG. All frames decoded sequentially. OpenCV HSV full-frame classification after resizing to 160x120: saturation>=75 and V>=65, orange H<26 or H>175, green H in [32,99). Bright fraction V>=65. Each column peak can come from a different frame.
+{
+  "video": "transition-115722.avi",
+  "sha256": "daeb18baf4bb472c179c2715c55d1470979760fb33adfceb7d49c94196266752",
+  "header_frames": 6592,
+  "decoded": 6592,
+  "columns": [
+    "orange_fraction",
+    "green_fraction",
+    "bright_fraction"
+  ],
+  "maxima": [
+    0.0,
+    0.0,
+    0.0250521
+  ],
+  "ordinary_cable_images": {
+    "orange": [
+      0.7158333,
+      0.0,
+      0.7335417
+    ],
+    "green": [
+      0.0,
+      0.70875,
+      0.7100521
+    ]
+  }
+}

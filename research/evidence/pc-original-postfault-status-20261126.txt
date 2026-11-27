@@ -1,0 +1,10 @@
+XHC1 / CV10 .357 / original phone cable C9.49.6 / no auxiliary supply / physical proximity window left clear on operator-confirmed cold replug.
+Normal COM18 PCUI calls made after the 12:00 wear-triggered loss. No permission transition or file export; two exception queries bracketing the status queries.
+{"at": "2026-11-26T12:09:13.217", "event": "armed"}
+{"at": "2026-11-26T12:11:40.129", "event": "query", "command": "AT^DEVMODEL?", "response": "\r\n^DEVMODEL:CV10\r\n\r\nOK\r\n"}
+{"at": "2026-11-26T12:11:40.330", "event": "query", "command": "AT^CABLEINFO?", "response": "\r\n^CABLEINFO=10C094906255+280\r\n\r\nOK\r\n"}
+{"at": "2026-11-26T12:11:40.486", "event": "query", "command": "AT^QUERYEXCEPTION", "response": "0"}
+{"at": "2026-11-26T12:11:40.641", "event": "query", "command": "AT^GETLOGCFG", "response": "\r\nNO PERMISSION\r\n"}
+{"at": "2026-11-26T12:11:40.795", "event": "query", "command": "AT^DEVBOOTSTATE?", "response": "\r\n^DEVBOOTSTATE:1\r\n\r\nOK\r\n"}
+{"at": "2026-11-26T12:11:40.949", "event": "query", "command": "AT^QUERYEXCEPTION", "response": "0"}
+{"at": "2026-11-26T12:11:40.964", "event": "finished"}

@@ -1,0 +1,4 @@
+# Preserve upstream package bytes and captured logs for checksum verification.
+/docs/reference/** -text -whitespace
+/firmware_update/official/** -text -whitespace
+/research/evidence/pc-original-*.txt -whitespace

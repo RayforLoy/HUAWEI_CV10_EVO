@@ -1,5 +1,5 @@
 """Windows desktop interface for the CV10 cable firmware tool."""
-from datetime import datetime
+import os
 from pathlib import Path
 from queue import Empty, Queue
 from threading import Lock, Thread
@@ -16,17 +16,13 @@ def status():
         return cable.probe(read)
 
 
-def version(raw):
-    tag, major, minor, patch = bytes.fromhex(raw)
-    return f'{tag:X}{major:X}.{minor:X}.{patch:X}'
-
-
 class Window:
     def __init__(self, root):
         self.root = root
         self.busy = False
         self.results = Queue()
-        self.backup = None
+        local_data = Path(os.environ.get('LOCALAPPDATA') or Path.home() / 'AppData' / 'Local')
+        self.backup_directory = local_data / 'CV10-Cable-Tool' / 'Backups'
         root.title('CV10 连接线工具')
         root.minsize(630, 390)
         self.device_lock = Lock()
@@ -115,57 +111,60 @@ class Window:
         def show(info):
             mode = '运行态' if info['mode'] == 'runtime' else 'ROM 维护模式'
             self.note(f"{info['manufacturer']}  ·  {info['product']}\nUSB  {info['vid_pid']}    "
-                      f"固件  {version(info['version_raw'])}    模式  {mode}")
+                      f"固件  {cable.format_version(info['version_raw'])}    模式  {mode}")
         self.run('正在读取设备状态…', status, show)
 
     def dump(self):
-        name = 'CV10-cable-' + datetime.now().strftime('%Y%m%d-%H%M%S') + '.bin'
-        selected = filedialog.asksaveasfilename(parent=self.root, title='保存连接线固件',
-                    initialfile=name, defaultextension='.bin', filetypes=[('固件镜像', '*.bin')])
+        selected = filedialog.askdirectory(
+            parent=self.root, title='选择固件导出目录', mustexist=True)
         if not selected:
             return
-        dest = Path(selected)
-        if dest.exists():
-            messagebox.showinfo('文件已存在', '请选择新的文件名，以保留原备份。', parent=self.root)
-            return
+
+        def export():
+            return cable.save_versioned_dump(Path(selected), cable.dump_maintenance())
 
         def done(result):
-            self.backup = dest
-            self.note(f"导出成功，两次读取一致。\n{dest}\n版本  {version(result['version_raw'])}    "
+            self.note(f"导出成功，两次读取一致。\n{result['output']}\n"
+                      f"版本  {cable.format_version(result['version_raw'])}    "
                       f"{result['bytes']:,} 字节    CRC-16  {result['crc16_usb']}\nSHA-256  {result['sha256']}")
-        args = SimpleNamespace(file=dest, maintenance=True, fwupdtool=None)
-        self.run('正在读取两遍并校验固件…', lambda: cable.export(args), done)
+        self.run('正在读取两遍并校验固件…', export, done)
 
     def flash(self):
-        common = dict(parent=self.root, filetypes=[('固件镜像', '*.bin')])
-        target = filedialog.askopenfilename(title='选择同板型的待烧录固件', **common)
+        target = filedialog.askopenfilename(parent=self.root, title='选择待烧录固件',
+                                            filetypes=[('固件镜像', '*.bin')])
         if not target:
             return
-        hint = dict(initialdir=str(self.backup.parent), initialfile=self.backup.name) if self.backup else {}
-        backup = filedialog.askopenfilename(title='选择当前这根线的原始备份', **hint, **common)
-        if not backup:
-            return
-        args = SimpleNamespace(file=Path(target), backup=Path(backup), apply=False)
+        candidate_file = Path(target)
 
         def preview(result):
             meta = result['candidate']
+            backup = result['backup']
             diff = result['differing_sectors']
-            self.note(f"预检完成：{target}\n候选版本  {version(meta['version_raw'])}    "
-                      f"差异扇区  {diff}\nSHA-256  {meta['sha256']}")
+            current = cable.format_version(backup['version_raw'])
+            target_version = cable.format_version(meta['version_raw'])
+            self.note(f"自动备份已保存\n{backup['output']}\n"
+                      f"预检完成  {current} → {target_version}    差异扇区  {diff}\n"
+                      f"目标文件  {target}\nSHA-256  {meta['sha256']}")
             if not diff:
                 self.state.set('固件相同，无需烧录')
                 return
-            prompt = (f"当前版本  {version(result['runtime_version'])}\n"
-                      f"候选版本  {version(meta['version_raw'])}\n文件  {target}\n\n"
+            prompt = (f"{current} → {target_version}\n"
+                      f"目标文件  {target}\n自动备份  {backup['output']}\n\n"
                       f"即将擦写 {diff} 个扇区。请确认固件来自同板型连接线。断电可能导致设备无法启动。")
             if not messagebox.askyesno('确认烧录', prompt, default='no', parent=self.root):
                 self.state.set('已取消烧录')
                 return
-            args.apply = True
-            self.run('正在写入并回读校验…', lambda: cable.flash_raw(args, expected_sha256=meta['sha256']),
+            args = SimpleNamespace(file=candidate_file, backup=Path(backup['output']), apply=True)
+
+            def apply():
+                return cable.flash_raw(args, expected_sha256=meta['sha256'],
+                                       expected_backup_sha256=backup['sha256'])
+
+            self.run('正在写入并回读校验…', apply,
                      lambda r: self.note(f"烧录完成。已写入 {r['programmed_sectors']} 个扇区，"
-                                         f"重启后版本 {version(r['runtime_version'])}。"))
-        self.run('正在核对备份与设备，比较候选固件…', lambda: cable.flash_raw(args), preview)
+                                         f"重启后版本 {cable.format_version(r['runtime_version'])}。"))
+        self.run('正在双读备份并比较目标固件…',
+                 lambda: cable.prepare_upgrade(candidate_file, self.backup_directory), preview)
 
 
 if __name__ == '__main__':

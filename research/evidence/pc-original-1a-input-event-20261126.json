@@ -1,0 +1,268 @@
+{
+  "trial": "CV10 original mobile cable C9.49.6; retained RT9471 factory 1 A input-current limit and factory charge, output and telemetry decisions.",
+  "date": "2026-11-26",
+  "timezone": "Asia/Hong_Kong",
+  "setup": {
+    "host": "Windows, XHC1",
+    "auxiliary_supply_nameplate": "5 V / 2 A; kept attached throughout both measurement windows",
+    "idle": "Cable to PC, auxiliary supply present, headset detached",
+    "load": "Attach CV10 to same box, initially leave proximity window clear, then cover it without moving connections; unplug headset only to read cable directly",
+    "display": "2026-11-26T14:30:33.357+08:00 display/target ('\\\\\\\\.\\\\DISPLAY3', 2560, 0, 3200, 1600, 90) (3200, 1600, 90.0, 529940000)",
+    "headset_identity": "2026-11-26T14:30:32.637+08:00 AT^DEVMODEL? b'\\r\\n^DEVMODEL:CV10\\r\\n\\r\\nOK\\r\\n' ms 2.1",
+    "headset_cable_reply": "2026-11-26T14:30:32.680+08:00 AT^CABLEINFO? b'\\r\\n^CABLEINFO=10C094906255+280\\r\\n\\r\\nOK\\r\\n' ms 41.6"
+  },
+  "how_measured": "Observer calibrates the three transaction acknowledgement bits against RT9471 INFO 0x69. Clear IRQ1 (0x21) and arm in standalone mode. No host poll of IRQ1 while attached. On return to standalone check continuity marker and read the latched IRQ1 byte. Bit 6 is an input-current regulation entry, bit 7 is an input-voltage regulation entry. The first observer failed its unloaded calibration and contributed no load measurements.",
+  "firmware_and_irq_operations": [
+    {
+      "at": "2026-11-26T14:10:08.414306+08:00",
+      "event": "pretest-double-read",
+      "image": {
+        "bytes": 49152,
+        "version_raw": "0c094906",
+        "header_vid_pid": "2109:0105",
+        "crc16_usb": "1a69",
+        "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+      }
+    },
+    {
+      "at": "2026-11-26T14:11:16.986+08:00",
+      "event": "observer-installed",
+      "data": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "22ca",
+          "sha256": "648ae3028a566650a66b6579bb752e28da6bb4487b8b10cf02a17a415e26c26a"
+        },
+        "differing_sectors": 2,
+        "programmed_sectors": 2,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "at": "2026-11-26T14:11:36.594+08:00",
+      "event": "command-failure",
+      "data": {
+        "command": [
+          "idle"
+        ],
+        "error": "IRQ1 transaction did not pass ACK and reserved-bit checks"
+      }
+    },
+    {
+      "at": "2026-11-26T14:15:53.638+08:00",
+      "event": "calibrated-observer-installed",
+      "data": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "9d82",
+          "sha256": "8ebeed232724c3ef3c4f5c8f10a8a6ad8236da55ac3b5bf11df983d3de18da7a"
+        },
+        "differing_sectors": 2,
+        "programmed_sectors": 2,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "at": "2026-11-26T14:16:08.076+08:00",
+      "event": "idle-arm",
+      "data": {
+        "previous": "69",
+        "cleared_and_armed": true,
+        "info_control_ack_bits": 0
+      }
+    },
+    {
+      "at": "2026-11-26T14:16:18.405+08:00",
+      "event": "idle-finish",
+      "data": {
+        "armed_marker_preserved": true,
+        "irq1": "00",
+        "input_voltage_regulation_edge": false,
+        "input_current_regulation_edge": false
+      }
+    },
+    {
+      "at": "2026-11-26T14:16:33.103+08:00",
+      "event": "load-arm",
+      "data": {
+        "previous": "00",
+        "cleared_and_armed": true,
+        "info_control_ack_bits": 0
+      }
+    },
+    {
+      "at": "2026-11-26T14:31:12.866+08:00",
+      "event": "endpoint-watch-start",
+      "data": {
+        "wear_log": ".research\\cable-1a-load-optics-20261126\\run-20261126-143032-546317\\wear.log"
+      }
+    },
+    {
+      "at": "2026-11-26T14:32:23.975+08:00",
+      "event": "endpoint-marker",
+      "data": "A1"
+    },
+    {
+      "at": "2026-11-26T14:32:29.296+08:00",
+      "event": "load-finish",
+      "data": {
+        "armed_marker_preserved": true,
+        "irq1": "40",
+        "input_voltage_regulation_edge": false,
+        "input_current_regulation_edge": true
+      }
+    },
+    {
+      "at": "2026-11-26T14:33:26.275+08:00",
+      "event": "stock-restored",
+      "data": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "1a69",
+          "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+        },
+        "differing_sectors": 2,
+        "programmed_sectors": 2,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "at": "2026-11-26T14:33:41.314+08:00",
+      "event": "restoration-double-read",
+      "data": {
+        "image": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "1a69",
+          "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+        },
+        "runtime": {
+          "version_raw": "0c094906",
+          "level_raw": 255,
+          "level_percent": null,
+          "temperature_raw": 65535,
+          "temperature_c": null,
+          "port_status_raw": 131,
+          "charger_info_raw": 105,
+          "charger_model": "RT9471"
+        }
+      }
+    }
+  ],
+  "timeline": {
+    "initial_sensor_clear": "Reported by operator; no FAR event recorded in this session",
+    "headset_near": "2026-11-26T14:31:07.099+08:00 proximity 1 0142000001010800020004000100cf02",
+    "screen_on_acknowledgement": "2026-11-26T14:31:07.103+08:00 AT^SWITCHSCREEN=1 b'\\r\\n^SWITCHSCREEN=1\\r\\n\\r\\nOK\\r\\n' ms 1.4",
+    "control_port_failure": "2026-11-26T14:31:07.115+08:00 serial/control transition SerialException(\"ReadFile failed (PermissionError(13, '拒绝访问。', None, 5))\")",
+    "independent_usb_hub_observation": "2026-11-26T14:31:07.127 {'XHC1/1': '0000:0000/1', 'CV10/1': '0000:0000/0', 'CV10/2': '0000:0000/0', 'CV10/5': '0000:0000/0'}",
+    "near_to_control_loss_ms": 16,
+    "ack_to_control_loss_ms": 12
+  },
+  "optics": {
+    "lens": "right",
+    "resolution": [
+      640,
+      480
+    ],
+    "stimulus": "Alternating orange and green R/up-arrow pattern, approximately three seconds per color",
+    "observed": "No identifiable R/up arrow or alternating field in the recorded right lens",
+    "first_frame_at_or_after_ack": {
+      "index_zero_based": 969,
+      "at": "2026-11-26T14:31:07.123+08:00",
+      "ms_after_ack": 20,
+      "file": "pc-original-1a-irq-right-20261126.jpg",
+      "sha256": "f32a0a16e0357b3671983173c6b1d86288f74e5a486334a6355e8c8d9a39472d"
+    },
+    "video_local": ".research/cable-1a-load-optics-20261126/run-20261126-143032-546317/transition-right.avi",
+    "video_sha256": "5ca15fd71712b3e2541b99ef7b5d5e2d2d2fab0a132cde408343e2aaff268088",
+    "video_bytes": 4275424,
+    "frame_summary": {
+      "frames": 1177,
+      "maxima_orange_green_bright": [
+        0.00375,
+        0.00010416666666666667,
+        0.013854166666666667
+      ],
+      "peaks": [
+        {
+          "frame": 956,
+          "host_time": "2026-11-26T14:31:06.691+08:00",
+          "fraction": 0.00375
+        },
+        {
+          "frame": 428,
+          "host_time": "2026-11-26T14:30:48.835+08:00",
+          "fraction": 0.00010416666666666667
+        }
+      ],
+      "direct_reference": {
+        "orange": [
+          0.7158333333333333,
+          0.0,
+          0.7335416666666666
+        ],
+        "green": [
+          0.0,
+          0.70875,
+          0.7100520833333334
+        ]
+      },
+      "dominant_epochs": [
+        {
+          "dominant": "other",
+          "first_frame": 0,
+          "last_frame": 1176,
+          "start": "2026-11-26T14:30:34.355+08:00",
+          "end": "2026-11-26T14:31:14.132+08:00"
+        }
+      ],
+      "note": "A dominant-color fraction of 0.10 is only used to annotate time intervals. Confirm R and arrow and color alternation in the video."
+    }
+  },
+  "interpretation": {
+    "idle_irq1_hex": "00",
+    "load_irq1_hex": "40",
+    "continuity_marker_hex": "A1",
+    "confirmed": "The charger entered input-current regulation at least once during the loaded observation window. No input-voltage regulation entry was latched.",
+    "limits": "The event has no timestamp. The window includes insertion, preparation, wearing, opening the screen, loss of USB and headset removal. No electrical waveform or current measurement, no evidence that the IRQ edge coincided with or caused USB loss; no test at 2 A. Camera evidence concerns the recorded right-lens frames."
+  },
+  "rollback": {
+    "verified_bytes": 49152,
+    "matched": [
+      "stock-before.bin",
+      "stock-after.bin",
+      "resources/CV10-cable-C9.49.6.bin"
+    ],
+    "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02",
+    "details": {
+      "at": "2026-11-26T14:33:41.314+08:00",
+      "event": "restoration-double-read",
+      "data": {
+        "image": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "1a69",
+          "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+        },
+        "runtime": {
+          "version_raw": "0c094906",
+          "level_raw": 255,
+          "level_percent": null,
+          "temperature_raw": 65535,
+          "temperature_c": null,
+          "port_status_raw": 131,
+          "charger_info_raw": 105,
+          "charger_model": "RT9471"
+        }
+      }
+    }
+  }
+}

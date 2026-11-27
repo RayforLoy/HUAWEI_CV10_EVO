@@ -1,0 +1,235 @@
+{
+  "setup": "C9.49.6 original cable alone on the Windows PC, external 5 V, no headset load. No electrical measurements.",
+  "timezone": "Asia/Hong_Kong",
+  "baseline": {
+    "first_at": "2026-11-26T13:46:37.911+08:00",
+    "last_at": "2026-11-26T13:46:52.855+08:00",
+    "count": 31,
+    "raw_register_addresses": {
+      "low_threshold_state": "0x2b3b",
+      "protection_state": "0x2aa3",
+      "port_control_state": "0x2a5e",
+      "port_trigger": "0x2beb",
+      "port_sequence": "0x2a9f"
+    },
+    "distinct_values": {
+      "version_raw": [
+        "0c094906"
+      ],
+      "level_raw": [
+        255
+      ],
+      "level_percent": [
+        null
+      ],
+      "temperature_raw": [
+        65535
+      ],
+      "temperature_c": [
+        null
+      ],
+      "port_status_raw": [
+        131
+      ],
+      "charger_info_raw": [
+        105
+      ],
+      "charger_model": [
+        "RT9471"
+      ],
+      "low_threshold_state": [
+        0
+      ],
+      "protection_state": [
+        0
+      ],
+      "port_control_state": [
+        4
+      ],
+      "port_trigger": [
+        0
+      ],
+      "port_sequence": [
+        0
+      ]
+    }
+  },
+  "firmware": "Input profile of the reporting-only observer. One original I2C diagnostic read per poll; live registers only. Nibbles sampled separately. Two consecutive complete rounds confirmed by INFO=69.",
+  "sample_count_including_partial": 41,
+  "gauge_and_port_during_observation": {
+    "level": "FF",
+    "temperature": "FFFF",
+    "port": "83",
+    "protection_state": "00"
+  },
+  "rounds": [
+    {
+      "03": {
+        "raw": "14",
+        "low_at": "2026-11-26T13:50:44.139+08:00",
+        "high_at": "2026-11-26T13:50:49.005+08:00"
+      },
+      "0B": {
+        "raw": "69",
+        "low_at": "2026-11-26T13:50:54.072+08:00",
+        "high_at": "2026-11-26T13:50:59.141+08:00"
+      },
+      "04": {
+        "raw": "46",
+        "low_at": "2026-11-26T13:51:04.007+08:00",
+        "high_at": "2026-11-26T13:51:09.079+08:00"
+      },
+      "02": {
+        "raw": "40",
+        "low_at": "2026-11-26T13:51:14.148+08:00",
+        "high_at": "2026-11-26T13:51:19.029+08:00"
+      },
+      "0F": {
+        "raw": "F1",
+        "low_at": "2026-11-26T13:51:24.097+08:00",
+        "high_at": "2026-11-26T13:51:29.167+08:00"
+      },
+      "10": {
+        "raw": "C0",
+        "low_at": "2026-11-26T13:51:34.033+08:00",
+        "high_at": "2026-11-26T13:51:39.101+08:00"
+      },
+      "11": {
+        "raw": "00",
+        "low_at": "2026-11-26T13:51:44.170+08:00",
+        "high_at": "2026-11-26T13:51:49.036+08:00"
+      },
+      "12": {
+        "raw": "02",
+        "low_at": "2026-11-26T13:51:54.107+08:00",
+        "high_at": "2026-11-26T13:51:59.175+08:00"
+      }
+    },
+    {
+      "03": {
+        "raw": "14",
+        "low_at": "2026-11-26T13:52:04.041+08:00",
+        "high_at": "2026-11-26T13:52:09.111+08:00"
+      },
+      "0B": {
+        "raw": "69",
+        "low_at": "2026-11-26T13:52:14.178+08:00",
+        "high_at": "2026-11-26T13:52:19.048+08:00"
+      },
+      "04": {
+        "raw": "46",
+        "low_at": "2026-11-26T13:52:24.116+08:00",
+        "high_at": "2026-11-26T13:52:29.186+08:00"
+      },
+      "02": {
+        "raw": "40",
+        "low_at": "2026-11-26T13:52:34.255+08:00",
+        "high_at": "2026-11-26T13:52:39.121+08:00"
+      },
+      "0F": {
+        "raw": "F1",
+        "low_at": "2026-11-26T13:52:44.190+08:00",
+        "high_at": "2026-11-26T13:52:49.259+08:00"
+      },
+      "10": {
+        "raw": "C0",
+        "low_at": "2026-11-26T13:52:54.125+08:00",
+        "high_at": "2026-11-26T13:52:59.193+08:00"
+      },
+      "11": {
+        "raw": "00",
+        "low_at": "2026-11-26T13:53:04.262+08:00",
+        "high_at": "2026-11-26T13:53:09.128+08:00"
+      },
+      "12": {
+        "raw": "02",
+        "low_at": "2026-11-26T13:53:14.198+08:00",
+        "high_at": "2026-11-26T13:53:19.265+08:00"
+      }
+    }
+  ],
+  "operations": [
+    {
+      "time": "2026-11-26T13:49:33.017+08:00",
+      "event": "stock-doubly-read",
+      "data": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+    },
+    {
+      "time": "2026-11-26T13:49:59.456+08:00",
+      "event": "observer-installed",
+      "data": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "39cd",
+          "sha256": "ec9a46d76f844d8f086fb3859ae9d073645286a03a31a71aae2b11253019f501"
+        },
+        "differing_sectors": 2,
+        "programmed_sectors": 2,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "time": "2026-11-26T13:53:19.466+08:00",
+      "event": "observed-rounds",
+      "data": [
+        {
+          "03": 20,
+          "0B": 105,
+          "04": 70,
+          "02": 64,
+          "0F": 241,
+          "10": 192,
+          "11": 0,
+          "12": 2
+        },
+        {
+          "03": 20,
+          "0B": 105,
+          "04": 70,
+          "02": 64,
+          "0F": 241,
+          "10": 192,
+          "11": 0,
+          "12": 2
+        }
+      ]
+    },
+    {
+      "time": "2026-11-26T13:53:45.917+08:00",
+      "event": "original-restored",
+      "data": {
+        "candidate": {
+          "bytes": 49152,
+          "version_raw": "0c094906",
+          "header_vid_pid": "2109:0105",
+          "crc16_usb": "1a69",
+          "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02"
+        },
+        "differing_sectors": 2,
+        "programmed_sectors": 2,
+        "runtime_version": "0c094906"
+      }
+    },
+    {
+      "time": "2026-11-26T13:54:00.441+08:00",
+      "event": "independent-double-readback",
+      "data": {
+        "size": 49152,
+        "sha256": "f16057065c4c29d6d86901239371f2a6aab2bcf03c6976505c8f5971fba93e02",
+        "runtime": {
+          "version_raw": "0c094906",
+          "level_raw": 255,
+          "level_percent": null,
+          "temperature_raw": 65535,
+          "temperature_c": null,
+          "port_status_raw": 131,
+          "charger_info_raw": 105,
+          "charger_model": "RT9471"
+        }
+      }
+    }
+  ],
+  "restored_comparison_equal": true
+}

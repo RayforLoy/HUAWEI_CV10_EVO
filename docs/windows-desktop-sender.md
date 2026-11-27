@@ -1,6 +1,6 @@
 # 将 Windows 桌面投到 CV10
 
-本机可双击 `resources\VRGlassPC.exe`。Windows 负责抓取一个显示器，手机接收 JPEG 帧并通过外屏向眼镜绘制。声音、返向输入与头部姿态不包含在这条桌面视频通道内。[上游协议](https://github.com/samrat1games/huawei-vr-glass-globalka/blob/266dbe02e115c7aeed936dedc2d1924ae375bc8c/docs/desktop-protocol.md)
+本机可双击 `tools\globalka\VRGlassPC.exe`。Windows 负责抓取一个显示器，手机接收 JPEG 帧并通过外屏向眼镜绘制。声音、返向输入与头部姿态不包含在这条桌面视频通道内。[上游协议](https://github.com/samrat1games/huawei-vr-glass-globalka/blob/266dbe02e115c7aeed936dedc2d1924ae375bc8c/docs/desktop-protocol.md)
 
 1. Fold7 通过普通 C-C 线接 CV10，将三星 DeX 的“连接的显示设备”设为“已镜像”。在接收应用打开“接收电脑屏幕”，记下手机显示的局域网 IP 和本次六位配对码。
 2. 在同一可信局域网上打开 Windows 发送端。第一项填手机 IP，第二项填六位码，第三项选择要发送的显示器。端口固定为 TCP 7788，默认 JPEG 质量为 60。应用协议通过局域网明文传输。
@@ -18,4 +18,4 @@
 .\tools\build-globalka-sender.ps1
 ```
 
-脚本默认写入 `resources\VRGlassPC.exe`，支持 `-OutputDirectory` 指定其他目录。本机实测二进制的 SHA-256 为 `7f7ad9d8e3934873b4141bcae10cee8fe032457ed305e3916b26718139108c11`。上游 README 的 Licence 段仅说明代码按现状发布，另列全景素材为 CC0。仓库跟踪本项目的构建脚本，第三方 EXE 保存在本机资源目录。[上游 Licence](https://github.com/samrat1games/huawei-vr-glass-globalka/blob/266dbe02e115c7aeed936dedc2d1924ae375bc8c/README.md#licence)
+脚本默认写入 `tools\globalka\VRGlassPC.exe`，支持 `-OutputDirectory` 指定其他目录。本机实测二进制的 SHA-256 为 `7f7ad9d8e3934873b4141bcae10cee8fe032457ed305e3916b26718139108c11`。上游 README 的 Licence 段仅说明代码按现状发布，另列全景素材为 CC0。仓库跟踪本项目的构建脚本，发送端归档于 `tools/globalka/`。[上游 Licence](https://github.com/samrat1games/huawei-vr-glass-globalka/blob/266dbe02e115c7aeed936dedc2d1924ae375bc8c/README.md#licence)
