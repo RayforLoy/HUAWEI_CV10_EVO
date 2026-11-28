@@ -1,0 +1,57 @@
+{
+  "device": "SM-F9660",
+  "date": "2026-11-28",
+  "controller": "Huawei CF20, physical BLE notifications",
+  "runtime": "org.cv10.monado.out_of_process.launcher_preview",
+  "runtime_sha256": "6f16f281657d0ae726838b2ce48efa25686ffb85cb5c9a58ab723b02e4780c94",
+  "previous_apk_sha256": "bc501e62b023f87078dbc75215ba9e4127858ce039b12d4efac6f34963d1488d",
+  "signer_sha256": "68365fa0904432aaa86a8904c691f9e6487414dc959786d72831a083b9f23fca",
+  "hello_xr": {
+    "action": "Right Khronos Simple Controller Grip",
+    "first_build_sample": {
+      "time": "16:39:12.578",
+      "home": 0,
+      "head_yaw_deg": 1.24,
+      "raw_hand_yaw_deg": 156.31,
+      "correction_deg": -155.07,
+      "corrected_hand_minus_head_deg": -0.0
+    },
+    "wearer": "Controller cube follows hand after centering. No visible scene reset reported in the initial build.",
+    "final_build_native_events": [
+      "11-28 16:46:28.688 CF20 Home requested local-space recenter",
+      "11-28 16:46:28.693 CF20 Home local-space recenter client=1 result=0",
+      "11-28 16:46:32.654 CF20 Home requested local-space recenter",
+      "11-28 16:46:32.659 CF20 Home local-space recenter client=1 result=0",
+      "11-28 16:46:35.177 CF20 Home requested local-space recenter",
+      "11-28 16:46:35.182 CF20 Home local-space recenter client=1 result=0"
+    ],
+    "app_event_observation": "Server returned success for the session-local reference-space reset. No app-side receipt log captured."
+  },
+  "piliplus": {
+    "apk_sha256": "b69581ca7cdcbd51ac3048bc9a231531ba1c97786f321e6275b6b99a4db1a2b7",
+    "action": "Right Khronos Simple Controller Aim",
+    "home_sample": {
+      "time": "16:43:21.353",
+      "home": 1,
+      "head_yaw_deg": -30.17,
+      "raw_hand_yaw_deg": 159.11,
+      "correction_deg": 170.61,
+      "corrected_hand_minus_head_deg": -0.11
+    },
+    "wearer": "Long Home moved the browser panel to the new forward direction."
+  },
+  "launcher": "Focused 3D launcher consumes the long-Home broadcast first and retains its own panel and pointer recenter. No repeat optical test of the launcher in this run.",
+  "space_scope": [
+    "LOCAL",
+    "LOCAL_FLOOR"
+  ],
+  "regression_vectors": [
+    "180-degree initial heading",
+    "stale HMD pose",
+    "near-vertical direction",
+    "head and controller turn independently",
+    "explicit Home",
+    "saved zero calibration",
+    "BLE reconnect"
+  ]
+}

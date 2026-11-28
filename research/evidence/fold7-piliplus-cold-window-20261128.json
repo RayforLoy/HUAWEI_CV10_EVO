@@ -1,0 +1,1757 @@
+{
+  "date": "2026-11-28",
+  "device": "Fold7 SM-F9660; 1080x2520 active cover panel, original powered cable and HUAWEIAV03 3200x1600 @90 Hz",
+  "runtime_final_sha256": "d2798159a2b9ecf2c92c1657a0dc650d811c4e4dbfc6d5788eb1b98b4e917c29",
+  "app_AA_before_sha256": "4fff209763a5ff7b9039d1b452e7a3de7906c163f57a371c7e803f20c5b6343a",
+  "app_fixed_sha256": "f659344d587cd1d02bf2dcd1915b8d246a8052e9e27b67e29cb0bd90b1d6416b",
+  "raw_system_settings": {
+    "min_refresh_rate": "120.0",
+    "peak_refresh_rate": "60.0",
+    "shizuku_server_running": true
+  },
+  "protocol": "Stopped both applications before each launch, waited three seconds, launched MainActivity via MAIN/LAUNCHER. No video played in these observation windows. No refresh-setting writes or active display-mode commands from ADB. Thermal state 3 observed for control and window-vote runs. Shizuku and wireless ADB available.",
+  "measurement": "Deduplicated actual-present timestamps (second column) separately in each SurfaceFlinger --latency snapshot of the CV10 output surface. Reported median of rolling windows after the first four seconds. Collections overlap; the method avoids counting time between disjoint captures. Startup and thermal/loading variability remain visible in raw windows.",
+  "controls": [
+    {
+      "runtime": "previous model build",
+      "duration_s": 35.8,
+      "steady_from_s": 4,
+      "windows": 55,
+      "physical_hz_after_4s": [
+        60.0
+      ],
+      "minimum_setting": [
+        "120.0"
+      ],
+      "median_present_hz": 59.94,
+      "range_present_hz": [
+        59.93,
+        59.95
+      ],
+      "first_85_hz_window_s": null,
+      "samples": [
+        {
+          "at_s": 2.45,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 57,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 50.48
+        },
+        {
+          "at_s": 3.03,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 124,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.47
+        },
+        {
+          "at_s": 3.62,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 4.23,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 4.8,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 5.33,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 5.95,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 6.58,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 7.2,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 7.75,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 8.47,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 9.0,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 9.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 10.06,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 10.72,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 11.27,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 11.77,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 12.25,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 12.77,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 13.33,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 13.84,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 14.36,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 14.89,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 15.42,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 16.0,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 16.55,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 17.14,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 17.72,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 18.33,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 18.94,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 19.58,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 20.33,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 20.97,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 21.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 22.11,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 22.69,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 23.3,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 23.84,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 24.39,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 25.06,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 25.62,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 26.34,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 26.88,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 27.44,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 28.08,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 28.67,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 29.5,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 30.06,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 30.67,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 31.34,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 31.95,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 32.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 33.09,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 33.62,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 34.17,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 34.72,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 35.31,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 35.81,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3324",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        }
+      ]
+    },
+    {
+      "runtime": "final model/pose build, same as treatment",
+      "duration_s": 23.5,
+      "steady_from_s": 4,
+      "windows": 35,
+      "physical_hz_after_4s": [
+        60.0
+      ],
+      "minimum_setting": [
+        "120.0"
+      ],
+      "median_present_hz": 59.94,
+      "range_present_hz": [
+        59.94,
+        59.96
+      ],
+      "first_85_hz_window_s": null,
+      "samples": [
+        {
+          "at_s": 2.14,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 23,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 42.54
+        },
+        {
+          "at_s": 2.67,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 91,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 54.49
+        },
+        {
+          "at_s": 3.25,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 3.77,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 4.3,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 4.81,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 5.39,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 5.91,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 6.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 7.08,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 7.61,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 8.16,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 8.72,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 9.27,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 9.78,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 127,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 10.36,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 10.94,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 11.47,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 12.09,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 12.66,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 13.22,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 13.75,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.96
+        },
+        {
+          "at_s": 14.3,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 14.91,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 15.48,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 16.16,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 16.69,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 17.27,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 17.81,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 18.36,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 18.89,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 19.48,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 20.14,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 20.75,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 21.33,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 21.88,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.94
+        },
+        {
+          "at_s": 22.42,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 22.97,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        },
+        {
+          "at_s": 23.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3361",
+          "unique_timestamps": 126,
+          "physical_hz": 60.0,
+          "floor": "120.0",
+          "present_hz": 59.95
+        }
+      ]
+    }
+  ],
+  "fixed": [
+    {
+      "duration_s": 34.7,
+      "steady_from_s": 4,
+      "windows": 49,
+      "physical_hz_after_4s": [
+        120.0
+      ],
+      "minimum_setting": [
+        "120.0"
+      ],
+      "median_present_hz": 89.91,
+      "range_present_hz": [
+        83.91,
+        90.46
+      ],
+      "first_85_hz_window_s": 2.3,
+      "samples": [
+        {
+          "at_s": 1.8,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 29,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 59.93
+        },
+        {
+          "at_s": 2.3,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 2.88,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 3.47,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 4.11,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 4.58,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 5.08,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 5.69,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 6.27,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.45
+        },
+        {
+          "at_s": 6.8,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 7.3,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 7.91,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 8.53,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 9.05,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 9.55,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 10.06,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 10.55,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.9
+        },
+        {
+          "at_s": 11.12,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.9
+        },
+        {
+          "at_s": 11.75,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 12.34,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 12.98,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 13.66,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.45
+        },
+        {
+          "at_s": 14.19,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.46
+        },
+        {
+          "at_s": 14.89,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.46
+        },
+        {
+          "at_s": 15.38,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 15.91,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 16.48,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 19.66,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 85.82
+        },
+        {
+          "at_s": 21.48,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 83.91
+        },
+        {
+          "at_s": 22.08,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 85.34
+        },
+        {
+          "at_s": 22.7,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 85.83
+        },
+        {
+          "at_s": 23.28,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 84.87
+        },
+        {
+          "at_s": 23.78,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 83.93
+        },
+        {
+          "at_s": 24.27,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 83.93
+        },
+        {
+          "at_s": 24.81,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 84.4
+        },
+        {
+          "at_s": 25.33,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 83.93
+        },
+        {
+          "at_s": 25.84,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 83.93
+        },
+        {
+          "at_s": 26.34,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 84.39
+        },
+        {
+          "at_s": 26.92,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 84.39
+        },
+        {
+          "at_s": 27.47,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 126,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 85.14
+        },
+        {
+          "at_s": 28.0,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 126,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 86.12
+        },
+        {
+          "at_s": 28.5,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 126,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 85.13
+        },
+        {
+          "at_s": 29.0,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 86.31
+        },
+        {
+          "at_s": 29.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 88.86
+        },
+        {
+          "at_s": 30.06,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 30.66,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 31.22,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 31.84,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 32.42,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 33.03,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 33.61,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 34.14,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 34.67,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3398",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        }
+      ]
+    },
+    {
+      "duration_s": 33.7,
+      "steady_from_s": 4,
+      "windows": 53,
+      "physical_hz_after_4s": [
+        120.0
+      ],
+      "minimum_setting": [
+        "120.0"
+      ],
+      "median_present_hz": 89.92,
+      "range_present_hz": [
+        89.75,
+        91.01
+      ],
+      "first_85_hz_window_s": 2.72,
+      "samples": [
+        {
+          "at_s": 2.22,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 95,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 78.8
+        },
+        {
+          "at_s": 2.72,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 3.27,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 3.84,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 4.45,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 4.92,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 126,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.75
+        },
+        {
+          "at_s": 5.48,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 128,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.11
+        },
+        {
+          "at_s": 5.97,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 6.53,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 7.08,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 7.7,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.93
+        },
+        {
+          "at_s": 8.31,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 8.81,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.46
+        },
+        {
+          "at_s": 9.31,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.46
+        },
+        {
+          "at_s": 9.81,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.46
+        },
+        {
+          "at_s": 10.34,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 10.89,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 11.53,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 12.09,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.45
+        },
+        {
+          "at_s": 12.66,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 13.23,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.93
+        },
+        {
+          "at_s": 13.86,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.93
+        },
+        {
+          "at_s": 14.45,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.93
+        },
+        {
+          "at_s": 14.98,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 15.59,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 16.09,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.9
+        },
+        {
+          "at_s": 16.7,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.9
+        },
+        {
+          "at_s": 17.22,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.9
+        },
+        {
+          "at_s": 17.75,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.44
+        },
+        {
+          "at_s": 18.25,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.44
+        },
+        {
+          "at_s": 18.78,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.44
+        },
+        {
+          "at_s": 19.28,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 19.78,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 20.27,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 20.83,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.45
+        },
+        {
+          "at_s": 21.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 22.17,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.91
+        },
+        {
+          "at_s": 22.78,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 23.27,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.46
+        },
+        {
+          "at_s": 23.83,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.47
+        },
+        {
+          "at_s": 24.38,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 24.88,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 25.41,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 25.95,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 26.56,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 128,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.1
+        },
+        {
+          "at_s": 27.17,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 27.75,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.46
+        },
+        {
+          "at_s": 28.42,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 29.02,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 29.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.93
+        },
+        {
+          "at_s": 30.14,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 91.01
+        },
+        {
+          "at_s": 30.78,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.93
+        },
+        {
+          "at_s": 31.41,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 32.02,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 89.92
+        },
+        {
+          "at_s": 32.52,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.46
+        },
+        {
+          "at_s": 33.14,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 128,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.1
+        },
+        {
+          "at_s": 33.66,
+          "layer": "9613ce SurfaceView[]@0(BLAST)#3435",
+          "unique_timestamps": 127,
+          "physical_hz": 120.0,
+          "floor": "120.0",
+          "present_hz": 90.45
+        }
+      ]
+    }
+  ],
+  "os_evidence": {
+    "old": "MainActivity preferredRefreshRate=120.00001, no mode ID; SurfaceFlinger setFrameRate overrides {10844, 60.00 Hz}.",
+    "fixed": "MainActivity preferredRefreshRate=120.00001 + preferredDisplayMode=8; setFrameRate overrides {10844, 120.00 Hz}. At 17:27:33.496 and 17:28:31.221 the app intercepted a later preferredId=0 during the browser session. At 17:28:16.191 leaving the first session restored preferredId=0.",
+    "focus": "Both fixes measured from fresh FOCUSED browsing prior to any playback; user subsequently confirmed normal visual behavior."
+  }
+}

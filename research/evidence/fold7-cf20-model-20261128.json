@@ -1,0 +1,164 @@
+{
+  "tested": "2026-11-28 +08:00",
+  "hardware": "Galaxy Z Fold7 SM-F9660, CV10 over original mobile cable and 5 V/2 A, physical BLE CF20",
+  "room": "PiliPlus XR browse, LOCAL space",
+  "runtime_package": "org.cv10.monado.out_of_process.launcher_preview",
+  "runtime_sha256": "882d7385f9bb05a0e5920fa58368faeb2e2510cbafa93096252293a321ccb018",
+  "app_package": "com.example.piliplus",
+  "linkfix_app_sha256": "dba1df2201a659eea236980fefaa6e7bbc9135a18a9707582da270835c390e2c",
+  "signing_cert_sha256": "68365fa0904432aaa86a8904c691f9e6487414dc959786d72831a083b9f23fca",
+  "asset": {
+    "source": "Huawei VR Home com.huawei.vrlauncherx 11.1.0.337",
+    "sha256": "76e976932c96b7ebc3f844b773e8476dd16777d29e8a5d2a447f332a1a141087",
+    "bytes": 182180,
+    "primitives": 6,
+    "vertices": 2569,
+    "triangles": 3350,
+    "images": 1,
+    "animatable_nodes": 0,
+    "gltf_validator": "2.0.0-dev.3.10, 0 errors / 0 warnings"
+  },
+  "first_failure": "The first installed PiliPlus could draw its old cursor but Adreno rejected its new GLES program (beamLength uniform precision mismatch). Explicit matching precision in both stages fixed the link.",
+  "loader_observation": "11-28 17:10:37.597 18260 18463 I P5MVR   : XR controller GLB loaded: 182180 bytes, 6 parts, 3350 triangles, 1 images",
+  "grip_to_aim_expected_m": [
+    0,
+    0.02,
+    -0.069
+  ],
+  "pose_samples": {
+    "n": 38,
+    "start": "17:10:37.601",
+    "end": "17:11:51.958",
+    "max_angle_deg": 0.0344,
+    "max_origin_error_mm": 0.348,
+    "flags": [
+      "0xf"
+    ],
+    "description": "Actual model-space and action aim-space client poses at the same predicted display times, with quantization from device log output"
+  },
+  "home": {
+    "requested": "17:11:22.462",
+    "ipc_result": 0,
+    "ipc_completed": "17:11:22.468",
+    "before": {
+      "time": "17:11:22.222",
+      "home_counter": 0,
+      "yaw_correction_deg": 82.0,
+      "aligned_hand_minus_head_yaw_deg": -48.88
+    },
+    "after": {
+      "time": "17:11:22.475",
+      "home_counter": 1,
+      "yaw_correction_deg": 131.17,
+      "aligned_hand_minus_head_yaw_deg": -0.02
+    }
+  },
+  "wearer": "Confirmed same direction with buttons facing up and confirmed model, laser and XR panel aligned after long Home. Noticed severe aliasing on the laser.",
+  "visual_evidence": "fold7-cf20-model-before-aa-left-20261128.png is an upright crop from the submitted left eye. Lens appearance confirmed by the wearer.",
+  "anti_aliasing": {
+    "app_sha256": "4fff209763a5ff7b9039d1b452e7a3de7906c163f57a371c7e803f20c5b6343a",
+    "wearer": "Clearly improved when moving; cinema laser was also normal.",
+    "browser": "MainActivity phone configuration port 1080x2520; Flutter viewport 1680x1260 in the headset. Physical controller produced screen hits and activated cinema; separate bottom-right-boundary hit not instrumented.",
+    "cinema": "17:19:51.903 VrPlayerActivity started, 17:19:52.150 FOCUSED, 17:19:52.217 reloaded same 182180 byte GLB, modelVisible=1. Sampled screen and HUD hits (1, 2).",
+    "left_eye_samples": "From two upright compositor left-eye PNGs, over a dark background with similarly sloped beam segments. Different physical poses, no optical-photometric calibration. Green-channel intensity summed per scanline with local background removed; coefficient of variation and centerline RMS measured after fitting a quadratic to the captured lens-warped curve.",
+    "before": {
+      "input": "linked-motion-display-015.png",
+      "preview_roi": [
+        338.0,
+        282.0,
+        383.0,
+        427.0
+      ],
+      "rows": 357,
+      "eye": "left",
+      "component": "green, local background subtracted",
+      "total_intensity_avg": 948.65,
+      "intensity_cv": 0.241,
+      "p10_over_p90": 0.54,
+      "peak_median": 231.0,
+      "rows_below_half_median": 0.078,
+      "ridge_center_rmse_px": 0.734
+    },
+    "after": {
+      "input": "aa-motion-display-018.png",
+      "preview_roi": [
+        374.5,
+        432.1,
+        419.6,
+        568.8
+      ],
+      "rows": 336,
+      "eye": "left",
+      "component": "green, local background subtracted",
+      "total_intensity_avg": 975.63,
+      "intensity_cv": 0.067,
+      "p10_over_p90": 0.831,
+      "peak_median": 222.0,
+      "rows_below_half_median": 0.0,
+      "ridge_center_rmse_px": 0.063
+    },
+    "submitted_left_crop": "fold7-cf20-model-aa-left-20261128.png",
+    "separate_present_check_browse": {
+      "host": "17:19:44",
+      "phone_mode": "Active mode for display 0:\n  Mode ID: 8, Resolution: 1080x2520, Refresh Rate: 120.00 Hz",
+      "layers": [
+        {
+          "layer": "67d2028 SurfaceView[]@0(BLAST)#3248",
+          "unique": 127,
+          "hz": 90.48,
+          "first_ns": 8246224568621,
+          "last_ns": 8247617096538
+        }
+      ]
+    },
+    "separate_present_check_cinema": {
+      "host": "17:20:26",
+      "phone_mode": "Active mode for display 0:\n  Mode ID: 8, Resolution: 1080x2520, Refresh Rate: 120.00 Hz",
+      "layers": [
+        {
+          "layer": "670ff15 SurfaceView[]@0(BLAST)#3259",
+          "unique": 127,
+          "hz": 89.38,
+          "first_ns": 8288888606834,
+          "last_ns": 8290298380063
+        }
+      ]
+    },
+    "phone_controller_fallback": "Implemented by the app and tested on host without a model; no separate on-device phone-only run in this measurement."
+  },
+  "same_time_pose_fix": {
+    "runtime_sha256": "d2798159a2b9ecf2c92c1657a0dc650d811c4e4dbfc6d5788eb1b98b4e917c29",
+    "reason": "Separate grip/model and aim lookups for identical predicted times could see different BLE reports during first-frame texture upload.",
+    "observed_prior": [
+      {
+        "t": "17:19:02.832",
+        "angle_deg": 1.4834,
+        "origin_error_mm": 10.038
+      },
+      {
+        "t": "17:19:30.051",
+        "angle_deg": 2.7778,
+        "origin_error_mm": 19.518
+      }
+    ],
+    "fixed_first_frame": {
+      "wall": "17:24:19.881",
+      "angle_deg": 0.0,
+      "origin_error_mm": 0.076
+    },
+    "fixed_sample_count": 25,
+    "max_angle_deg": 0.0,
+    "max_origin_error_mm": 0.102
+  },
+  "final_installed": {
+    "runtime_sha256": "d2798159a2b9ecf2c92c1657a0dc650d811c4e4dbfc6d5788eb1b98b4e917c29",
+    "piliplus_sha256": "f659344d587cd1d02bf2dcd1915b8d246a8052e9e27b67e29cb0bd90b1d6416b",
+    "installed_hash_matches_host": true,
+    "wearer_final": "Reported normal on the cold-start check; native Home successfully recentered the selected XR client at 17:29:23.066.",
+    "current_runtime_captures": 122,
+    "model_minus_aim_max_angle_deg": 0.0,
+    "grip_to_aim_max_origin_error_mm": 0.137,
+    "comparison_precision": "Quaternions from app logs rounded to five decimal places; positions to four decimal places.",
+    "cold_start_report": "fold7-piliplus-cold-window-20261128.json"
+  }
+}

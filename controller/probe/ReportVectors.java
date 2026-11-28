@@ -52,6 +52,7 @@ final class ReportVectors {
                 Cv10ControllerCalibration.supportsFlags("4.0.5") && Cv10ControllerCalibration.supportsFlags("4.1.0"),
                 "minimum firmware for calibration flags");
         calibrationVectors();
+        headingVectors();
         System.out.println("CF20 report, firmware and right-side calibration vectors passed");
     }
 
@@ -89,6 +90,34 @@ final class ReportVectors {
         float sign = negate ? -1f : 1f;
         return new Cv10SimulationCalibration.Orientation(ns, sign * cY * sP, sign * sY * cP,
                 -sign * sY * sP, sign * cY * cP);
+    }
+
+    private static Cv10ControllerReport hand(float yaw, float pitch) {
+        Cv10SimulationCalibration.Orientation q = orientation(0, yaw, pitch, false);
+        java.nio.ByteBuffer bytes = java.nio.ByteBuffer.allocate(20);
+        bytes.position(1);
+        for (float field : new float[] {q.x, -q.y, -q.w, q.z})
+            bytes.putShort((short) Math.round(field * 32767f));
+        return Cv10ControllerReport.decode(bytes.array());
+    }
+
+    private static void headingVectors() {
+        long now = 2_000_000_000L;
+        Cv10SimulationCalibration.Heading alignment = new Cv10SimulationCalibration.Heading();
+        Cv10SimulationCalibration.Orientation head = orientation(now, 0.4f, 0.1f, false);
+        float opposite = 0.4f - (float)Math.PI;
+        check(Float.isNaN(alignment.resolve(1, 0, Float.NaN, null, now, hand(opposite, 0))), "wait for HMD");
+        check(Float.isNaN(alignment.resolve(1, 0, Float.NaN, head, now, hand(opposite, 1.57f))), "vertical hand");
+        float correction = alignment.resolve(1, 0, Float.NaN, head, now, hand(opposite, 0.1f));
+        check(Math.abs(Math.abs(correction) - Math.PI) < 0.0001, "opposite bearing aligned");
+        close(alignment.resolve(1, 0, Float.NaN, orientation(now, -1f, 0f, false), now, hand(-1f, 0.3f)),
+                correction, "head and hand can turn independently");
+        close(alignment.resolve(1, 1, Float.NaN, head, now, hand(0.1f, 0f)), 0.3f, "long Home re-aligns");
+        close(alignment.resolve(1, 1, 0f, head, now, hand(opposite, 0)), 0f, "saved zero calibration wins");
+        close(alignment.resolve(2, 0, -0.2f, head, now, hand(opposite, 0)), -0.2f, "reconnect honors saved yaw");
+        check(Float.isNaN(alignment.resolve(3, 0, Float.NaN, head, now + 200_000_000L, hand(0.1f, 0))),
+                "stale HMD cannot anchor a new link");
+        close(alignment.resolve(3, 0, Float.NaN, head, now, hand(0.2f, 0)), 0.2f, "fresh reconnect");
     }
 
     private static byte[] hex(String input) {

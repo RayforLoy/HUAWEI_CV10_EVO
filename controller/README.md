@@ -4,7 +4,7 @@
 
 | 硬件 | Monado CV10 | 独立诊断 APK | 验证 |
 | --- | --- | --- | --- |
-| CF20 蓝牙 3DoF 手柄 | 应用内搜索、选用、Android 系统配对、会话自动连接和右手 OpenXR 输入 | GATT 状态、报告频率、原始包、四元数、按键、触控、惯性和电量 | 通过构建和协议测试向量。Fold7 待验收 |
+| CF20 蓝牙 3DoF 手柄 | 与手机独立接入 OpenXR，左右手可交换 | 六个按键、触控板、握持与瞄准、角速度、电量 | [Fold7 双手与长按 Home 实测](../docs/fold7-dual-controller.md) |
 | 原厂 6DoF 套件 | 菜单可启用头显定位，或启用头显加双手定位。前台服务读取定位器 HID、外接 Y8 和逐机校准。双手提供 OpenXR 位姿和按键 | 枚举 USB 和相机，读取原始记录和逐机校准，导出双目帧及头显 SLAM 参数，离线回放头显和双手，实时采样头显 SLAM | 已通过构建、协议向量、Windows 原厂库回放及手柄标定参数对照。Fold7 的外接 Y8、HiAI 和有效 OpenXR 位姿待验证 |
 
 两条协议独立记录在 [CF20 蓝牙协议](cf20-protocol.md) 和 [6DoF 套件协议](kit-6dof-protocol.md)。诊断 APK 与运行时共用发现、配对及报告解码源码。
@@ -14,6 +14,8 @@
 [原厂手机操控逆向](oem-phone-controller.md)记录手机的触控分区、手势阈值、姿态射线和回正。
 
 [原厂光标与射线渲染](oem-pointer-rendering.md)记录光标贴图、命中位置、射线几何及深度遮挡。
+
+第三方 OpenXR 应用可从 Monado CV10 加载 CF20 的机身、触控面和按键。[原厂模型提取、构建与应用调用](cf20-openxr-model.md)
 
 ## 本机产物
 

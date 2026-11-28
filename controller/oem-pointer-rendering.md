@@ -43,6 +43,22 @@ Android 默认使用白色空心环，基础局部缩放为 `0.24`，未命中�
 
 ## 复核位置
 
+### CF20 的握持原点和前端
+
+`level1` 的模型 `DefaultController`（Transform 1842）与 `EventCamera`（Transform 984）同属 `HVRRightController`。相机局部变换为单位矩阵。`HVRController.UpdateControllerPos` 将手柄姿态和手腕位置应用到共同父级。保留模型静置旋转、1.5 倍局部缩放和部件变换，取动态手臂缩放 `m_Radio = 1` 后，OpenXR 握持坐标中的包围盒为 X −28.7 至 +28.7 mm、Y −23.5 至 +28.6 mm、Z −78.7 至 +82.6 mm。圆形触控面中心在 Y 约 +25 mm、Z 约 −47 mm。 [GLB 提取与应用调用](cf20-openxr-model.md)
+
+| 部件 | sharedassets1.assets 网格 ID | 实物对应 |
+| --- | ---: | --- |
+| `c_b` | 42 | 外壳 |
+| `c_f` | 47 | 正面圆形触控面 |
+| `b_l`、`b_r` | 56、54 | 左侧返回键、右侧 Home 键 |
+| `c_t` | 35 | 前端下方扳机 |
+| `v_m` | 51 | 音量按键 |
+
+六个部件共用 `sharedassets1.assets:31/controller16` 图集。外壳使用 `:6/HVR_WhiteRGB`，按键使用 `:5/HVR_WhiteButoon`。GLB 保留原始网格、法线、UV 和图集 RGB，用标准 PBR 材质近似原厂随视角变化的边缘高光。外壳 shader 使用图集 alpha 计算高光，因此 GLB 的表面按不透明材质处理。
+
+### 场景与着色器
+
 Unity 序列化文件路径均相对于 APK 中的 `assets/bin/Data/`。冒号后为 Unity Path ID。
 
 | 证据 | 可复核位置 |

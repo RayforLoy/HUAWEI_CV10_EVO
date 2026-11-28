@@ -46,7 +46,7 @@ CF20 是单手持 3DoF 手柄。华为手柄应用负责 BLE 连接，华为 VR 
 | 17 | s8 | SDK 返回的电量字段 |
 | 18–19 | 原始字节 | 该版解码器未读取 |
 
-报告没有 SDK 读取的设备时间戳。Monado 在收到通知时以 `System.nanoTime()` 标记，规范化四元数。最后报告超过 250 ms 即停用 CF20 输入和姿态，已启用的手机操控仍可接管。作为 `/user/hand/right` 的 `/interaction_profiles/khr/simple_controller` 提供扳机或确认 → `select/click`、返回 → `menu/click`、`grip/pose` 和 `aim/pose`。[OpenXR Simple Controller](https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html#_khr_simple_controller_profile)
+Monado 使用单调到达时间标记 BLE 报告。报告超过 250 ms 时停用 CF20 输入与姿态，并释放这只手的电量有效位。华为交互配置向应用提供六个按键、触控板二维坐标、握持和瞄准。仅声明 simple controller 的旧应用可使用扳机或确认作为 select、返回作为 menu。使用手机和 CF20 时，角色可互换。[接口与 Fold7 验收](../docs/fold7-dual-controller.md)
 
 固件从 `4.0.5` 起，原厂用字节 12 的最低位表示静置校准完成，用字节 14 的最低位表示画八字校准完成（`z0.x`、`z0.y`）。Monado 保留原始陀螺仪字段，从相同字节读诊断位。固件未知或较旧时，诊断分别显示无法读取或不支持。该页读取状态，手柄内部校准和下述贴合偏移各自独立。
 

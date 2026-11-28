@@ -1,0 +1,317 @@
+{
+  "date": "2026-11-28",
+  "time_zone": "Asia/Hong_Kong",
+  "device": "Samsung Galaxy Z Fold7 (SM-F9660)",
+  "hardware": [
+    "CV10 original phone cable, device-reported 0C095306",
+    "external 5 V / 2 A",
+    "CF20 over BLE"
+  ],
+  "runtime": {
+    "release_sha256": "857aa8bf041a085b840882b233e41d1a3286a7bbcec2ba015aac94d7955dc5ec",
+    "package": "org.cv10.monado.out_of_process.launcher_preview",
+    "version": "0.1.4-rc.3 / 106",
+    "ABI": "arm64-v8a",
+    "signer_sha256": "68365fa0904432aaa86a8904c691f9e6487414dc959786d72831a083b9f23fca"
+  },
+  "piliplus": {
+    "sha256": "317d32d92faa3509c1e4972035df82e6e2057994abb6c8f8df5b5432be08d41f",
+    "package": "com.example.piliplus"
+  },
+  "early_candidate": {
+    "sha256": "0e657744e9ee316423c5a56a8254eefcb34be2db4055bfe3d782bb29c7b8bfd4",
+    "scope": "Physical CF20 six distinct button actions, two touch strokes, three-axis movement, Home and real wear transitions. Later revisions added phone appearance and adjusted phone-only preference fallback.",
+    "audit_mask_map": {
+      "01": "home",
+      "02": "back",
+      "04": "volume_up",
+      "08": "volume_down",
+      "10": "trigger",
+      "20": "trackpad_click",
+      "40": "trackpad_touch"
+    },
+    "input": [
+      {
+        "time": "17:50:53.421",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=10 active=7f padActive=1 xy=0.000,0.000 trigger=1.0"
+      },
+      {
+        "time": "17:50:55.532",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=60 active=7f padActive=1 xy=0.059,-0.176 trigger=0.0"
+      },
+      {
+        "time": "17:50:58.166",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=02 active=7f padActive=1 xy=0.000,0.000 trigger=0.0"
+      },
+      {
+        "time": "17:50:59.399",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=04 active=7f padActive=1 xy=0.000,0.000 trigger=0.0"
+      },
+      {
+        "time": "17:51:00.854",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=08 active=7f padActive=1 xy=0.000,0.000 trigger=0.0"
+      },
+      {
+        "time": "17:51:30.688",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=01 active=7f padActive=1 xy=0.000,0.000 trigger=0.0"
+      },
+      {
+        "time": "17:50:53.888",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=40 active=7f padActive=1 xy=-0.271,-0.569 trigger=0.0"
+      }
+    ],
+    "up_stroke": [
+      [
+        -0.278,
+        0.027
+      ],
+      [
+        -0.247,
+        0.569
+      ]
+    ],
+    "right_stroke": [
+      [
+        -1,
+        -0.247
+      ],
+      [
+        0.867,
+        -0.027
+      ]
+    ],
+    "api": [
+      {
+        "time": "17:49:48.954",
+        "source": "CV10InputAudit",
+        "message": "supportsPresence=1"
+      },
+      {
+        "time": "17:50:49.110",
+        "source": "CV10InputAudit",
+        "message": "profile hand=1 name=/interaction_profiles/huawei/controller batteryFlags=1 level=0.970"
+      },
+      {
+        "time": "17:50:48.710",
+        "source": "CV10InputAudit",
+        "message": "pose hand=1 flags=7 grip=7 velFlags=2 omega=-0.021,0.811,-0.675 q=0.117,-0.195,0.013,0.974"
+      },
+      {
+        "time": "17:51:31.688",
+        "source": "CV10InputAudit",
+        "message": "recenter space=2"
+      },
+      {
+        "time": "17:51:38.602",
+        "source": "MonadoCV10",
+        "message": "CV10 wear state=0"
+      },
+      {
+        "time": "17:51:38.610",
+        "source": "CV10InputAudit",
+        "message": "wear=0"
+      },
+      {
+        "time": "17:51:41.805",
+        "source": "MonadoCV10",
+        "message": "CV10 wear state=1"
+      },
+      {
+        "time": "17:51:41.810",
+        "source": "CV10InputAudit",
+        "message": "wear=1"
+      }
+    ]
+  },
+  "role_regression_candidate": {
+    "sha256": "00f521c6dae7d9578601d0fd695b936788f3f7519ac2962451b282c5a07e8b1b",
+    "swapped": [
+      {
+        "time": "17:55:16.927",
+        "source": "CV10InputAudit",
+        "message": "profile hand=0 name=/interaction_profiles/huawei/controller batteryFlags=1 level=0.960"
+      },
+      {
+        "time": "17:55:16.927",
+        "source": "CV10InputAudit",
+        "message": "profile hand=1 name=/interaction_profiles/khr/simple_controller batteryFlags=0 level=-1.000"
+      },
+      {
+        "time": "17:55:34.949",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=10 active=12 padActive=0 xy=0.000,0.000 trigger=0.0"
+      },
+      {
+        "time": "17:55:35.449",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=02 active=12 padActive=0 xy=0.000,0.000 trigger=0.0"
+      }
+    ],
+    "phone_only": [
+      {
+        "time": "17:55:57.041",
+        "source": "CV10InputAudit",
+        "message": "profile hand=0 name=none batteryFlags=0 level=-1.000"
+      },
+      {
+        "time": "17:55:57.041",
+        "source": "CV10InputAudit",
+        "message": "profile hand=1 name=/interaction_profiles/khr/simple_controller batteryFlags=0 level=-1.000"
+      },
+      {
+        "time": "17:56:14.830",
+        "source": "CV10InputAudit",
+        "message": "input hand=1 mask=10 active=12 padActive=0 xy=0.000,0.000 trigger=0.0"
+      }
+    ],
+    "PiliPlus_wearer": "手机上字是正的，cf20home也正常",
+    "PiliPlus_browser_present": {
+      "phone_hz": 120,
+      "per_second": 89.66,
+      "sample_seconds": [
+        1,
+        6
+      ],
+      "source": "unique SurfaceFlinger actual present timestamps"
+    }
+  },
+  "two_model_candidate": {
+    "phone_only": [
+      {
+        "time": "18:07:53.109",
+        "source": "CV10InputAudit",
+        "message": "model hand=/user/hand/right id=1 uuid=814b0a72 bytes=20908 flags=f pos=0.401,-0.502,-0.852"
+      },
+      {
+        "time": "18:07:52.442",
+        "source": "CV10InputAudit",
+        "message": "pose hand=1 flags=7 grip=7 velFlags=0 omega=0.000,0.000,0.000 q=-0.000,0.000,0.000,1.000"
+      }
+    ],
+    "PiliPlus": [
+      {
+        "time": "18:09:17.831",
+        "source": "P5MVR",
+        "message": "XR model bound hand=left id=3 bytes=20908 parts=5"
+      },
+      {
+        "time": "18:09:17.814",
+        "source": "P5MVR",
+        "message": "XR model bound hand=right id=2 bytes=182180 parts=6"
+      },
+      {
+        "time": "18:09:19.791",
+        "source": "P5MVR",
+        "message": "XR controller stereo draw t=2609286809493 primary=right aimP=(0.3718 -0.5348 -0.3839) aimQ=(0.15776 -0.28095 0.11191 0.94003) beam=2.542 leftVisible=1 rightVisible=1 hit=0 AA eye=2240x2240 cropL=1455x1552 cropR=1536x1552"
+      },
+      {
+        "time": "18:09:49.504",
+        "source": "P5MVR",
+        "message": "XR primary pointer left: left tracked=1 select=1 menu=0, right tracked=1 select=0 menu=0"
+      },
+      {
+        "time": "18:10:17.510",
+        "source": "P5MVR",
+        "message": "XR primary pointer right: left tracked=1 select=0 menu=0, right tracked=1 select=1 menu=0"
+      }
+    ],
+    "sha256": "22f537cdb93f23bd08914f8a33287e3e785e484fd1b6c1cda6e778e29cd081a1",
+    "wearer": "能分辨两个模型，跟手，都能点击。此时手机的屏幕轴向和腕位仍需修正。"
+  },
+  "release": {
+    "runtime_commit": "c3880c1f11cbd56ae0ac8c548efd06550a786e6b",
+    "application_commit": "2715511ffc8c84b034a08d06b15dcfd408d10fa4",
+    "wearer_after_pose_fix": "都正常了",
+    "regular": [
+      {
+        "time": "18:18:57.248",
+        "source": "CV10InputAudit",
+        "message": "modelCount=2"
+      },
+      {
+        "time": "18:18:57.248",
+        "source": "CV10InputAudit",
+        "message": "model hand=/user/hand/left id=3 uuid=814b0a72 bytes=20908 flags=f pos=-0.138,-0.706,-0.365"
+      },
+      {
+        "time": "18:18:57.248",
+        "source": "CV10InputAudit",
+        "message": "model hand=/user/hand/right id=2 uuid=76e97693 bytes=182180 flags=f pos=0.113,-0.482,-0.333"
+      },
+      {
+        "time": "18:18:55.914",
+        "source": "CV10InputAudit",
+        "message": "profile hand=1 name=/interaction_profiles/huawei/controller batteryFlags=1 level=0.960"
+      }
+    ],
+    "swapped": [
+      {
+        "time": "18:19:55.110",
+        "source": "CV10InputAudit",
+        "message": "modelCount=2"
+      },
+      {
+        "time": "18:19:55.110",
+        "source": "CV10InputAudit",
+        "message": "model hand=/user/hand/left id=2 uuid=76e97693 bytes=182180 flags=f pos=-0.166,-0.524,-0.407"
+      },
+      {
+        "time": "18:19:55.111",
+        "source": "CV10InputAudit",
+        "message": "model hand=/user/hand/right id=1 uuid=814b0a72 bytes=20908 flags=f pos=0.221,-0.742,-0.381"
+      },
+      {
+        "time": "18:19:54.443",
+        "source": "CV10InputAudit",
+        "message": "profile hand=0 name=/interaction_profiles/huawei/controller batteryFlags=1 level=0.960"
+      }
+    ],
+    "PiliPlus": [
+      {
+        "time": "18:17:56.096",
+        "source": "P5MVR",
+        "message": "XR model bound hand=left id=5 bytes=20908 parts=5"
+      },
+      {
+        "time": "18:17:56.096",
+        "source": "P5MVR",
+        "message": "XR model bound hand=right id=4 bytes=182180 parts=6"
+      },
+      {
+        "time": "18:17:56.099",
+        "source": "P5MVR",
+        "message": "XR controller stereo draw t=2661030593338 primary=right aimP=(0.2734 -0.5882 -0.3980) aimQ=(0.09009 -0.08083 0.02632 0.99230) beam=2.052 leftVisible=1 rightVisible=1 hit=1 AA eye=2240x2240 cropL=2240x2240 cropR=2240x2240"
+      }
+    ],
+    "gravity_check": "Android game rotation vector's device +Z against XR model's +Z dot world-up. Positive values near 1 indicate screen facing up. Optical wearer independently verified upright and wrist swing.",
+    "gravity_examples": [
+      {
+        "t": "18:15:43.825",
+        "sensor": 0.998,
+        "model": 0.9978,
+        "position": [
+          0.2119,
+          -0.7285,
+          -0.3605
+        ]
+      },
+      {
+        "t": "18:17:34.783",
+        "sensor": 0.8536,
+        "model": 0.8459,
+        "position": [
+          0.2055,
+          -0.6253,
+          -0.4149
+        ]
+      }
+    ]
+  }
+}
