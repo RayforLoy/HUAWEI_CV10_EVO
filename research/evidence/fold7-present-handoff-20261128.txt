@@ -1,0 +1,65 @@
+pocket-budgeted-fence-matrix1-lit-1-default-calibrated-true-0-2.0
+  Monado 90.00 submits/s; CV10 60.33 actual/s (904/904 matching timestamps); fresh 56.53/s
+  Newer Pocket swap timestamps before draw: 60/904 joins
+  Pocket swap to Monado draw: 7.48 / 18.50 ms
+  Monado draw to GPU done: 4.84 / 8.19 ms
+  GPU done to CV10 present: 34.63 / 55.40 ms
+  Pocket swap to CV10 present: 46.79 / 68.94 ms
+  Pre-capture: Thermal Status: 2; mValue=42.1, mType=3, mName=SKIN, mStatus=2; mValue=42.7, mType=3, mName=SKIN, mStatus=2; level: 45 temperature: 363
+  Display power records: mCommittedState=OFF mCommittedState=ON mCommittedState=ON
+  Nonzero optional waits in entire capture: 270; max 1500 us
+
+pocket-budgeted-fence-matrix1-off-0-default-calibrated-true-0-2.0
+  Monado 90.00 submits/s; CV10 87.80 actual/s (1317/1317 matching timestamps); fresh 87.26/s
+  Newer Pocket swap timestamps before draw: 1312/1317 joins
+  Pocket swap to Monado draw: 12.17 / 13.00 ms
+  Monado draw to GPU done: 3.54 / 3.81 ms
+  GPU done to CV10 present: 5.85 / 17.06 ms
+  Pocket swap to CV10 present: 21.58 / 32.74 ms
+  Pre-capture: Thermal Status: 2; mValue=42.1, mType=3, mName=SKIN, mStatus=2; mValue=42.1, mType=3, mName=SKIN, mStatus=2; level: 45 temperature: 357
+  Display power records: mCommittedState=OFF mCommittedState=OFF mCommittedState=ON restored-panel
+  Nonzero optional waits in entire capture: 0
+
+pocket-budgeted-fence-matrix1-off-1-default-calibrated-true-0-2.0
+  Monado 90.00 submits/s; CV10 89.40 actual/s (1341/1341 matching timestamps); fresh 86.26/s
+  Newer Pocket swap timestamps before draw: 1269/1341 joins
+  Pocket swap to Monado draw: 12.76 / 14.41 ms
+  Monado draw to GPU done: 4.63 / 4.80 ms
+  GPU done to CV10 present: 5.20 / 16.44 ms
+  Pocket swap to CV10 present: 23.12 / 32.55 ms
+  Pre-capture: Thermal Status: 2; mValue=42.1, mType=3, mName=SKIN, mStatus=2; mValue=42.6, mType=3, mName=SKIN, mStatus=2; level: 45 temperature: 361
+  Display power records: mCommittedState=OFF mCommittedState=OFF mCommittedState=ON restored-panel
+  Nonzero optional waits in entire capture: 260; max 615 us
+
+pocket-ready-cadence-pair1-lit-default-calibrated-true-0-2.0
+  Monado 89.86 submits/s; CV10 60.33 actual/s (904/904 matching timestamps); fresh 59.60/s
+  Newer Pocket swap timestamps before draw: 25/904 joins
+  Pocket swap to Monado draw: 9.07 / 9.29 ms
+  Monado draw to GPU done: 4.48 / 5.91 ms
+  GPU done to CV10 present: 22.12 / 33.06 ms
+  Pocket swap to CV10 present: 35.61 / 46.75 ms
+  Pre-capture: Thermal Status: 1; mValue=40.0, mType=3, mName=SKIN, mStatus=1; mValue=40.0, mType=3, mName=SKIN, mStatus=1; level: 46 temperature: 332
+  Display power records: mCommittedState=OFF mCommittedState=ON mCommittedState=ON
+  Nonzero optional waits in entire capture: 0
+
+pocket-ready-cadence-pair2-lit-default-calibrated-true-0-2.0
+  Monado 89.93 submits/s; CV10 60.31 actual/s (905/905 matching timestamps); fresh 59.51/s
+  Newer Pocket swap timestamps before draw: 440/905 joins
+  Pocket swap to Monado draw: 11.08 / 12.81 ms
+  Monado draw to GPU done: 4.46 / 5.85 ms
+  GPU done to CV10 present: 21.00 / 32.11 ms
+  Pocket swap to CV10 present: 36.71 / 48.03 ms
+  Pre-capture: Thermal Status: 2; mValue=42.1, mType=3, mName=SKIN, mStatus=2; mValue=42.2, mType=3, mName=SKIN, mStatus=2; level: 45 temperature: 353
+  Display power records: mCommittedState=OFF mCommittedState=ON mCommittedState=ON
+  Nonzero optional waits in entire capture: 0
+
+pocket-ready-cadence-pair2-off-default-calibrated-true-0-2.0
+  Monado 90.00 submits/s; CV10 89.53 actual/s (1343/1343 matching timestamps); fresh 83.19/s
+  Newer Pocket swap timestamps before draw: 619/1343 joins
+  Pocket swap to Monado draw: 4.29 / 14.67 ms
+  Monado draw to GPU done: 5.44 / 6.18 ms
+  GPU done to CV10 present: 13.95 / 25.55 ms
+  Pocket swap to CV10 present: 33.11 / 44.21 ms
+  Pre-capture: Thermal Status: 1; mValue=39.9, mType=3, mName=SKIN, mStatus=1; mValue=40.9, mType=3, mName=SKIN, mStatus=1; level: 46 temperature: 347
+  Display power records: mCommittedState=OFF mCommittedState=OFF mCommittedState=ON restored-panel
+  Nonzero optional waits in entire capture: 0

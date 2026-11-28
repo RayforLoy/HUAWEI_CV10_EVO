@@ -1,0 +1,42 @@
+buffers { size_kb: 196608 fill_policy: DISCARD }
+buffers { size_kb: 8192 fill_policy: DISCARD }
+duration_ms: 30000
+data_sources { config { name: "android.surfaceflinger.frame" target_buffer: 1 } }
+data_sources { config { name: "linux.process_stats" process_stats_config { scan_all_processes_on_start: true } } }
+data_sources {
+  config {
+    name: "linux.ftrace"
+    ftrace_config {
+      ftrace_events: "ftrace/print"
+      drain_period_ms: 250
+      atrace_categories: "gfx"
+      atrace_categories: "hal"
+      atrace_categories: "sync"
+      ftrace_events: "sched/sched_switch"
+      ftrace_events: "sched/sched_waking"
+      atrace_apps: "org.cv10.pocketxr"
+      atrace_apps: "org.cv10.monado.out_of_process.launcher_preview"
+    }
+  }
+}
+data_sources {
+  config {
+    name: "linux.perf"
+    perf_event_config {
+      timebase {
+        period: 1
+        tracepoint {
+          name: "sched/sched_switch"
+          filter: "(prev_pid == 1825 || prev_comm ~ \"binder:1825*\" || prev_comm == \"sdm_hpd_process\") && prev_state != 0"
+        }
+        timestamp_clock: PERF_CLOCK_MONOTONIC
+      }
+      callstack_sampling {
+        scope { target_pid: 1825 }
+        kernel_frames: true
+        user_frames: UNWIND_SKIP
+      }
+      ring_buffer_pages: 512
+    }
+  }
+}

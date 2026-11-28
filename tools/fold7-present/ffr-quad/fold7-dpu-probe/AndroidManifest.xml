@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.cv10.dpuprobe">
+  <uses-sdk android:minSdkVersion="34" android:targetSdkVersion="34"/>
+  <application android:label="CV10 DPU Probe" android:theme="@android:style/Theme.Material.NoActionBar" android:hasCode="true" android:extractNativeLibs="true">
+    <activity android:name=".Probe" android:exported="true"/>
+  </application>
+</manifest>

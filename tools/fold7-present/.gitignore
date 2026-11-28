@@ -1,0 +1,17 @@
+# Local output
+__pycache__/
+ffr-quad/*.apk
+ffr-quad/*.log
+ffr-quad/*.png
+ffr-quad/*.jpg
+ffr-quad/*.txt
+ffr-quad/*.perfetto-trace
+ffr-quad/fold7-unattended-battery-paused
+ffr-quad/ahb-probe/cv10-ahb-probe
+ffr-quad/ahb-probe/*.spv
+ffr-quad/ahb-probe/*.txt
+ffr-quad/fold7-dpu-probe/build/
+ffr-quad/fold7-dpu-probe/*.txt
+ffr-quad/fold7-dpu-probe/*.log
+ffr-quad/fold7-dpu-probe/*.perfetto-trace
+head-motion/*.txt

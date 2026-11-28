@@ -4,13 +4,15 @@
 
 [Monado CV10 整合预发布 v0.1.4-rc.2](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.2) · [稳定版 v0.1.3](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3) · [Windows 连接线工具（主项目 v0.1.1）](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1) · [跨电脑接手指南](AGENTS.md)
 
+[Fold7 现阶段交接与复现实验](docs/cv10-company-handoff-20261128.md) · [实验 APK、工具和数据](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/cv10-handoff-2026-11-28)
+
 ## Android 源码与安装包
 
 | 项目 | 源码及构建 | 安装包 |
 | --- | --- | --- |
 | Monado CV10 运行时 | [当前源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/main/README.md)，本地位于 `ports/Monado_CV10` | [整合预发布 ARM APK](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.2)，在 Broker 选择 **Monado CV10**（`org.cv10.monado.out_of_process.launcher_preview`） |
 | PiliPlus Monado 播放器 | [源码与移植提交](https://github.com/RayforLoy/piliplus_monado)，本地位于 `ports/piliplus_monado` | 在子模块内运行 `python build.py`，产物为 `dist/PiliPlus-CV10.apk` |
-| Pocket XR CV10 | [Build and display integration](https://github.com/RayforLoy/pocket-xr-cv10/blob/codex/cv10-optics/docs/CV10.md)，本地位于 `ports/pocket-xr-cv10` | 在子模块内构建 `org.cv10.pocketxr` |
+| Pocket XR CV10 | [Build and display integration](https://github.com/RayforLoy/pocket-xr-cv10/blob/codex/cv10-gles-ffr/docs/CV10.md)，本地位于 `ports/pocket-xr-cv10` | 在子模块内构建 `org.cv10.pocketxr` |
 | Moonlight XR CV10 串流客户端 | [源码补丁、构建及实机记录](ports/moonlight-xr/README.md) | 构建 `nonRootRelease` 的 arm64-v8a APK。正常退出及重进已使用带卸载修复的 Monado 预览包验证 |
 
 新电脑运行以下命令，获取主项目及对应版本的子模块。

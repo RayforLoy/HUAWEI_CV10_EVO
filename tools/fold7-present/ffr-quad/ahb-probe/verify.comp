@@ -1,0 +1,14 @@
+#version 450
+layout(local_size_x = 4) in;
+layout(set = 0, binding = 0) uniform sampler2D source;
+layout(std430, set = 0, binding = 1) writeonly buffer Verification {
+    uint texels[4];
+};
+
+void main()
+{
+    const uint index = gl_LocalInvocationIndex;
+    const ivec2 quadrant = ivec2(index % 2u, index / 2u);
+    const ivec2 sample_at = (2 * quadrant + 1) * textureSize(source, 0) / 4;
+    texels[index] = packUnorm4x8(texelFetch(source, sample_at, 0));
+}

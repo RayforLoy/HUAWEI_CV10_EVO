@@ -1,0 +1,14 @@
+buffers { size_kb: 131072 fill_policy: DISCARD }
+duration_ms: 32500
+data_sources { config { name: "linux.process_stats" process_stats_config { scan_all_processes_on_start: true } } }
+data_sources {
+  config {
+    name: "linux.ftrace"
+    ftrace_config {
+      ftrace_events: "ftrace/print"
+      atrace_categories: "gfx"
+      atrace_apps: "org.cv10.pocketxr"
+      atrace_apps: "org.cv10.monado.out_of_process.launcher_preview"
+    }
+  }
+}

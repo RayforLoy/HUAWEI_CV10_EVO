@@ -7,4 +7,4 @@
 [submodule "ports/pocket-xr-cv10"]
 	path = ports/pocket-xr-cv10
 	url = https://github.com/RayforLoy/pocket-xr-cv10.git
-	branch = codex/cv10-optics
+	branch = codex/cv10-gles-ffr
