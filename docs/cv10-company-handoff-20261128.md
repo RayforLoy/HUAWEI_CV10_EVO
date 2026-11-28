@@ -43,3 +43,19 @@ Pocket XR 的源资源用 Git LFS 管理。只查看源码或使用预编译 APK
 3. 亮屏独立 90 Hz 的下一步是通过同一时钟对比 SF、HWC/Composer 和共享连接锁，以确定能否在手机旧帧未 retire 时先推进 CV10。源码模型只在独立的可调试 Android 环境验证。Pocket XR 继续查 ready atlas 到 runtime latch 的相位，保留零拷贝与中心尺寸，先用 A/B/A/B 确认稳定收益。
 
 [本轮逐组数值与热状态](../research/evidence/fold7-present-handoff-20261128.txt) · [Android 与镜片检查](device-openxr-check.md) · [跨电脑基础指南](../AGENTS.md)
+
+## 冻结后续测入口
+
+从发布标签复现实验 APK 和全部固定版本。要用以下续测工具，检出本交接分支的最新提交，再用标签固定的 APK 作基线。两个 Monado 分支各自从冻结版分出，可用独立工作树复现。
+
+- 显示链分支 `026d882` 将静止手机输出复用、手机旧帧未完成时的准入判断放进同一份 AOSP 实验系列。补丁通过源树应用和反向检查，栅栏判定通过主机边界测试。还需系统构建及 Fold7 实测。[补丁和回放说明](https://github.com/RayforLoy/Monado_CV10/blob/026d882c0cf24afa74e23aacda3314a298228f8b/history/fold7-independent-present.md)
+- 渲染分支 `29cf882` 含 GLES 管线的就绪栅栏实验、融合四视图重投影预计算和可选畸变坐标打包。打包后每个输出像素的畸变纹理读取从三次减至两次，已构建 ARM64 APK，主机逐像素核对通过。Fold7 上的 GPU 时长及镜片验收仍待测。[构建及对照说明](https://github.com/RayforLoy/Monado_CV10/blob/29cf8827f4b3a08cadda7bc4e67d6dc8d73877f8/history/fold7-independent-present.md)
+
+[双屏硬件呈现统计工具](../tools/fold7-present/README.md#analyze-and-trace)已用原 Fold7 追踪复查。取每段起点后 1 秒开始的同长度 20 秒，`pocket-ready-cadence-pair2-{lit,off}-default-calibrated-true-0-2.0.perfetto-trace` 的结果如下。较长间隔指相邻外屏 retire 之间超过 16.667 ms。
+
+| Pocket XR 对照 | 手机 retire/s | CV10 retire/s | CV10 每秒范围 | CV10 较长间隔 |
+| --- | ---: | ---: | ---: | ---: |
+| 亮屏 60 Hz | 60.30 | 60.30 | 60–61 | 584 |
+| 内屏熄灭 | 0 | 89.70 | 87–90 | 5 |
+
+这里统计的是两块屏同一窗口里的内核栅栏数量。续测时同时记录手机内屏模式、Pocket XR 新源帧数、眼镜图层实际呈现和镜片画面。

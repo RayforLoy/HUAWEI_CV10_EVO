@@ -59,6 +59,14 @@ adb -s $serial shell rm /data/misc/perfetto-traces/cv10.pftrace
 python ffr-quad/inspect-fold7-connection-lock.py cv10.pftrace
 ```
 
+Measure both DRM retire streams over the same steady-state or head-turn interval. Run from `tools/fold7-present` and use the CRTC IDs confirmed in the current trace. `288` and `301` were the phone and CV10 on SM-F9660 build F9660ZCUDBZJ9. These DRM object IDs come from the trace worker names. Android logical and physical display IDs use different identifiers.
+
+```powershell
+python ffr-quad/dual-display-retire.py cv10.pftrace --phone-crtc 288 --cv10-crtc 301 --start-s 1 --duration-s 20
+```
+
+`--start-s` is relative to the trace start. Select the head-turn interval before comparing runs. The report counts unique completed `signal_retire_fence` timestamps in the shared interval, then prints one-second counts, gap p95 and max, and gaps longer than 1.5 nominal periods. The command exits with status 2 if Perfetto reports trace loss, an ftrace CPU buffer overran, or the chosen CV10 has no retire events. Confirm display power and active modes separately. If the lit phone must sustain 60 new presents/s during the test, run a continuous animation on the phone to produce damage. A static phone image can legitimately produce fewer retire events. For Pocket XR, keep the existing pipeline and optical measurements to check the source frame cadence and the view through the lens. [Perfetto data loss checks](https://perfetto.dev/docs/concepts/buffers#debugging-data-losses)
+
 Use Monado's `history/fold7-pocket-acquire-fence.py --help` to join Android frame events to Vulkan present IDs and the raw SurfaceFlinger file. Ftrace probes can depend on the system build. The sanitized numeric evidence archive keeps the markers needed to rerun the pipeline analysis. `reduce-capture.py` records the extraction used for the included comparison runs and is optional for new runs.
 
 `ffr-quad/ahb-probe/run.ps1 -Serial $serial` builds the independent EGL/AHB/Vulkan sample using NDK 27.0.12077973. It uses the Windows default SDK location. The DPU sample requires the same NDK, Android SDK Platform 35, Build Tools 36.0.0, JDK 17, and a local H.264 MP4 such as a generated 1080p90 test card passed as `-VideoFile`. Build it with `fold7-dpu-probe/build.ps1`, then run `fold7-dpu-probe/run.ps1 -Serial $serial`. The retire-guard test C++ includes the extracted helper. The adjacent generator documents the source location used with the experimental Qualcomm patch. Those probe results do not install or validate a replacement HAL.
