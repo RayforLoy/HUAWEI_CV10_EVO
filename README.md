@@ -2,23 +2,23 @@
 
 项目目标是在 Galaxy Z Fold7 上运行标准 OpenXR 应用，由 HUAWEI VR Glass CV10 显示独立双目画面并提供头部 3DoF。Fold7 上未经修改的 Khronos `hello_xr` 已通过双眼镜片实拍、立体视差和眼镜姿态验证。当前使用定制运行时 **Monado CV10**。
 
-[Monado CV10 整合预发布 v0.1.4-rc.3](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.3) · [稳定版 v0.1.3](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3) · [Windows 连接线工具（主项目 v0.1.1）](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1) · [跨电脑接手指南](AGENTS.md)
+[Monado CV10 整合预发布 v0.1.4-rc.4](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.4) · [稳定版 v0.1.3](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3) · [Windows 连接线工具（主项目 v0.1.1）](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1) · [家中电脑接手本轮发布](docs/fold7-home-handoff-20261128.md) · [协作指南](AGENTS.md)
 
-[手机与 CF20 双手输入、佩戴检测和实测](docs/fold7-dual-controller.md) · [Fold7 现阶段交接与复现实验](docs/cv10-company-handoff-20261128.md) · [实验 APK、工具和数据](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/cv10-handoff-2026-11-28)
+[手机触摸板、CF20 双手输入与 Fold7 实测](docs/fold7-dual-controller.md) · [Fold7 现阶段交接与复现实验](docs/cv10-company-handoff-20261128.md) · [实验 APK、工具和数据](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/cv10-handoff-2026-11-28)
 
 ## Android 源码与安装包
 
 | 项目 | 源码及构建 | 安装包 |
 | --- | --- | --- |
-| Monado CV10 运行时 | [当前源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.4-rc.3/README.md)，本地位于 `ports/Monado_CV10` | [整合预发布 ARM APK](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.3)，在 Broker 选择 **Monado CV10**（`org.cv10.monado.out_of_process.launcher_preview`） |
-| PiliPlus Monado 播放器 | [双手柄版本源码](https://github.com/RayforLoy/piliplus_monado/tree/cv10-dual-controllers-20261128)，本地位于 `ports/piliplus_monado` | 在子模块内运行 `python build.py`，产物为 `dist/PiliPlus-CV10.apk` |
-| Pocket XR CV10 | [Build and display integration](https://github.com/RayforLoy/pocket-xr-cv10/blob/codex/cv10-gles-ffr/docs/CV10.md)，本地位于 `ports/pocket-xr-cv10` | 在子模块内构建 `org.cv10.pocketxr` |
+| Monado CV10 运行时 | [当前源码及构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.4-rc.4/README.md)，本地位于 `ports/Monado_CV10` | [整合预发布 ARM APK](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.4)，在 Broker 选择 **Monado CV10**（`org.cv10.monado.out_of_process.launcher_preview`） |
+| PiliPlus Monado 播放器 | [配套版本源码](https://github.com/RayforLoy/piliplus_monado/tree/cv10-dual-controller-zoom-20261128)，本地位于 `ports/piliplus_monado` | [PiliPlus ARM64 APK 与 SHA-256](https://github.com/RayforLoy/piliplus_monado/releases/tag/cv10-dual-controller-zoom-20261128) |
+| Pocket XR CV10 | [构建和显示接入](https://github.com/RayforLoy/pocket-xr-cv10/blob/cv10-v1.6.33-quad-ffr.1/docs/CV10.md)，本地位于 `ports/pocket-xr-cv10` | [CV10 Spatial Desk ARM64 APK 与 SHA-256](https://github.com/RayforLoy/pocket-xr-cv10/releases/tag/cv10-v1.6.33-quad-ffr.1) |
 | Moonlight XR CV10 串流客户端 | [源码补丁、构建及实机记录](ports/moonlight-xr/README.md) | 构建 `nonRootRelease` 的 arm64-v8a APK。正常退出及重进已使用带卸载修复的 Monado 预览包验证 |
 
 新电脑运行以下命令，获取主项目及对应版本的子模块。
 
 ```shell
-git clone --branch codex/cv10-phase1 https://github.com/RayforLoy/HUAWEI_CV10_EVO.git
+git clone --branch main https://github.com/RayforLoy/HUAWEI_CV10_EVO.git
 ```
 
 进入仓库后运行 `git submodule update --init --recursive`。仅检出源码时，可在运行前为当前终端设置 `GIT_LFS_SKIP_SMUDGE=1`，跳过 Pocket XR 的历史 Play 发布附件。
@@ -27,7 +27,7 @@ git clone --branch codex/cv10-phase1 https://github.com/RayforLoy/HUAWEI_CV10_EV
 
 [整合版实测与原厂实现对照计划](docs/cv10-unified-runtime.md) · [2026-11-27 夜间维护交接](docs/cv10-maintenance-20261127.md)
 
-当前源码的原厂交互适配、中心超分辨率和增强渲染设置见以下文档。[Monado CV10 使用说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.4-rc.3/README.md) · [原厂渲染对照](docs/cv10-oem-rendering.md) · [原厂手机与 CF20 切换](controller/oem-controller-switching.md) · [Fold7 已知问题](docs/fold7-openxr-known-issues.md)
+当前源码的原厂交互适配、中心超分辨率和增强渲染设置见以下文档。[Monado CV10 使用说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.4-rc.4/README.md) · [原厂渲染对照](docs/cv10-oem-rendering.md) · [原厂手机与 CF20 切换](controller/oem-controller-switching.md) · [Fold7 已知问题](docs/fold7-openxr-known-issues.md)
 
 ## 各会话进度 · 2026-11-26
 

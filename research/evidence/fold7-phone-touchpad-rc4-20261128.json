@@ -1,0 +1,309 @@
+{
+  "date": "2026-11-28",
+  "artifacts": {
+    "monado": {
+      "commit": "57501d66ca3d183421fabc9d1d34cc80f339cb9e",
+      "version": "0.1.4-rc.4",
+      "code": 107,
+      "sha256": "0e46b5dac9a23995b6a0408977f26e369d758f7bc99ee6f8581789acb2ef1278",
+      "size": 9119461
+    },
+    "piliplus": {
+      "buildCommit": "87734cb3adcb8248bc34c6a65795c6e546e203b9",
+      "sha256": "261c09080f5007203e8300c21fd0c154158ef2a29a8954bae26e32352114bac2",
+      "size": 48195978
+    },
+    "certificateSha256": "68365fa0904432aaa86a8904c691f9e6487414dc959786d72831a083b9f23fca"
+  },
+  "fold7": {
+    "model": "SM-F9660",
+    "connectionBeforeDisconnect": "CV10 original phone cable (reported 0C095306), external 5 V / 2 A",
+    "releaseBytesMatchedInstalledBaseApks": true,
+    "abIs": [
+      "arm64-v8a"
+    ],
+    "coldProbe": {
+      "clearedRunningProcesses": [
+        "test client",
+        "Monado runtime",
+        "PiliPlus",
+        "hello_xr"
+      ],
+      "clearedAppData": false,
+      "launchState": "COLD",
+      "xrSessionState": "FOCUSED",
+      "wearEvent": false,
+      "cf20RightBattery": 0.96,
+      "finalTapAndPiliPlusOpticalTestCompleted": false,
+      "limit": "The HUAWEIAV03 physical display disappeared and the Fold7 subsequently went offline during setup. No final finger/optical or actual-present-rate result for this combination."
+    },
+    "priorSameDayCandidate": {
+      "sha256": "6c632cc7ff723c73347a0ddf9c3d568fc4e9ac165a111d0f948a6f0d2ac4aa2a",
+      "semantics": "previous hold candidate, input acceptance excluded for the new tap implementation",
+      "independentOpenXrProfile": "/interaction_profiles/google/daydream_controller",
+      "observedSwipeMaxX": 0.556,
+      "observedSwipeMaxY": 0.528,
+      "brightnessDuringPad": {
+        "phoneWindowOverride": "0.1",
+        "externalWindowOverride": "NaN",
+        "adaptiveEnabled": true
+      },
+      "brightnessAfterHide": {
+        "phoneWindowOverride": "0.73",
+        "externalWindowOverride": "NaN",
+        "adaptiveEnabled": true
+      },
+      "brightnessAfterHome": {
+        "phoneWindowOverride": "NaN",
+        "externalWindowOverride": "NaN",
+        "adaptiveEnabled": true
+      }
+    }
+  },
+  "androidEmulator": {
+    "api": 36,
+    "abi": "x86_64",
+    "launch": "clean Android virtual device followed by two Activity cold starts with the process absent",
+    "exercised": "Exact published release DEX touch view, brightness override and Kotlin phone input service. Android shell input dispatched MotionEvents; input service sampled at ~9 ms. Harness invokes the service in process, without OpenXR compositor, Binder hop or physical headset.",
+    "dexSha256": {
+      "classes.dex": "0059eea5f8ca09558c30127c2770d59ff83411652b707a93a8b4cf4d4e931275",
+      "classes2.dex": "4c77a47daf8421c79c4779a0ea52eb22f818364db9e3b45aa6690e5bb466f8ff",
+      "classes3.dex": "42599a54963e09ca8d48482ec21377092722592bea9795944f9355513c4f15ca"
+    },
+    "results": [
+      {
+        "launch": "COLD",
+        "process_absent_before_start": true,
+        "events": {
+          "short": {
+            "clicks": 1,
+            "service_select_edges": [
+              0,
+              1,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.0
+          },
+          "quick": {
+            "clicks": 1,
+            "service_select_edges": [
+              1,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.0
+          },
+          "drag_right": {
+            "clicks": 0,
+            "service_select_edges": [
+              0,
+              0
+            ],
+            "touch_x_range": 0.688,
+            "touch_y_range": 0.0
+          },
+          "drag_up": {
+            "clicks": 0,
+            "service_select_edges": [
+              0,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.522
+          },
+          "long": {
+            "clicks": 0,
+            "service_select_edges": [
+              0,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.0
+          },
+          "cancel": {
+            "clicks": 0,
+            "service_select_edges": [
+              0,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.0
+          }
+        },
+        "window_brightness": {
+          "visible": 0.1,
+          "hidden": 0.73
+        }
+      },
+      {
+        "launch": "COLD",
+        "process_absent_before_start": true,
+        "events": {
+          "short": {
+            "clicks": 1,
+            "service_select_edges": [
+              0,
+              1,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.0
+          },
+          "quick": {
+            "clicks": 1,
+            "service_select_edges": [
+              0,
+              1,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.0
+          },
+          "drag_right": {
+            "clicks": 0,
+            "service_select_edges": [
+              0,
+              0
+            ],
+            "touch_x_range": 0.712,
+            "touch_y_range": 0.0
+          },
+          "drag_up": {
+            "clicks": 0,
+            "service_select_edges": [
+              0,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.53
+          },
+          "long": {
+            "clicks": 0,
+            "service_select_edges": [
+              0,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.0
+          },
+          "cancel": {
+            "clicks": 0,
+            "service_select_edges": [
+              0,
+              0
+            ],
+            "touch_x_range": 0.0,
+            "touch_y_range": 0.0
+          }
+        },
+        "window_brightness": {
+          "visible": 0.1,
+          "hidden": 0.73
+        }
+      }
+    ],
+    "crossProcessColdTest": {
+      "source": "Unchanged APK classes*.dex and resources.arsc. Real Cv10ClientPhonePad, per-client Binder capability, Kotlin phone controller service and Android virtual rotation sensor. Test harness supplies the session start signal. Two independent processes start cold on each run.",
+      "results": [
+        {
+          "coldProcesses": [
+            "client",
+            "runtime"
+          ],
+          "events": {
+            "quick": {
+              "clicks": 1,
+              "peak_x": 0.0,
+              "peak_y": 0.0
+            },
+            "short": {
+              "clicks": 1,
+              "peak_x": 0.002,
+              "peak_y": 0.0
+            },
+            "right": {
+              "clicks": 0,
+              "peak_x": 0.645,
+              "peak_y": 0.0
+            },
+            "up": {
+              "clicks": 0,
+              "peak_x": 0.002,
+              "peak_y": 0.636
+            },
+            "hold": {
+              "clicks": 0,
+              "peak_x": 0.002,
+              "peak_y": 0.0
+            },
+            "cancel": {
+              "clicks": 0,
+              "peak_x": 0.002,
+              "peak_y": 0.0
+            }
+          },
+          "phoneWindowVisible": 0.1,
+          "phoneWindowHidden": 0.73
+        },
+        {
+          "coldProcesses": [
+            "client",
+            "runtime"
+          ],
+          "events": {
+            "quick": {
+              "clicks": 1,
+              "peak_x": 0.0,
+              "peak_y": 0.0
+            },
+            "short": {
+              "clicks": 1,
+              "peak_x": 0.002,
+              "peak_y": 0.0
+            },
+            "right": {
+              "clicks": 0,
+              "peak_x": 0.627,
+              "peak_y": 0.0
+            },
+            "up": {
+              "clicks": 0,
+              "peak_x": 0.002,
+              "peak_y": 0.573
+            },
+            "hold": {
+              "clicks": 0,
+              "peak_x": 0.002,
+              "peak_y": 0.0
+            },
+            "cancel": {
+              "clicks": 0,
+              "peak_x": 0.002,
+              "peak_y": 0.0
+            }
+          },
+          "phoneWindowVisible": 0.1,
+          "phoneWindowHidden": 0.73
+        }
+      ],
+      "screenshot": "fold7-phone-touchpad-rc4-ui.png (Android emulator)"
+    }
+  },
+  "otherTests": {
+    "jvmTouchSequences": 10,
+    "nativeTouchpadAssertions": 20,
+    "jvmCases": [
+      "tap on UP",
+      "jitter",
+      "drag away and return",
+      "long hold",
+      "normalized axes",
+      "cancel",
+      "second finger",
+      "detach",
+      "large UP displacement",
+      "accessibility click"
+    ]
+  }
+}

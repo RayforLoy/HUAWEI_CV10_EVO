@@ -4,14 +4,14 @@
 
 ## 接手工作树
 
-当前协作分支为 `codex/cv10-phase1`。在仓库根目录运行以下命令，核对本机分支、未提交工作、与远端的差距，以及发布标签对应的源码。首次检出和初始化子模块参见 [README](README.md#android-源码与安装包)。
+本轮发布已整合到主项目和三个子模块的 `main`。交接入口见[家中电脑复现步骤](docs/fold7-home-handoff-20261128.md)。在仓库根目录运行以下命令，核对本机分支、未提交工作、与远端的差距，以及发布标签对应的源码。首次检出和初始化子模块参见 [README](README.md#android-源码与安装包)。
 
 ```powershell
 git fetch origin --tags
 git status --short --branch
-git log --oneline --left-right HEAD...origin/codex/cv10-phase1
-git log -1 --oneline v0.1.1
-git ls-tree HEAD ports/Monado_CV10
+git log --oneline --left-right HEAD...origin/main
+git log -1 --oneline cv10-fold7-20261128.1
+git ls-tree HEAD ports/Monado_CV10 ports/piliplus_monado ports/pocket-xr-cv10
 git -C ports/Monado_CV10 describe --tags --always
 ```
 
@@ -19,18 +19,18 @@ git -C ports/Monado_CV10 describe --tags --always
 
 ## 在新电脑上复现
 
-- **直接安装**　Fold7 双手柄使用 [Monado CV10 v0.1.4-rc.3](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.3)，另有 [v0.1.3 稳定版](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3) 的 arm64-v8a APK。Windows x64 连接线工具在[主项目 v0.1.1](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1)。用 `Get-FileHash <文件> -Algorithm SHA256` 与各自发布页核对。覆盖安装已有运行时需要相同签名。
+- **直接安装**　Fold7 双手柄使用 [Monado CV10 v0.1.4-rc.4](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.4)，另有 [v0.1.3 稳定版](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.3) 的 arm64-v8a APK。Windows x64 连接线工具在[主项目 v0.1.1](https://github.com/RayforLoy/HUAWEI_CV10_EVO/releases/tag/v0.1.1)。用 `Get-FileHash <文件> -Algorithm SHA256` 与各自发布页核对。覆盖安装已有运行时需要相同签名。
 - **验证整合功能**　安装 [Monado CV10 v0.1.4-rc.1](https://github.com/RayforLoy/Monado_CV10/releases/tag/v0.1.4-rc.1)，在 Broker 选择 **Monado CV10 Preview**。同一个 APK 提供启动器、Pocket XR 外显、CF20、6DoF 套件和软件瞳距入口。[整合验收与原厂对照](docs/cv10-unified-runtime.md)
-- **构建 Monado**　更新干净工作树后运行 `git submodule update --init --recursive`，再按 [v0.1.3 构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.3/README.md)构建。历史补丁和验证记录位于 `ports/Monado_CV10/history/`。
-- **移植其他应用**：可复用仓库内的 [OpenXR 移植流程](.agents/skills/cv10-openxr-port/SKILL.md)。[Globalka](ports/globalka/README.md) 已实测手机和 Windows 桌面投屏；[PiliPlus 双手柄版](https://github.com/RayforLoy/piliplus_monado/releases/tag/cv10-dual-controllers-20261128) 已在 Fold7 眼镜内验证手机与 CF20 的选择、模型和回正。
+- **构建 Monado**　更新干净工作树后运行 `git submodule update --init --recursive`，再按 [rc.4 构建说明](https://github.com/RayforLoy/Monado_CV10/blob/v0.1.4-rc.4/README.md)构建。历史补丁和验证记录位于 `ports/Monado_CV10/history/`。
+- **移植其他应用**：可复用仓库内的 [OpenXR 移植流程](.agents/skills/cv10-openxr-port/SKILL.md)。[Globalka](ports/globalka/README.md) 已实测手机和 Windows 桌面投屏；[配套 PiliPlus](https://github.com/RayforLoy/piliplus_monado/releases/tag/cv10-dual-controller-zoom-20261128) 已覆盖安装。前一双手柄版在 Fold7 眼镜内通过手机与 CF20 的选择、模型和回正测试。
 - **本地资料**：`.research/` 是本机构建、日志和厂商样本的工作目录，`resources/` 为 Git 忽略的临时收件目录，整理后保持为空。固件与烧录工具、文档、APK 附件和其余工具按 [README 归档规则](README.md#资料归档与发布规则)存放。新电脑上需另外准备所需上游源码、SDK 或样本；目录名和 ADB 序列号以当前机器为准。
 
 ## 设备与验收
 
-手机与 CF20 同时使用时，在「应用启动器 → 手机操控 OpenXR 应用」核对角色。默认手机左、CF20 右，手机单独使用时为右手。第三方应用中的手机竖屏、独立输入、CF20 电量和长按 Home 的实测见[双手柄验收](docs/fold7-dual-controller.md)。
+手机与 CF20 同时使用时，在「应用启动器 → 手机操控 OpenXR 应用」核对角色。默认手机左、CF20 右，手机单独使用时为右手。rc.4 在手机端显示点阵触摸板，轻点抬手确认，显示手柄期间主屏窗口亮度为 10%。第三方应用中的手机竖屏、独立输入、CF20 电量和长按 Home 的实测见[双手柄验收](docs/fold7-dual-controller.md)。
 
 1. 用 `adb devices -l` 找出当前 Fold7 的序列号。另一部 P40 Pro+ 可能同时在线，所有手机操作使用 `adb -s $serial …`。Fold7 可通过无线 ADB 观察，三星 DeX 外接显示器选择「已镜像」。可用普通 C-C 直连。原厂线的成功配置为用户已刷 2 A 测试固件的线盒、外接 5 V / 2 A，先接辅助供电，再接已解锁的手机。
-2. Broker 选择 **Monado CV10**（`org.cv10.monado.out_of_process`）。官方 Monado 可共存。以未经修改的 Khronos OpenGLES `hello_xr` 测试；样例 APK 的 SHA-256 为 `29ae01ef6a4fea41d67816f7051698f2694ab08ced4c16c02bdd978e62975962`。确认 USB 访问已允许、OpenXR 会话进入 FOCUSED，再分别拍摄左右镜片。
+2. 使用本轮 APK 时，Broker 选择 **Monado CV10**（`org.cv10.monado.out_of_process.launcher_preview`）。官方 Monado 可共存。以未经修改的 Khronos OpenGLES `hello_xr` 测试；样例 APK 的 SHA-256 为 `29ae01ef6a4fea41d67816f7051698f2694ab08ced4c16c02bdd978e62975962`。确认 USB 访问已允许、OpenXR 会话进入 FOCUSED，再分别拍摄左右镜片。
 3. 测手机独立高刷时，在手机上启动 Shizuku，通过其「已授权应用」逐项确认 **Monado CV10** 开关，并在 Monado 菜单启用独立 120 Hz。保持旧 ADB 会话提频脚本关闭。记录手机主屏活动模式、眼镜面板模式和眼镜图层不同呈现时间戳的频率。这三项典型读数分别为 120 Hz、90 Hz、约 90 次/秒。按返回键退出后核验系统最低刷新率恢复原值。[重连实测](research/evidence/fold7-cv10-shizuku-reconnect.json)
 4. 黑屏或帧率异常时可从以下只读命令开始。通过 SurfaceFlinger 的显示名称和图层列表查当前 ID，每次插拔都可能改变逻辑显示 ID。此次已验证手机端重启 Shizuku 后重新提频；完整的「拔线 → 重启 Shizuku → 接线 → 打开样例」仍待一轮独立记录。
 
