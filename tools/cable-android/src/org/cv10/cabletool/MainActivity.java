@@ -152,6 +152,9 @@ public final class MainActivity extends Activity {
         if (firmware == Firmware.PIN_C) {
             message += "\n\n群友修改版仅声明 DP Pin C。主机若无法使用该模式，眼镜可能无画面。";
         }
+        if (firmware == Firmware.RT9471_PHONE_2A) {
+            message += "\n\n此测试版将 RT9471 输入限流提高到 2.5 A。上游完成 5 V / 3 A 协商后，手机端可公布 5 V / 2 A。实际取电、压降和温升仍需实测。";
+        }
         TextView summary = label(message, 15, INK);
         detail.addView(summary);
         CheckBox confirmed = new CheckBox(this);

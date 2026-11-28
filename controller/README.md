@@ -9,7 +9,11 @@
 
 两条协议独立记录在 [CF20 蓝牙协议](cf20-protocol.md) 和 [6DoF 套件协议](kit-6dof-protocol.md)。诊断 APK 与运行时共用发现、配对及报告解码源码。
 
-[原厂手机与 CF20 的控制切换](oem-controller-switching.md)记录来源优先级、断线重连及手机操控显示。[原厂手机操控](oem-phone-controller.md)记录触控分区、手势、姿态和回正。
+[原厂手机与 CF20 的控制切换](oem-controller-switching.md)记录原厂 SDK 如何选择输入源、处理重连，以及电源键如何控制手机模型与射线。
+
+[原厂手机操控逆向](oem-phone-controller.md)记录手机的触控分区、手势阈值、姿态射线和回正。
+
+[原厂光标与射线渲染](oem-pointer-rendering.md)记录光标贴图、命中位置、射线几何及深度遮挡。
 
 ## 本机产物
 

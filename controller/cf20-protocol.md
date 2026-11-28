@@ -15,7 +15,9 @@ CF20 是单手持 3DoF 手柄。华为手柄应用负责 BLE 连接，华为 VR 
 
 1. 原厂识别广播名称前缀 `Testmotion`、`Huawei Controller`、`HUAWEI CF20`。Monado 搜索 15 秒，也接受广播下表服务 UUID 的设备。可以手动填写地址。
 2. 原厂以 `connectGatt(..., autoConnect=false, transport=LE)` 直连。手柄应用 `MainActivity` 将服务连接状态 1 显示为配对中、2 显示为成功。`t0.l8.r2 → q2` 在状态 2 后向 iConnect 发 `com.huawei.iconnect.action.DEVICE_BOND_STATE_CHANGED`。静态可追溯路径走应用连接状态，未见它主动调用 Android `createBond()`。
-3. 原厂先注册控制通知，约 500 ms 后注册输入通知。Monado 等控制 CCCD 写入回调再写输入 CCCD。设备缺少控制通知描述符时尝试直接订阅输入。收到首个符合格式的 20 字节报告后，**配对并选用**保存该地址，下一次运行时创建设备时自动连接。用户也可选**Android 系统配对**，等待 `BOND_BONDED` 后再确认输入通知。系统配对支持情况待特定固件实测。[Android BluetoothDevice](https://developer.android.com/reference/android/bluetooth/BluetoothDevice) · [Android BluetoothGatt](https://developer.android.com/reference/android/bluetooth/BluetoothGatt)
+3. 原厂连接和服务发现各设 20 秒超时。链路建立后等约 1 秒再发现服务，控制通知成功后等约 500 ms 再订阅输入。`t0.s5` 的快速重试最多 3 次，通常间隔 1 秒，GATT 状态 133 时为 5 秒。
+4. Monado 复用这些阶段和间隔，并给每次 CCCD 写入和等待首包各设 5 秒超时。缺少控制通知或收到其写入失败回调时，直接尝试输入订阅。快速重试用尽后每 15 秒再试，首个合规输入报告到达后恢复快速重试额度。关蓝牙会清理连接，恢复后重新尝试。诊断页显示各阶段用时、当前重试原因和固件查询状态。
+5. 收到首个符合长度的 20 字节报告后，**配对并选用**保存该地址，下一次运行时创建设备时自动连接。用户也可选**Android 系统配对**，等待 `BOND_BONDED` 后再确认输入通知。系统配对支持情况待特定固件实测。[Android BluetoothDevice](https://developer.android.com/reference/android/bluetooth/BluetoothDevice) · [Android BluetoothGatt](https://developer.android.com/reference/android/bluetooth/BluetoothGatt)
 
 | GATT 项 | UUID | 原厂用途 |
 | --- | --- | --- |
@@ -25,7 +27,7 @@ CF20 是单手持 3DoF 手柄。华为手柄应用负责 BLE 连接，华为 VR 
 | 输入特征 | `ffb4a651-c224-420b-a134-13d3aba313fb` | 20 字节传感器与按键报告 |
 | CCCD | `00002902-0000-1000-8000-00805f9b34fb` | 写 `01 00` 启用通知 |
 
-原厂 E4 另有 iConnect 上下文写入 `01 0f …`（`r0.g2`、`t0.d3.l0/a`）和应用控制写入 `01 07 07 00`（`a.l1/g2.m`）。Monado 只写 CCCD，对输入报告的连通性以实际通知为准。SDK 的 `DefaultController.startVibrate` 返回 `-1`，目前没有已核实的振动输出命令。
+输入订阅成功后，Monado 通过 E4 发送原厂版本查询 `01 07 07 00`，从 E5 的 `01 07` 响应读取类型 `07` 的固件版本字符串（`com.huawei.vrhandle.a`、`r0.g2`、`r0.h5`）。版本查询超时为 3 秒，输入可独立继续。SDK 的 `DefaultController.startVibrate` 返回 `-1`，目前没有已核实的振动输出命令。
 
 ## 输入报告
 
@@ -44,4 +46,21 @@ CF20 是单手持 3DoF 手柄。华为手柄应用负责 BLE 连接，华为 VR 
 | 17 | s8 | SDK 返回的电量字段 |
 | 18–19 | 原始字节 | 该版解码器未读取 |
 
-报告没有 SDK 读取的设备时间戳。Monado 在收到通知时以 `System.nanoTime()` 标记，规范化四元数。最后报告超过 250 ms 即停用输入和姿态。作为 `/user/hand/right` 的 `/interaction_profiles/khr/simple_controller` 提供扳机或确认 → `select/click`、返回 → `menu/click`、`grip/pose` 和 `aim/pose`。位置采用固定右手偏移 `(0.20, -0.30, -0.35) m`，只设置位置有效位。触控、音量、Home、原始传感器和电量用于诊断。握持轴、瞄准轴和头显坐标对齐待实测。[OpenXR Simple Controller](https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html#_khr_simple_controller_profile)
+报告没有 SDK 读取的设备时间戳。Monado 在收到通知时以 `System.nanoTime()` 标记，规范化四元数。最后报告超过 250 ms 即停用 CF20 输入和姿态，已启用的手机操控仍可接管。作为 `/user/hand/right` 的 `/interaction_profiles/khr/simple_controller` 提供扳机或确认 → `select/click`、返回 → `menu/click`、`grip/pose` 和 `aim/pose`。[OpenXR Simple Controller](https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html#_khr_simple_controller_profile)
+
+固件从 `4.0.5` 起，原厂用字节 12 的最低位表示静置校准完成，用字节 14 的最低位表示画八字校准完成（`z0.x`、`z0.y`）。Monado 保留原始陀螺仪字段，从相同字节读诊断位。固件未知或较旧时，诊断分别显示无法读取或不支持。该页读取状态，手柄内部校准和下述贴合偏移各自独立。
+
+## 模拟位置与右侧贴合校准
+
+- CF20 的 `grip/pose` 使用原厂 `HVRArmModel` 的躯干朝向滤波、抬臂伸展、肘部与手腕几何，位置加上同一原点下的头显位置。`aim/pose` 保持握持朝向，射线起点相对手腕上移 20 mm、向前移 69 mm，取自原厂可见射线的偏移。模型使用姿态和约束几何计算平移。
+- CV10 USB IMU 模式使用原厂 `HVRLayoutCore` 的颈部支点。将原厂的 `(0, 0.075, 0.0805) m` 转换到 OpenXR 的负 Z 前方后，头显平移为 `Q × neck − neck`，再加离地眼高。默认眼高为 1.50 m，`LOCAL_FLOOR` 和 `STAGE` 使用地面原点。头显和 CF20 的模拟位置均报告位置有效，位置追踪位关闭。套件的定位器继续提供其测量的位置。
+- 在 Monado CV10 的 **CV10 Bluetooth Controller** 中输入 `0.50–2.50 m` 的离地眼高。可直接保存眼高，或选择 **准备右侧贴合校准**。校准准备有效期为 90 秒。进入 OpenXR 后平视，把 CF20 贴在头显右侧，手柄前端朝前、按键朝上，稳住并按住扳机约 1 秒。运行时要求两路姿态时间接近且连续稳定至少 800 ms，将该次头显姿态的高度对齐到输入值，并保存与此 CF20 地址关联的偏航修正。校准扳机保持期间不向第三方应用发出该扳机点击。返回设置页可查看是否保存，也可清除偏移。
+- 贴合位置由用户摆放，IMU 提供两者的相对朝向。以后若以明显不同的朝向初始化头显，或发现两个 IMU 的偏航漂移，可重新贴合。这项校准无法获得手柄相对头显的实测平移。
+
+### 3DoF 手部位置模式
+
+- **华为桌面手臂模型**按手柄朝向计算肘点和腕点，腕点会扫过弧线。抬臂伸展时肘点也变化。Monado 将腕点映射到标准 OpenXR `grip/pose`，并把射线起点映射到 `aim/pose`。原厂 SDK 对 CF20 的原始位置取零。
+- **固定位置**在 OpenXR 驱动坐标中输入米制 X、Y、Z。预设包括 Monado 之前的固定值 `(0.20, -0.30, -0.35)` 和华为 SDK 原点 `(0, 0, 0)`。位置锁定后，手柄仍然更新朝向。
+- **单次 6DoF 校准**将头部位置设为 `(0, 输入眼高, 0)`。进入 OpenXR 后平视，手柄前端朝前、按键朝上，贴在头显右侧。双击 Home 启动采样，听到提示后在 8 秒内移到舒适位置，停稳后再双击 Home。接触点使用从头显中心往右 9 cm 的估计值，积分角速度更新姿态并以报告四元数纠偏，扣除重力后用加速度积分估计位移。成功时按蓝牙地址保存并固定终点。断线、超时或样本不合格时保留上次保存的点。
+
+离线验证覆盖固件 TLV、校准标志、贴合采样门限、颈部和手臂坐标、GATT 分阶段回调，以及单次积分的静止、移动、方向和采样中断向量。握持轴、瞄准轴、单次校准的实际位移误差和第三方应用体验待设备验收。

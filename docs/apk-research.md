@@ -2,6 +2,8 @@
 
 华为原厂服务有一条经 VCOM 串口控制屏幕的路径。头显 HID 初始化、姿态读取、DP 显示枚举和华为 VR 应用路由各有自己的入口。普通 C-C 线的 Fold7 实测见[真机记录](device-openxr-check.md)。如果系统识别到外屏却始终黑屏，再查接近传感器、供电、实际时序及是否出现 VCOM 接口。[Fold7 点亮手册](fold7-bringup.md)
 
+头姿时序、CF20 重连、视频超分、6DoF 安全区和虚拟屏的二次分析见[原厂六个 APK 复用评估](cv10-oem-reuse-audit.md)。
+
 ## 样本来源与复现
 
 固定下载地址、字节数和 SHA-256 见[样本清单](../research/sources.json)。官方 Unity `3.5.0.68` ZIP 附带 `3.5.0.68.apk`。官方 OpenXR `3.5.0.79` ZIP 包含 loader、SDK 及示例，示例构建配置选择 `armeabi-v7a`。另外七个 APK 来自固定社区镜像。镜像维护者记录 `vrservice` 来自 HMA-AL00、EMUI 11.0.0.155 的 `hw_product` 分区 `/region_comm/china/app/VRServiceX/VRServiceX.apk`。这个来源对应 Mate 20，用户的 P40 Pro+ 仍需在真机阶段核对包版本及系统服务。[华为 Unity SDK](https://developer.huawei.com/consumer/cn/doc/graphics-Library/unity-sdk-download-0000001142315529/) · [华为 OpenXR SDK](https://developer.huawei.com/consumer/cn/doc/graphics-Library/openxr-sdk-download-0000001148849243/) · [社区样本基线](https://github.com/EnYaoJingYa/huawei-vr-compat/blob/03bf1012493fd821f38114010e4b21fe20f1d4f1/docs/BASELINE.md) · [固件提取记录](https://github.com/EnYaoJingYa/huawei-vr-compat/blob/03bf1012493fd821f38114010e4b21fe20f1d4f1/docs/FIRMWARE_HMA11_EMUI11.md)

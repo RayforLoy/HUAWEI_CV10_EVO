@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | **CV10 / AV02 头显** | 华为 Windows [HuaweiVRUpdater 10.0.0.312 原 ZIP](../firmware_update/official/windows/HuaweiVRUpdater_10.0.0.312.zip) 或 [已解包程序](../firmware_update/official/windows/HuaweiVRUpdater_10.0.0.312/HuaweiVRUpdater_10.0.0.312.exe) | 接入头显。在升级器中核对型号和目标版本，使用对应的 `.dfu`。运行解包程序时保留整个目录，其中包含驱动、两个 DFU 和页面资源。 [华为升级指南](https://consumer.huawei.com/cn/support/content/zh-cn00793390/) |
 | **原厂手机连接线 VL105** | [项目 Windows x64 连接线工具](../firmware_update/tools/windows/CV10-Cable-Tool.exe) 和下方的 49,152 字节线缆 `.bin` | 只接线盒的「连接手机」端，眼镜端拔开，读取状态确认 `2109:0105`。先用「导出固件」备份，再用「烧录固件」选择目标镜像并核对预检。 [工具说明和回刷记录](cable.md) |
-| **原厂手机连接线 VL105** | [CV10 安卓线盒工具 v1.1](../firmware_update/tools/android/CV10-Cable-Tool-Android-v1.1.apk) | 需要 Android 8.0 及 USB Host。内置 C9.49.6、C9.52.6、C9.53.6 原版，以及 C9.53.6 供电测试版和群友 Pin C 版。双读备份与预检通过后，需勾选风险确认才能开始刷写。 [Android 工具说明与镜像摘要](../tools/cable-android/README.md) |
+| **原厂手机连接线 VL105** | [CV10 安卓线盒工具 v1.2](../firmware_update/tools/android/CV10-Cable-Tool-Android-v1.2.apk) | 需要 Android 8.0 及 USB Host。内置 C9.49.6、C9.52.6、C9.53.6 原版，以及 C9.53.6 供电测试版、群友 Pin C 版和 RT9471 2.5 A ＋ 条件式 2 A 版。双读备份与预检通过后，需勾选风险确认才能开始刷写。 [Android 工具说明与镜像摘要](../tools/cable-android/README.md) |
 | **原厂手机连接线 VL105** | [旧款 Android ARM 2 A 升级工具](../firmware_update/tools/android/CV10-Cable-Updater-2A-arm.apk) | 内置 **C9.49.6 2 A 观测版**，支持 `arm64-v8a` 和 `armeabi-v7a`，需要 Android 8.0 及 USB Host。 [旧款工具说明](../tools/android-cable/README.md) |
 | **华为手机端线缆 OTA** | P40 参考组的[华为 VR 手柄](apk-archive.md)与[华为 VR 桌面](apk-archive.md) | 在华为 VR 环境中按版本提示更新。手机也可只接线盒，通过 USB 授权进入升级页。升级包由原厂流程在线提供。 [华为线缆 OTA 操作](https://consumer.huawei.com/cn/support/content/zh-cn11355237/) |
 | **6DoF 定位器和左右手柄** | 华为 [PC VR 助手 11.0.0.105](../firmware_update/official/6dof/HwPCVRAssistant_11.0.0.105.exe)或华为 VR 桌面 | 设备接好并联网后，在「设备管理 → 固件升级」查看配件更新。 [华为 6DoF 升级指南](https://consumer.huawei.com/cn/support/content/zh-cn15856480/) |
@@ -45,6 +45,7 @@ Windows 连接线工具烧录时会在 `%LOCALAPPDATA%\CV10-Cable-Tool\Backups` 
 | C9.53.6 来样（本地样本） | `D0DB` | 用户提供的线盒导出，来源描述为官方售后版。已核对 CRC、输入限流和 PD 离线回放。 [C9.53.6 与 C9.52.6 对照](cable-c9536-vs-c9526.md) |
 | C9.53.6 供电测试版 | `7EF0` | 安卓线盒工具内置。符合 5 V / 3 A 上游协商条件时向手机发布 5 V / 2 A。Fold7 实刷、完整回读及重启通过。 [生成脚本](../tools/patch_c9536_charging.py) |
 | C9.53.6 群友版 · 仅 Pin C | `A5CB` | 安卓线盒工具 v1.1 内置。供电逻辑与上项一致，DP Discover Modes 仅声明 Pin C。 [字节差异与离线回放](cable-c9536-pin-c.md) |
+| C9.53.6 · RT9471 2.5 A ＋ 条件式 2 A | `ACC2` | 安卓线盒工具 v1.2 内置。RT9471 输入限流设为 2.5 A。保留原厂上游请求，上游完成 5 V / 3 A 协商后可向手机发布 5 V / 2 A。 [镜像 SHA-256](../tools/cable-android/README.md#读取备份与刷写) |
 | [C9.49.6 2 A 观测版](../firmware_update/firmware/cable/modified/C9.49.6-2A-input-observer.bin) | `27B9` | Windows 实机读回 `IBUS=28`，同一测试配置有 Windows、P40 和 Fold7 出图记录。此镜像已核对与项目 Android APK 内置固件相同。 [Windows 输入限流对照](../research/evidence/pc-original-2a-input-20261126.json) · [Fold7 和 P40 实测](../research/evidence/fold7-original-2a-openxr-20261126.json) |
 | [C9.52.6 2 A](../firmware_update/firmware/cable/modified/C9.52.6-2A-input.bin) | `7E58` | `IBUS` 初始化为 `0x28`。通过镜像校验和 PD 离线回放，实机带载待验证。 |
 | [C9.52.6 2.5 A](../firmware_update/firmware/cable/modified/C9.52.6-2.5A-input.bin) | `47DE` | `IBUS` 初始化为 `0x32`。通过镜像校验和 PD 离线回放，5 V / 2.4 A iPad 电源的带载表现待验证。 |

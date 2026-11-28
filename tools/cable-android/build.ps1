@@ -5,6 +5,7 @@ param(
     [Parameter(Mandatory)] [string] $Stock53,
     [Parameter(Mandatory)] [string] $Phone2A,
     [Parameter(Mandatory)] [string] $PinC,
+    [Parameter(Mandatory)] [string] $Rt9471Phone2A,
     [string] $Stock49,
     [string] $Stock52,
     [string] $BuildToolsVersion = '34.0.0',
@@ -45,6 +46,7 @@ $images = @{
     'stock53.bin' = @($Stock53, '8e8d9d0df2809f2d3a673519834c83662acc5be6635060d75ef246133956843e')
     'phone2a.bin' = @($Phone2A, 'ba4fa99083c69bcacbd44b0a7afcbfcde228b5535752bc47c59cea13fc3d1096')
     'pinc.bin' = @($PinC, 'c9d88fcc5205bfb6f9aa6cdd93839c0bfb056522f542132d9ef028efe1c129f6')
+    'rt9471-phone2a.bin' = @($Rt9471Phone2A, '6b481d03fadb6911b7fe3e51903a8cc48b9029c5cea85dc848ee5c35787d1f9c')
 }
 foreach ($asset in $images.Keys) {
     $source, $expected = $images[$asset]

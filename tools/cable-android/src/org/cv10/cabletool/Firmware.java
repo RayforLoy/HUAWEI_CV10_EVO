@@ -15,7 +15,9 @@ enum Firmware {
     PHONE_2A("C9.53.6 供电测试版 · 5 V / 2 A", "phone2a.bin",
             "ba4fa99083c69bcacbd44b0a7afcbfcde228b5535752bc47c59cea13fc3d1096"),
     PIN_C("C9.53.6 群友版 · 仅 Pin C", "pinc.bin",
-            "c9d88fcc5205bfb6f9aa6cdd93839c0bfb056522f542132d9ef028efe1c129f6");
+            "c9d88fcc5205bfb6f9aa6cdd93839c0bfb056522f542132d9ef028efe1c129f6"),
+    RT9471_PHONE_2A("C9.53.6 · RT9471 2.5 A ＋ 条件式 2 A", "rt9471-phone2a.bin",
+            "6b481d03fadb6911b7fe3e51903a8cc48b9029c5cea85dc848ee5c35787d1f9c");
 
     static final int SIZE = 0xc000;
     static final int HEADER = 0x1003;

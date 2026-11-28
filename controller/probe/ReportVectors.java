@@ -35,7 +35,60 @@ final class ReportVectors {
         check(asymmetric.isTouched() && asymmetric.touchX == 255 && asymmetric.touchY == 0 &&
                 asymmetric.battery == -1, "signed battery and unsigned touch");
         check(!Cv10ControllerReport.decode(new byte[20]).orientationValid, "zero quaternion");
-        System.out.println("CF20 report vectors passed");
+        check(active.stillnessDone && active.figureEightDone, "both firmware flags");
+        check(!idle.stillnessDone && !idle.figureEightDone, "neither firmware flag");
+        byte[] flags = new byte[20];
+        flags[14] = 1;
+        Cv10ControllerReport eight = Cv10ControllerReport.decode(flags);
+        check(!eight.stillnessDone && eight.figureEightDone, "figure eight alone");
+        check(java.util.Arrays.equals(Cv10ControllerCalibration.requestVersion(), hex("01 07 07 00")), "version query");
+        check("4.0.5".equals(Cv10ControllerCalibration.parseVersionResponse(hex("01 07 09 01 aa 07 05 34 2e 30 2e 35"))),
+                "firmware TLV after another field");
+        check("4.0.5".equals(Cv10ControllerCalibration.parseVersionResponse(hex("01 07 07 80 05 34 2e 30 2e 35"))),
+                "extended length");
+        check(Cv10ControllerCalibration.parseVersionResponse(hex("01 07 07 05 34 2e 30 2e")) == null, "truncated TLV");
+        check(Cv10ControllerCalibration.parseVersionResponse(hex("01 08 07 05 34 2e 30 2e 35")) == null, "unrelated reply");
+        check(!Cv10ControllerCalibration.supportsFlags(null) && !Cv10ControllerCalibration.supportsFlags("4.0.4") &&
+                Cv10ControllerCalibration.supportsFlags("4.0.5") && Cv10ControllerCalibration.supportsFlags("4.1.0"),
+                "minimum firmware for calibration flags");
+        calibrationVectors();
+        System.out.println("CF20 report, firmware and right-side calibration vectors passed");
+    }
+
+    private static void calibrationVectors() {
+        Cv10SimulationCalibration hold = new Cv10SimulationCalibration();
+        float headYaw = 0.4f, handYaw = -0.6f, headPitch = 0.2f;
+        long start = 1_000_000_000L;
+        check(hold.sample(1, orientation(start - 150_000_000L, headYaw, headPitch, false),
+                orientation(start, handYaw, 0f, false)) == null, "stale head cannot calibrate");
+        check(hold.sample(1, orientation(start, headYaw, 1f, false), orientation(start, handYaw, 0f, false)) == null,
+                "head must be approximately level");
+        Cv10SimulationCalibration.Offset result = null;
+        for (int i = 0; i <= 16; i++) {
+            long now = start + i * 50_000_000L;
+            result = hold.sample(1, orientation(now - 10_000_000L, headYaw, headPitch, i % 2 == 0),
+                    orientation(now, handYaw, 0f, i % 2 == 1));
+            if (i < 16) check(result == null, "800 ms hold required");
+        }
+        check(result != null, "steady samples including quaternion sign flips");
+        close(result.yaw, headYaw - handYaw, "right-side yaw alignment");
+        close(result.heightCorrection, -0.075f * ((float) Math.cos(headPitch) - 1f) -
+                0.0805f * (float) Math.sin(headPitch), "neck height correction");
+        long later = start + 2_000_000_000L;
+        check(hold.sample(1, orientation(later, headYaw, headPitch, false), orientation(later, handYaw, 0f, false)) == null,
+                "a gap resets the hold");
+        check(hold.sample(1, orientation(later + 50_000_000L, headYaw, headPitch, false),
+                orientation(later + 50_000_000L, handYaw + 0.2f, 0f, false)) == null, "movement resets the hold");
+        check(hold.sample(2, orientation(later + 100_000_000L, headYaw, headPitch, false),
+                orientation(later + 100_000_000L, handYaw, 0f, false)) == null, "new arm request starts a new hold");
+    }
+
+    private static Cv10SimulationCalibration.Orientation orientation(long ns, float yaw, float pitch, boolean negate) {
+        float cY = (float) Math.cos(yaw / 2f), sY = (float) Math.sin(yaw / 2f);
+        float cP = (float) Math.cos(pitch / 2f), sP = (float) Math.sin(pitch / 2f);
+        float sign = negate ? -1f : 1f;
+        return new Cv10SimulationCalibration.Orientation(ns, sign * cY * sP, sign * sY * cP,
+                -sign * sY * sP, sign * cY * cP);
     }
 
     private static byte[] hex(String input) {

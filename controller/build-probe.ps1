@@ -35,15 +35,18 @@ New-Item -ItemType Directory -Force -Path "$work/classes", "$work/dex", "$work/l
 
 Invoke-Tool $javac @('-encoding', 'UTF-8', '--release', '8', '-classpath', $android, '-d', "$work/classes",
     "$public/Cv10ControllerActivity.java", "$public/Cv10ControllerLink.java", "$public/Cv10ControllerReport.java",
+    "$public/Cv10ControllerCalibration.java", "$public/Cv10SimulationCalibration.java", "$public/Cv10SimulationSettings.java",
+    "$public/Cv10OneShotCalibration.java",
     "$public/Cv10KitActivity.java", "$public/Cv10KitReport.java", "$public/Cv10KitCalibration.java", "$public/Cv10KitHid.java",
     "$public/Cv10KitSlamParameters.java", "$public/Cv10KitHandParameters.java", "$public/Cv10KitSlam.java",
     "$public/Cv10KitCamera.java", "$public/Cv10KitHands.java",
     "$public/Cv10KitTrackingService.java",
     "$PSScriptRoot/probe/ProbeActivity.java")
 Invoke-Tool $javac @('-encoding', 'UTF-8', '--release', '8', '-classpath', "$work/classes", '-d', $work,
-    "$PSScriptRoot/probe/ReportVectors.java", "$PSScriptRoot/probe/KitVectors.java")
+    "$PSScriptRoot/probe/ReportVectors.java", "$PSScriptRoot/probe/KitVectors.java", "$PSScriptRoot/probe/OneShotVectors.java")
 Invoke-Tool $java @('-classpath', "$work;$work/classes", 'org.freedesktop.monado.openxr_runtime.ReportVectors')
 Invoke-Tool $java @('-classpath', "$work;$work/classes", 'org.freedesktop.monado.openxr_runtime.KitVectors')
+Invoke-Tool $java @('-classpath', "$work;$work/classes", 'org.freedesktop.monado.openxr_runtime.OneShotVectors')
 
 Invoke-Tool $clang @('-std=c++17', '-Wall', '-Wextra', '-Werror', '-O2', '-fPIC', '-shared', '-static-libstdc++',
     '-Wl,-z,max-page-size=16384', '-ldl', "$native/cv10_kit_slam.cpp", '-o', "$work/lib/arm64-v8a/libcv10-kit-slam.so")
